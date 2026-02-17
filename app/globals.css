@@ -91,6 +91,7 @@
 @theme {
   --font-sans: var(--font-geist);
   --font-mono: var(--font-geist-mono);
+  --font-serif: var(--font-instrument-serif);
 
   --breakpoint-toast-mobile: 600px;
 

@@ -26,5 +26,5 @@ db-migrate:
 	@POSTGRES_URL=$(LOCAL_DATABASE_URL) pnpm db:migrate
 
 db-reset:
-	@docker exec knowsee-verse-postgres psql -U knowsee -d knowsee_verse -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+	@docker exec knowsee-verse-postgres psql -U knowsee -d knowsee_verse -c "DROP SCHEMA IF EXISTS drizzle CASCADE; DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 	@$(MAKE) db-migrate

@@ -1,4 +1,4 @@
-export const DEFAULT_CHAT_MODEL = "google/gemini-2.5-flash-lite";
+export const DEFAULT_CHAT_MODEL = "openai/gpt-oss-20b";
 
 export type ChatModel = {
   id: string;
@@ -9,16 +9,10 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
-    id: "google/gemini-2.5-flash-lite",
-    name: "Gemini 2.5 Flash Lite",
-    provider: "google",
-    description: "Ultra fast and affordable",
-  },
-  {
-    id: "google/gemini-2.5-pro",
-    name: "Gemini 2.5 Pro",
-    provider: "google",
-    description: "Most capable Google model",
+    id: "openai/gpt-oss-20b",
+    name: "GPT-OSS 20B",
+    provider: "groq",
+    description: "Fast open-weight model, matches o3-mini",
   },
 ];
 

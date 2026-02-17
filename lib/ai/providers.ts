@@ -1,10 +1,12 @@
-import { google } from "@ai-sdk/google";
+import { createGroq } from "@ai-sdk/groq";
 import {
   customProvider,
   extractReasoningMiddleware,
   wrapLanguageModel,
 } from "ai";
 import { isTestEnvironment } from "../constants";
+
+const groq = createGroq();
 
 export const myProvider = isTestEnvironment
   ? (() => {
@@ -30,32 +32,29 @@ export function getLanguageModel(modelId: string) {
     return myProvider.languageModel(modelId);
   }
 
-  // Strip provider prefix if present (gateway format: "google/model-name")
-  const cleanId = modelId.includes("/") ? modelId.split("/").pop()! : modelId;
-
   const isReasoningModel =
     modelId.includes("reasoning") || modelId.endsWith("-thinking");
 
   if (isReasoningModel) {
     return wrapLanguageModel({
-      model: google(cleanId),
+      model: groq(modelId),
       middleware: extractReasoningMiddleware({ tagName: "thinking" }),
     });
   }
 
-  return google(cleanId);
+  return groq(modelId);
 }
 
 export function getTitleModel() {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("title-model");
   }
-  return google("gemini-2.5-flash-lite");
+  return groq("openai/gpt-oss-20b");
 }
 
 export function getArtifactModel() {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("artifact-model");
   }
-  return google("gemini-2.5-flash-lite");
+  return groq("openai/gpt-oss-20b");
 }

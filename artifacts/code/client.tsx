@@ -16,6 +16,22 @@ import {
 } from "@/components/icons";
 import { generateUUID } from "@/lib/utils";
 
+const PYODIDE_VERSION = "0.27.5";
+const PYODIDE_CDN = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full`;
+
+async function ensurePyodideLoaded(): Promise<void> {
+  // @ts-expect-error - loadPyodide is loaded dynamically via CDN script
+  if (typeof globalThis.loadPyodide === "function") return;
+
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = `${PYODIDE_CDN}/pyodide.js`;
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Failed to load Pyodide runtime"));
+    document.head.appendChild(script);
+  });
+}
+
 const OUTPUT_HANDLERS = {
   matplotlib: `
     import io
@@ -133,9 +149,11 @@ export const codeArtifact = new Artifact<"code", Metadata>({
         }));
 
         try {
-          // @ts-expect-error - loadPyodide is not defined
+          await ensurePyodideLoaded();
+
+          // @ts-expect-error - loadPyodide is loaded dynamically
           const currentPyodideInstance = await globalThis.loadPyodide({
-            indexURL: "https://cdn.jsdelivr.net/pyodide/v0.23.4/full/",
+            indexURL: `${PYODIDE_CDN}/`,
           });
 
           currentPyodideInstance.setStdout({

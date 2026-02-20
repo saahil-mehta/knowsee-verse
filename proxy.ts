@@ -1,39 +1,57 @@
-import { type NextRequest, NextResponse } from "next/server";
-import { getToken } from "next-auth/jwt";
-import { guestRegex, isDevelopmentEnvironment } from "./lib/constants";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { headers } from "next/headers";
 
+/**
+ * Proxy for route protection (Next.js 16+).
+ *
+ * Enforces the "impenetrable wall" for email verification:
+ * - Unauthenticated users → /login
+ * - Authenticated but unverified users → /verify-email (cannot escape)
+ * - Verified users → full app access
+ */
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  /*
-   * Playwright starts the dev server and requires a 200 status to
-   * begin the tests, so this ensures that the tests can start
-   */
+  // Playwright health check
   if (pathname.startsWith("/ping")) {
     return new Response("pong", { status: 200 });
   }
 
+  // Better Auth endpoints must be accessible
   if (pathname.startsWith("/api/auth")) {
     return NextResponse.next();
   }
 
-  const token = await getToken({
-    req: request,
-    secret: process.env.AUTH_SECRET,
-    secureCookie: !isDevelopmentEnvironment,
+  // Dynamic import to avoid module-level database connection
+  const { auth } = await import("./lib/auth");
+
+  const session = await auth.api.getSession({
+    headers: await headers(),
   });
 
-  if (!token) {
-    const redirectUrl = encodeURIComponent(request.url);
+  const isAuthRoute =
+    pathname.startsWith("/login") || pathname.startsWith("/register");
+  const isVerifyRoute = pathname.startsWith("/verify-email");
 
-    return NextResponse.redirect(
-      new URL(`/api/auth/guest?redirectUrl=${redirectUrl}`, request.url)
-    );
+  // No session → must log in (unless already on auth pages)
+  if (!session) {
+    if (isAuthRoute) {
+      return NextResponse.next();
+    }
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  const isGuest = guestRegex.test(token?.email ?? "");
+  // Session but email not verified → THE WALL
+  if (!session.user.emailVerified) {
+    if (isVerifyRoute) {
+      return NextResponse.next();
+    }
+    return NextResponse.redirect(new URL("/verify-email", request.url));
+  }
 
-  if (token && !isGuest && ["/login", "/register"].includes(pathname)) {
+  // Verified user on auth/verify routes → redirect to app
+  if (isAuthRoute || isVerifyRoute) {
     return NextResponse.redirect(new URL("/", request.url));
   }
 
@@ -42,18 +60,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/",
-    "/chat/:id",
-    "/api/:path*",
-    "/login",
-    "/register",
-
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico, sitemap.xml, robots.txt (metadata files)
-     */
-    "/((?!_next/static|_next/image|favicon.ico|sitemap.xml|robots.txt).*)",
+    "/((?!_next/static|_next/image|icon|apple-icon|favicon.ico|sitemap.xml|robots.txt).*)",
   ],
 };

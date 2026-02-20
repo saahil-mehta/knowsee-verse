@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronUp, SettingsIcon, LogOutIcon, BadgeCheck } from "lucide-react";
+import { ChevronUp } from "lucide-react";
 import { useTheme } from "next-themes";
 import { toast } from "sonner";
 import {
@@ -59,7 +59,7 @@ export function UserMenu() {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
-                className="h-10 bg-background data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                className="h-10 bg-background focus-visible:ring-0 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 data-testid="user-nav-button"
               >
                 {isPending ? (
@@ -72,15 +72,12 @@ export function UserMenu() {
                 ) : (
                   <>
                     <GradientAvatar name={user?.name || user?.email || ""} image={user?.image} size="sm" />
-                    <span className="flex items-center gap-1 truncate">
+                    <span className="truncate">
                       {user?.name || user?.email}
-                      {user?.emailVerified && (
-                        <BadgeCheck className="size-3.5 shrink-0 text-green-500" />
-                      )}
                     </span>
                   </>
                 )}
-                <ChevronUp className="ml-auto" />
+                <ChevronUp className="ml-auto" strokeWidth={1.5} />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -102,7 +99,6 @@ export function UserMenu() {
                 className="cursor-pointer"
                 onClick={() => setSettingsOpen(true)}
               >
-                <SettingsIcon className="mr-2 size-4" />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -111,8 +107,7 @@ export function UserMenu() {
                 onClick={handleLogout}
                 disabled={isLoggingOut}
               >
-                <LogOutIcon className="mr-2 size-4" />
-                {isLoggingOut ? "Logging out..." : "Sign out"}
+                {isLoggingOut ? "Signing out..." : "Sign out"}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

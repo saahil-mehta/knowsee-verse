@@ -1,4 +1,4 @@
-export const DEFAULT_CHAT_MODEL = "openai/gpt-oss-20b";
+export const DEFAULT_CHAT_MODEL = "anthropic/claude-sonnet-4-6";
 
 export type ChatModel = {
   id: string;
@@ -9,16 +9,22 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
-    id: "openai/gpt-oss-20b",
-    name: "GPT-OSS 20B",
-    provider: "groq",
-    description: "Fast open-weight model, matches o3-mini",
+    id: "anthropic/claude-sonnet-4-6",
+    name: "Claude Sonnet 4.6",
+    provider: "anthropic",
+    description: "Balanced quality, speed, and cost",
   },
   {
-    id: "gemini-2.5-flash",
-    name: "Gemini 2.5 Flash",
-    provider: "google",
-    description: "Google's fast multimodal model",
+    id: "anthropic/claude-sonnet-4-6-thinking",
+    name: "Claude Sonnet 4.6 Thinking",
+    provider: "anthropic",
+    description: "Extended thinking for complex reasoning",
+  },
+  {
+    id: "anthropic/claude-haiku-4-5",
+    name: "Claude Haiku 4.5",
+    provider: "anthropic",
+    description: "Fast and lightweight",
   },
 ];
 

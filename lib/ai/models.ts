@@ -14,6 +14,12 @@ export const chatModels: ChatModel[] = [
     provider: "groq",
     description: "Fast open-weight model, matches o3-mini",
   },
+  {
+    id: "gemini-2.5-flash",
+    name: "Gemini 2.5 Flash",
+    provider: "google",
+    description: "Google's fast multimodal model",
+  },
 ];
 
 // Group models by provider for UI

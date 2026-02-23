@@ -10,12 +10,6 @@ import { DocumentPreview } from "./document-preview";
 import { MessageContent } from "./elements/message";
 import { Response } from "./elements/response";
 import {
-  Source as SourceLink,
-  Sources,
-  SourcesContent,
-  SourcesTrigger,
-} from "./elements/source";
-import {
   Tool,
   ToolContent,
   ToolHeader,
@@ -34,13 +28,6 @@ import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
-
-type WebSource = {
-  type: "source-url";
-  sourceId: string;
-  url: string;
-  title?: string;
-};
 
 const PurePreviewMessage = ({
   addToolApprovalResponse: _addToolApprovalResponse,
@@ -71,13 +58,11 @@ const PurePreviewMessage = ({
 
   useDataStream();
 
-  const { processedParts, sources, hasVisibleContent } = useMemo(() => {
-    const sources: WebSource[] = [];
+  const { processedParts, hasVisibleContent } = useMemo(() => {
     const processed: typeof message.parts = [];
 
     for (const part of message.parts) {
       if (part.type === "source-url") {
-        sources.push(part as unknown as WebSource);
         continue;
       }
 
@@ -111,7 +96,7 @@ const PurePreviewMessage = ({
       return renderedToolTypes.has(part.type);
     });
 
-    return { processedParts: processed, sources, hasVisibleContent };
+    return { processedParts: processed, hasVisibleContent };
   }, [message.parts]);
 
   return (
@@ -371,21 +356,6 @@ const PurePreviewMessage = ({
                 </span>
               </span>
             </div>
-          )}
-
-          {sources.length > 0 && (
-            <Sources>
-              <SourcesTrigger count={sources.length} />
-              <SourcesContent>
-                {sources.map((source) => (
-                  <SourceLink
-                    href={source.url}
-                    key={source.sourceId}
-                    title={source.title ?? new URL(source.url).hostname}
-                  />
-                ))}
-              </SourcesContent>
-            </Sources>
           )}
 
           {!isReadonly && (

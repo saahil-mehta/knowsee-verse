@@ -1,12 +1,10 @@
-import { createGroq } from "@ai-sdk/groq";
-import {
-  customProvider,
-  extractReasoningMiddleware,
-  wrapLanguageModel,
-} from "ai";
+import { gateway } from "@ai-sdk/gateway";
+import { customProvider } from "ai";
 import { isTestEnvironment } from "../constants";
 
-const groq = createGroq();
+// ---------------------------------------------------------------------------
+// Test environment — mock provider
+// ---------------------------------------------------------------------------
 
 export const myProvider = isTestEnvironment
   ? (() => {
@@ -27,34 +25,37 @@ export const myProvider = isTestEnvironment
     })()
   : null;
 
+// ---------------------------------------------------------------------------
+// Model resolution — strips internal suffixes before sending to the gateway.
+// ---------------------------------------------------------------------------
+
+function resolveModel(modelId: string) {
+  const gatewayModelId = modelId.replace(/-thinking$/, "");
+  return gateway(gatewayModelId);
+}
+
+// ---------------------------------------------------------------------------
+// Public API — used by route.ts, actions.ts, and artifact handlers.
+// ---------------------------------------------------------------------------
+
 export function getLanguageModel(modelId: string) {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel(modelId);
   }
 
-  const isReasoningModel =
-    modelId.includes("reasoning") || modelId.endsWith("-thinking");
-
-  if (isReasoningModel) {
-    return wrapLanguageModel({
-      model: groq(modelId),
-      middleware: extractReasoningMiddleware({ tagName: "thinking" }),
-    });
-  }
-
-  return groq(modelId);
+  return resolveModel(modelId);
 }
 
 export function getTitleModel() {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("title-model");
   }
-  return groq("openai/gpt-oss-20b");
+  return gateway("anthropic/claude-haiku-4-5");
 }
 
 export function getArtifactModel() {
   if (isTestEnvironment && myProvider) {
     return myProvider.languageModel("artifact-model");
   }
-  return groq("openai/gpt-oss-20b");
+  return gateway("anthropic/claude-haiku-4-5");
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { BookIcon, ChevronDownIcon } from "lucide-react";
+import { ChevronDownIcon, GlobeIcon } from "lucide-react";
 import type { ComponentProps } from "react";
 import {
   Collapsible,
@@ -56,19 +56,32 @@ export const SourcesContent = ({
 
 export type SourceProps = ComponentProps<"a">;
 
-export const Source = ({ href, title, children, ...props }: SourceProps) => (
-  <a
-    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 transition-colors hover:bg-muted/50 hover:underline"
-    href={href}
-    rel="noreferrer"
-    target="_blank"
-    {...props}
-  >
-    {children ?? (
-      <>
-        <BookIcon className="size-4 shrink-0" />
-        <span className="block truncate font-medium">{title}</span>
-      </>
-    )}
-  </a>
-);
+export const Source = ({ href, title, children, ...props }: SourceProps) => {
+  const hostname = href ? new URL(href).hostname : undefined;
+
+  return (
+    <a
+      className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 transition-colors hover:bg-muted/50 hover:underline"
+      href={href}
+      rel="noreferrer"
+      target="_blank"
+      {...props}
+    >
+      {children ?? (
+        <>
+          {hostname ? (
+            // biome-ignore lint/performance/noImgElement: external favicon — Next Image requires remotePatterns config
+            <img
+              alt=""
+              className="size-4 shrink-0 rounded-sm"
+              src={`https://www.google.com/s2/favicons?domain=${hostname}&sz=32`}
+            />
+          ) : (
+            <GlobeIcon className="size-4 shrink-0" />
+          )}
+          <span className="block truncate font-medium">{title}</span>
+        </>
+      )}
+    </a>
+  );
+};

@@ -117,73 +117,76 @@ function ChangePasswordDialog({
       }}
       open={open}
     >
-      <DialogContent className="border-0 sm:max-w-md">
+      <DialogContent className="sm:max-w-sm">
         <DialogHeader>
-          <DialogTitle>Change password</DialogTitle>
+          <DialogTitle className="text-base font-medium">
+            Change password
+          </DialogTitle>
           <DialogDescription>
             Enter your current password and choose a new one.
           </DialogDescription>
         </DialogHeader>
 
-        <form className="mt-2 space-y-4" onSubmit={handleSubmit}>
+        <form className="space-y-6" onSubmit={handleSubmit}>
           <div className="space-y-4">
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="current-password">
-                Current password
-              </label>
-              <Input
-                id="current-password"
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                placeholder="Enter current password"
-                required
-                type="password"
-                value={currentPassword}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="new-password">
-                New password
-              </label>
-              <Input
-                id="new-password"
-                minLength={8}
-                onChange={(e) => setNewPassword(e.target.value)}
-                placeholder="At least 8 characters"
-                required
-                type="password"
-                value={newPassword}
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-sm font-medium" htmlFor="confirm-password">
-                Confirm new password
-              </label>
-              <Input
-                id="confirm-password"
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder="Confirm new password"
-                required
-                type="password"
-                value={confirmPassword}
-              />
-            </div>
+            {error && (
+              <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
+                {error}
+              </div>
+            )}
+            <Input
+              aria-label="Current password"
+              className="h-12 rounded-full px-5 transition-shadow duration-200"
+              disabled={loading}
+              id="current-password"
+              onChange={(e) => setCurrentPassword(e.target.value)}
+              placeholder="Current password"
+              required
+              type="password"
+              value={currentPassword}
+            />
+            <Input
+              aria-label="New password"
+              className="h-12 rounded-full px-5 transition-shadow duration-200"
+              disabled={loading}
+              id="new-password"
+              minLength={8}
+              onChange={(e) => setNewPassword(e.target.value)}
+              placeholder="New password"
+              required
+              type="password"
+              value={newPassword}
+            />
+            <Input
+              aria-label="Confirm new password"
+              className="h-12 rounded-full px-5 transition-shadow duration-200"
+              disabled={loading}
+              id="confirm-password"
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              placeholder="Confirm new password"
+              required
+              type="password"
+              value={confirmPassword}
+            />
           </div>
 
-          {error && <p className="text-sm text-destructive">{error}</p>}
-
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="space-y-3">
             <Button
+              className="h-12 w-full rounded-full bg-foreground text-background hover:bg-foreground/90"
+              disabled={loading}
+              type="submit"
+            >
+              {loading && <Loader2 className="animate-spin" />}
+              Update password
+            </Button>
+            <button
+              className="w-full text-center text-sm text-muted-foreground transition-colors hover:text-foreground"
               disabled={loading}
               onClick={() => onOpenChange(false)}
               type="button"
-              variant="ghost"
             >
               Cancel
-            </Button>
-            <Button disabled={loading} type="submit">
-              {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
-              Update password
-            </Button>
+            </button>
           </div>
         </form>
       </DialogContent>

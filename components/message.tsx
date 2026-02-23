@@ -284,6 +284,23 @@ const PurePreviewMessage = ({
             return null;
           })}
 
+          {sources.length > 0 && (
+            <Sources>
+              <SourcesTrigger count={sources.length} />
+              <SourcesContent>
+                {sources.map((source) => (
+                  <SourceLink
+                    href={source.url}
+                    key={source.sourceId}
+                    title={
+                      source.title ?? new URL(source.url).hostname
+                    }
+                  />
+                ))}
+              </SourcesContent>
+            </Sources>
+          )}
+
           {!isReadonly && (
             <MessageActions
               chatId={chatId}

@@ -1,6 +1,6 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
@@ -16,10 +16,23 @@ import {
   ToolInput,
   ToolOutput,
 } from "./elements/tool";
+import {
+  Source as SourceLink,
+  Sources,
+  SourcesContent,
+  SourcesTrigger,
+} from "./elements/source";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
+
+type WebSource = {
+  type: "source-url";
+  sourceId: string;
+  url: string;
+  title?: string;
+};
 
 const PurePreviewMessage = ({
   addToolApprovalResponse: _addToolApprovalResponse,
@@ -50,6 +63,32 @@ const PurePreviewMessage = ({
 
   useDataStream();
 
+  const { processedParts, sources } = useMemo(() => {
+    const sources: WebSource[] = [];
+    const processed: typeof message.parts = [];
+
+    for (const part of message.parts) {
+      if (part.type === "source-url") {
+        sources.push(part as unknown as WebSource);
+        continue;
+      }
+
+      // Merge adjacent text parts into one (fixes line-break gaps from source interleaving)
+      const prev = processed[processed.length - 1];
+      if (part.type === "text" && prev?.type === "text") {
+        processed[processed.length - 1] = {
+          ...prev,
+          text: prev.text + part.text,
+        };
+        continue;
+      }
+
+      processed.push(part);
+    }
+
+    return { processedParts: processed, sources };
+  }, [message.parts]);
+
   return (
     <div
       className="group/message fade-in w-full animate-in duration-200"
@@ -64,15 +103,17 @@ const PurePreviewMessage = ({
       >
         <div
           className={cn("flex flex-col", {
-            "gap-2 md:gap-4": message.parts?.some(
+            "gap-2 md:gap-4": processedParts?.some(
               (p) => p.type === "text" && p.text?.trim()
             ),
             "w-full":
               (message.role === "assistant" &&
-                (message.parts?.some(
+                (processedParts?.some(
                   (p) => p.type === "text" && p.text?.trim()
                 ) ||
-                  message.parts?.some((p) => p.type.startsWith("tool-")))) ||
+                  processedParts?.some((p) =>
+                    p.type.startsWith("tool-")
+                  ))) ||
               mode === "edit",
             "max-w-[calc(100%-2.5rem)] sm:max-w-[min(fit-content,80%)]":
               message.role === "user" && mode !== "edit",
@@ -96,7 +137,7 @@ const PurePreviewMessage = ({
             </div>
           )}
 
-          {message.parts?.map((part, index) => {
+          {processedParts?.map((part, index) => {
             const { type } = part;
             const key = `message-${message.id}-part-${index}`;
 

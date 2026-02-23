@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { ChevronUp } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { useTheme } from "next-themes";
+import { useState } from "react";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -17,9 +17,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
+import { signOut, useSession } from "@/lib/auth-client";
 import { GradientAvatar } from "./gradient-avatar";
 import { SettingsDialog } from "./settings-dialog";
-import { signOut, useSession } from "@/lib/auth-client";
 
 export function UserMenu() {
   const router = useRouter();
@@ -71,7 +71,11 @@ export function UserMenu() {
                   </>
                 ) : (
                   <>
-                    <GradientAvatar name={user?.name || user?.email || ""} image={user?.image} size="sm" />
+                    <GradientAvatar
+                      image={user?.image}
+                      name={user?.name || user?.email || ""}
+                      size="sm"
+                    />
                     <span className="truncate">
                       {user?.name || user?.email}
                     </span>
@@ -104,8 +108,8 @@ export function UserMenu() {
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 className="cursor-pointer"
-                onClick={handleLogout}
                 disabled={isLoggingOut}
+                onClick={handleLogout}
               >
                 {isLoggingOut ? "Signing out..." : "Sign out"}
               </DropdownMenuItem>
@@ -114,7 +118,7 @@ export function UserMenu() {
         </SidebarMenuItem>
       </SidebarMenu>
 
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <SettingsDialog onOpenChange={setSettingsOpen} open={settingsOpen} />
     </>
   );
 }

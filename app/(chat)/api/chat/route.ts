@@ -9,12 +9,12 @@ import {
 } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
-import { getSession } from "@/lib/auth";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { updateDocument } from "@/lib/ai/tools/update-document";
+import { getSession } from "@/lib/auth";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
@@ -132,11 +132,7 @@ export async function POST(request: Request) {
           stopWhen: stepCountIs(5),
           experimental_activeTools: isReasoningModel
             ? []
-            : [
-                "createDocument",
-                "updateDocument",
-                "requestSuggestions",
-              ],
+            : ["createDocument", "updateDocument", "requestSuggestions"],
           providerOptions: isReasoningModel
             ? {
                 anthropic: {

@@ -1,12 +1,12 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { emailOTP } from "better-auth/plugins";
 import { nextCookies } from "better-auth/next-js";
+import { emailOTP } from "better-auth/plugins";
 import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
 import { headers } from "next/headers";
+import postgres from "postgres";
+import { account, session, user, verification } from "./db/schema";
 import { sendOTPEmail } from "./email";
-import { user, session, account, verification } from "./db/schema";
 
 // biome-ignore lint: Forbidden non-null assertion.
 const client = postgres(process.env.POSTGRES_URL!);

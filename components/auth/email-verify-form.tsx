@@ -1,44 +1,51 @@
 "use client";
 
-import * as React from "react";
-import { useRouter } from "next/navigation";
 import { Loader2, Mail } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useEffect, useState } from "react";
 import { toast } from "sonner";
-
-import { authClient, useSession } from "@/lib/auth-client";
-import { Button } from "@/components/ui/button";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { TypewriterText } from "@/components/typewriter-text";
+import { Button } from "@/components/ui/button";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
+import { authClient, useSession } from "@/lib/auth-client";
 
 export function EmailVerifyForm() {
   const router = useRouter();
   const { data: session } = useSession();
-  const [code, setCode] = React.useState("");
-  const [error, setError] = React.useState<string | null>(null);
-  const [success, setSuccess] = React.useState<string | null>(null);
-  const [isLoading, setIsLoading] = React.useState(false);
-  const [isResending, setIsResending] = React.useState(false);
-  const [needsResend, setNeedsResend] = React.useState(false);
+  const [code, setCode] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isResending, setIsResending] = useState(false);
+  const [needsResend, setNeedsResend] = useState(false);
 
-  React.useEffect(() => {
-    const isReturningUser = sessionStorage.getItem("knowsee_otp_sent") !== "true";
+  useEffect(() => {
+    const isReturningUser =
+      sessionStorage.getItem("knowsee_otp_sent") !== "true";
     if (isReturningUser && session?.user?.email) {
       setNeedsResend(true);
     }
   }, [session?.user?.email]);
 
   const handleResendOTP = async () => {
-    if (!session?.user?.email) return;
+    if (!session?.user?.email) {
+      return;
+    }
 
     setIsResending(true);
     setError(null);
     setSuccess(null);
 
     try {
-      const { error: sendError } = await authClient.emailOtp.sendVerificationOtp({
-        email: session.user.email,
-        type: "email-verification",
-      });
+      const { error: sendError } =
+        await authClient.emailOtp.sendVerificationOtp({
+          email: session.user.email,
+          type: "email-verification",
+        });
 
       if (sendError) {
         setError(sendError.message || "Failed to send verification code");
@@ -54,7 +61,7 @@ export function EmailVerifyForm() {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
     setSuccess(null);
@@ -101,9 +108,9 @@ export function EmailVerifyForm() {
 
   // Auto-submit when 6 digits are entered
   // biome-ignore lint/correctness/useExhaustiveDependencies: intentional
-  React.useEffect(() => {
+  useEffect(() => {
     if (code.length === 6 && !isLoading && !needsResend) {
-      handleSubmit(new Event("submit") as unknown as React.FormEvent);
+      handleSubmit(new Event("submit") as unknown as FormEvent);
     }
   }, [code]);
 
@@ -113,7 +120,11 @@ export function EmailVerifyForm() {
     <div className="w-full max-w-sm">
       <div className="mb-6">
         <h1 className="font-serif text-3xl text-foreground">
-          <TypewriterText text={"Knowsee.\nVerify your email"} speed={40} startDelay={200} />
+          <TypewriterText
+            speed={40}
+            startDelay={200}
+            text={"Knowsee.\nVerify your email"}
+          />
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
           {needsResend
@@ -122,7 +133,7 @@ export function EmailVerifyForm() {
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-6">
+      <form className="space-y-6" onSubmit={handleSubmit}>
         <div className="space-y-4">
           {error && (
             <div className="rounded-md bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -146,10 +157,10 @@ export function EmailVerifyForm() {
                 Request a new one to continue.
               </p>
               <Button
-                type="button"
-                onClick={handleResendOTP}
-                disabled={isResending}
                 className="h-12 w-full rounded-full bg-foreground text-background hover:bg-foreground/90"
+                disabled={isResending}
+                onClick={handleResendOTP}
+                type="button"
               >
                 {isResending && <Loader2 className="animate-spin" />}
                 Send verification code
@@ -158,7 +169,12 @@ export function EmailVerifyForm() {
           ) : (
             <>
               <div className="flex justify-center">
-                <InputOTP maxLength={6} value={code} onChange={setCode} disabled={isLoading}>
+                <InputOTP
+                  disabled={isLoading}
+                  maxLength={6}
+                  onChange={setCode}
+                  value={code}
+                >
                   <InputOTPGroup>
                     <InputOTPSlot index={0} />
                     <InputOTPSlot index={1} />
@@ -171,9 +187,9 @@ export function EmailVerifyForm() {
               </div>
 
               <Button
-                type="submit"
                 className="h-12 w-full rounded-full bg-foreground text-background hover:bg-foreground/90"
                 disabled={isLoading}
+                type="submit"
               >
                 {isLoading && <Loader2 className="animate-spin" />}
                 Verify email
@@ -181,12 +197,14 @@ export function EmailVerifyForm() {
 
               <div className="text-center">
                 <button
-                  type="button"
-                  onClick={handleResendOTP}
-                  disabled={isResending}
                   className="text-sm text-muted-foreground hover:text-foreground hover:underline disabled:opacity-50"
+                  disabled={isResending}
+                  onClick={handleResendOTP}
+                  type="button"
                 >
-                  {isResending ? "Sending..." : "Didn't receive the code? Resend"}
+                  {isResending
+                    ? "Sending..."
+                    : "Didn't receive the code? Resend"}
                 </button>
               </div>
             </>

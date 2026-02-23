@@ -2,17 +2,16 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import type { User } from "@/lib/auth";
 import { useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { PlusIcon, TrashIcon } from "@/components/icons";
+import { UserMenu } from "@/components/settings";
 import {
   getChatHistoryPaginationKey,
   SidebarHistory,
 } from "@/components/sidebar-history";
-import { UserMenu } from "@/components/settings";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -22,6 +21,7 @@ import {
   SidebarMenu,
   useSidebar,
 } from "@/components/ui/sidebar";
+import type { User } from "@/lib/auth";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -73,7 +73,9 @@ export function AppSidebar({ user }: { user: User | undefined }) {
               >
                 <span className="cursor-pointer rounded-md px-2 text-2xl font-serif hover:bg-muted">
                   <span className="font-normal">Know</span>
-                  <span className="-ml-0.5 font-light italic opacity-70">see.</span>
+                  <span className="-ml-0.5 font-light italic opacity-70">
+                    see.
+                  </span>
                 </span>
               </Link>
               <div className="flex flex-row gap-1">

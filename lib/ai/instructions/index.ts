@@ -12,7 +12,7 @@ import type { ArtifactKind } from "@/components/artifact";
 function loadInstruction(filename: string): string {
   return readFileSync(
     join(process.cwd(), "lib", "ai", "instructions", filename),
-    "utf-8",
+    "utf-8"
   ).trim();
 }
 
@@ -22,12 +22,11 @@ function loadInstruction(filename: string): string {
 
 function injectContext(
   template: string,
-  vars: Record<string, string | undefined>,
+  vars: Record<string, string | undefined>
 ): string {
   return Object.entries(vars).reduce(
-    (result, [key, value]) =>
-      result.replaceAll(`{{${key}}}`, value ?? ""),
-    template,
+    (result, [key, value]) => result.replaceAll(`{{${key}}}`, value ?? ""),
+    template
   );
 }
 
@@ -115,7 +114,7 @@ export const systemPrompt = ({
 
 export const updateDocumentPrompt = (
   currentContent: string | null,
-  type: ArtifactKind,
+  type: ArtifactKind
 ) => {
   let mediaType = "document";
 

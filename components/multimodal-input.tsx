@@ -399,7 +399,10 @@ function PureMultimodalInput({
               disabled={!input.trim() || uploadQueue.length > 0}
               status={status}
             >
-              <ArrowUpIcon size={14} className="transition-transform duration-200 group-hover:-translate-y-0.5" />
+              <ArrowUpIcon
+                className="transition-transform duration-200 group-hover:-translate-y-0.5"
+                size={14}
+              />
             </PromptInputSubmit>
           )}
         </PromptInputToolbar>

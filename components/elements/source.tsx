@@ -58,7 +58,7 @@ export type SourceProps = ComponentProps<"a">;
 
 export const Source = ({ href, title, children, ...props }: SourceProps) => (
   <a
-    className="flex items-center gap-2"
+    className="flex cursor-pointer items-center gap-2 rounded-md px-2 py-1 transition-colors hover:bg-muted/50 hover:underline"
     href={href}
     rel="noreferrer"
     target="_blank"
@@ -66,8 +66,8 @@ export const Source = ({ href, title, children, ...props }: SourceProps) => (
   >
     {children ?? (
       <>
-        <BookIcon className="size-4" />
-        <span className="block font-medium">{title}</span>
+        <BookIcon className="size-4 shrink-0" />
+        <span className="block truncate font-medium">{title}</span>
       </>
     )}
   </a>

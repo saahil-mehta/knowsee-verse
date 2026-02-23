@@ -119,10 +119,6 @@ export async function POST(request: Request) {
       });
     }
 
-    const isReasoningModel =
-      selectedChatModel.includes("reasoning") ||
-      selectedChatModel.includes("thinking");
-
     const modelMessages = await convertToModelMessages(uiMessages);
 
     const stream = createUIMessageStream({
@@ -133,22 +129,13 @@ export async function POST(request: Request) {
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages: modelMessages,
           stopWhen: stepCountIs(8),
-          experimental_activeTools: isReasoningModel
-            ? []
-            : [
-                "createDocument",
-                "updateDocument",
-                "requestSuggestions",
-                "web_search",
-                "web_fetch",
-              ],
-          providerOptions: isReasoningModel
-            ? {
-                anthropic: {
-                  thinking: { type: "enabled", budgetTokens: 10_000 },
-                },
-              }
-            : undefined,
+          experimental_activeTools: [
+            "createDocument",
+            "updateDocument",
+            "requestSuggestions",
+            "web_search",
+            "web_fetch",
+          ],
           tools: {
             ...serverTools,
             createDocument: createDocument({ session, dataStream }),

@@ -30,8 +30,7 @@ export const myProvider = isTestEnvironment
 // ---------------------------------------------------------------------------
 
 function resolveModel(modelId: string) {
-  const gatewayModelId = modelId.replace(/-thinking$/, "");
-  return gateway(gatewayModelId);
+  return gateway(modelId);
 }
 
 // ---------------------------------------------------------------------------

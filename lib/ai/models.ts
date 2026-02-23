@@ -15,12 +15,6 @@ export const chatModels: ChatModel[] = [
     description: "Balanced quality, speed, and cost",
   },
   {
-    id: "anthropic/claude-sonnet-4-6-thinking",
-    name: "Claude Sonnet 4.6 Thinking",
-    provider: "anthropic",
-    description: "Extended thinking for complex reasoning",
-  },
-  {
     id: "anthropic/claude-haiku-4-5",
     name: "Claude Haiku 4.5",
     provider: "anthropic",

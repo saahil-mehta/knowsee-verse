@@ -13,7 +13,11 @@ type DynamicToolState =
   | "input-streaming"
   | "input-available"
   | "output-streaming"
-  | "output-available";
+  | "output-available"
+  | "approval-requested"
+  | "approval-responded"
+  | "output-error"
+  | "output-denied";
 
 export type WebSearchOutput = Array<{
   type: "web_search_result";

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface UseTypewriterOptions {
   text: string;
@@ -24,16 +24,14 @@ export function useTypewriter({
   showCursor = true,
   cursorChar = "|",
 }: UseTypewriterOptions): UseTypewriterResult {
-  const [displayedText, setDisplayedText] = useState("");
+  const [charIndex, setCharIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
-  const indexRef = useRef(0);
 
   useEffect(() => {
-    setDisplayedText("");
+    setCharIndex(0);
     setIsComplete(false);
     setIsTyping(false);
-    indexRef.current = 0;
 
     const startTimer = setTimeout(() => {
       setIsTyping(true);
@@ -47,19 +45,19 @@ export function useTypewriter({
       return;
     }
 
-    const typeNext = () => {
-      if (indexRef.current < text.length) {
-        setDisplayedText(text.slice(0, indexRef.current + 1));
-        indexRef.current += 1;
+    const timer = setTimeout(() => {
+      if (charIndex < text.length) {
+        setCharIndex(charIndex + 1);
       } else {
         setIsComplete(true);
         setIsTyping(false);
       }
-    };
+    }, speed);
 
-    const timer = setTimeout(typeNext, speed);
     return () => clearTimeout(timer);
-  }, [text, speed, isTyping, isComplete, displayedText]);
+  }, [text, speed, isTyping, isComplete, charIndex]);
+
+  const displayedText = text.slice(0, charIndex);
 
   return {
     displayedText,

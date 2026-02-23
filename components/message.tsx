@@ -84,15 +84,23 @@ const PurePreviewMessage = ({
       processed.push(part);
     }
 
+    const renderedToolTypes = new Set([
+      "tool-createDocument",
+      "tool-updateDocument",
+      "tool-requestSuggestions",
+    ]);
+
     const hasVisibleContent = processed.some((part) => {
-      if (part.type === "text") return !!part.text?.trim();
+      if (part.type === "text") {
+        return !!part.text?.trim();
+      }
       if (part.type === "reasoning") {
         return (
           (part.text?.trim().length ?? 0) > 0 ||
           ("state" in part && part.state === "streaming")
         );
       }
-      return part.type.startsWith("tool-");
+      return renderedToolTypes.has(part.type);
     });
 
     return { processedParts: processed, sources, hasVisibleContent };
@@ -291,24 +299,20 @@ const PurePreviewMessage = ({
             return null;
           })}
 
-          {isLoading &&
-            message.role === "assistant" &&
-            !hasVisibleContent && (
-              <div className="flex items-center gap-1 text-muted-foreground text-sm">
-                <span className="animate-pulse">Thinking</span>
-                <span className="inline-flex">
-                  <span className="animate-bounce [animation-delay:0ms]">
-                    .
-                  </span>
-                  <span className="animate-bounce [animation-delay:150ms]">
-                    .
-                  </span>
-                  <span className="animate-bounce [animation-delay:300ms]">
-                    .
-                  </span>
+          {isLoading && message.role === "assistant" && !hasVisibleContent && (
+            <div className="flex items-center gap-1 text-muted-foreground text-sm">
+              <span className="animate-pulse">Thinking</span>
+              <span className="inline-flex">
+                <span className="animate-bounce [animation-delay:0ms]">.</span>
+                <span className="animate-bounce [animation-delay:150ms]">
+                  .
                 </span>
-              </div>
-            )}
+                <span className="animate-bounce [animation-delay:300ms]">
+                  .
+                </span>
+              </span>
+            </div>
+          )}
 
           {sources.length > 0 && (
             <Sources>

@@ -10,18 +10,18 @@ import { DocumentPreview } from "./document-preview";
 import { MessageContent } from "./elements/message";
 import { Response } from "./elements/response";
 import {
+  Source as SourceLink,
+  Sources,
+  SourcesContent,
+  SourcesTrigger,
+} from "./elements/source";
+import {
   Tool,
   ToolContent,
   ToolHeader,
   ToolInput,
   ToolOutput,
 } from "./elements/tool";
-import {
-  Source as SourceLink,
-  Sources,
-  SourcesContent,
-  SourcesTrigger,
-} from "./elements/source";
 import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
@@ -63,7 +63,7 @@ const PurePreviewMessage = ({
 
   useDataStream();
 
-  const { processedParts, sources } = useMemo(() => {
+  const { processedParts, sources, hasVisibleContent } = useMemo(() => {
     const sources: WebSource[] = [];
     const processed: typeof message.parts = [];
 
@@ -74,19 +74,28 @@ const PurePreviewMessage = ({
       }
 
       // Merge adjacent text parts into one (fixes line-break gaps from source interleaving)
-      const prev = processed[processed.length - 1];
+      const lastIdx = processed.length - 1;
+      const prev = processed.at(-1);
       if (part.type === "text" && prev?.type === "text") {
-        processed[processed.length - 1] = {
-          ...prev,
-          text: prev.text + part.text,
-        };
+        processed[lastIdx] = { ...prev, text: prev.text + part.text };
         continue;
       }
 
       processed.push(part);
     }
 
-    return { processedParts: processed, sources };
+    const hasVisibleContent = processed.some((part) => {
+      if (part.type === "text") return !!part.text?.trim();
+      if (part.type === "reasoning") {
+        return (
+          (part.text?.trim().length ?? 0) > 0 ||
+          ("state" in part && part.state === "streaming")
+        );
+      }
+      return part.type.startsWith("tool-");
+    });
+
+    return { processedParts: processed, sources, hasVisibleContent };
   }, [message.parts]);
 
   return (
@@ -111,9 +120,7 @@ const PurePreviewMessage = ({
                 (processedParts?.some(
                   (p) => p.type === "text" && p.text?.trim()
                 ) ||
-                  processedParts?.some((p) =>
-                    p.type.startsWith("tool-")
-                  ))) ||
+                  processedParts?.some((p) => p.type.startsWith("tool-")))) ||
               mode === "edit",
             "max-w-[calc(100%-2.5rem)] sm:max-w-[min(fit-content,80%)]":
               message.role === "user" && mode !== "edit",
@@ -284,6 +291,25 @@ const PurePreviewMessage = ({
             return null;
           })}
 
+          {isLoading &&
+            message.role === "assistant" &&
+            !hasVisibleContent && (
+              <div className="flex items-center gap-1 text-muted-foreground text-sm">
+                <span className="animate-pulse">Thinking</span>
+                <span className="inline-flex">
+                  <span className="animate-bounce [animation-delay:0ms]">
+                    .
+                  </span>
+                  <span className="animate-bounce [animation-delay:150ms]">
+                    .
+                  </span>
+                  <span className="animate-bounce [animation-delay:300ms]">
+                    .
+                  </span>
+                </span>
+              </div>
+            )}
+
           {sources.length > 0 && (
             <Sources>
               <SourcesTrigger count={sources.length} />
@@ -292,9 +318,7 @@ const PurePreviewMessage = ({
                   <SourceLink
                     href={source.url}
                     key={source.sourceId}
-                    title={
-                      source.title ?? new URL(source.url).hostname
-                    }
+                    title={source.title ?? new URL(source.url).hostname}
                   />
                 ))}
               </SourcesContent>

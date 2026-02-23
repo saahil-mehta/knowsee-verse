@@ -108,9 +108,6 @@ const PurePreviewMessage = ({
           ("state" in part && part.state === "streaming")
         );
       }
-      if (part.type === "dynamic-tool") {
-        return true;
-      }
       return renderedToolTypes.has(part.type);
     });
 
@@ -307,59 +304,55 @@ const PurePreviewMessage = ({
               );
             }
 
-            if (type === "dynamic-tool") {
-              if (part.toolName === "web_search") {
-                const query =
-                  part.state !== "input-streaming"
-                    ? (part.input as { query: string })?.query
-                    : undefined;
-                const results =
-                  part.state === "output-available"
-                    ? (part.output as WebSearchOutput)
-                    : undefined;
+            if (type === "tool-web_search") {
+              const query =
+                part.state !== "input-streaming"
+                  ? (part.input as { query: string })?.query
+                  : undefined;
+              const results =
+                part.state === "output-available"
+                  ? (part.output as WebSearchOutput)
+                  : undefined;
 
-                return (
-                  <WebSearchCard key={key}>
-                    <WebSearchHeader
-                      query={query}
-                      resultCount={results?.length}
-                      state={part.state}
-                    />
-                    {results && results.length > 0 && (
-                      <WebSearchResults>
-                        {results.map((result) => {
-                          let title = result.title;
-                          if (!title) {
-                            try {
-                              title = new URL(result.url).hostname;
-                            } catch {
-                              title = result.url;
-                            }
+              return (
+                <WebSearchCard key={key}>
+                  <WebSearchHeader
+                    query={query}
+                    resultCount={results?.length}
+                    state={part.state}
+                  />
+                  {results && results.length > 0 && (
+                    <WebSearchResults>
+                      {results.map((result) => {
+                        let title = result.title;
+                        if (!title) {
+                          try {
+                            title = new URL(result.url).hostname;
+                          } catch {
+                            title = result.url;
                           }
-                          return (
-                            <WebSearchResult
-                              href={result.url}
-                              key={result.url}
-                              title={title}
-                            />
-                          );
-                        })}
-                      </WebSearchResults>
-                    )}
-                  </WebSearchCard>
-                );
-              }
+                        }
+                        return (
+                          <WebSearchResult
+                            href={result.url}
+                            key={result.url}
+                            title={title}
+                          />
+                        );
+                      })}
+                    </WebSearchResults>
+                  )}
+                </WebSearchCard>
+              );
+            }
 
-              if (part.toolName === "web_fetch") {
-                const url =
-                  part.state !== "input-streaming"
-                    ? (part.input as { url: string })?.url
-                    : undefined;
+            if (type === "tool-web_fetch") {
+              const url =
+                part.state !== "input-streaming"
+                  ? (part.input as { url: string })?.url
+                  : undefined;
 
-                return <WebFetchCard key={key} state={part.state} url={url} />;
-              }
-
-              return null;
+              return <WebFetchCard key={key} state={part.state} url={url} />;
             }
 
             return null;

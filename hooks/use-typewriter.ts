@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
 interface UseTypewriterOptions {
   text: string;
@@ -40,10 +40,12 @@ export function useTypewriter({
     }, startDelay);
 
     return () => clearTimeout(startTimer);
-  }, [text, startDelay]);
+  }, [startDelay]);
 
   useEffect(() => {
-    if (!isTyping || isComplete) return;
+    if (!isTyping || isComplete) {
+      return;
+    }
 
     const typeNext = () => {
       if (indexRef.current < text.length) {

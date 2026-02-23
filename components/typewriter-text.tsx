@@ -34,7 +34,9 @@ function renderWithBranding(text: string): React.ReactNode {
           {before}
           {knowVisible && <span className="font-normal">{knowVisible}</span>}
           {seeVisible && (
-            <span className="-ml-0.5 font-light italic opacity-70">{seeVisible}</span>
+            <span className="-ml-0.5 font-light italic opacity-70">
+              {seeVisible}
+            </span>
           )}
           {after}
         </>
@@ -42,7 +44,7 @@ function renderWithBranding(text: string): React.ReactNode {
     }
 
     return (
-      <span key={lineIndex}>
+      <span key={`${lineIndex}-${line}`}>
         {lineIndex > 0 && <br />}
         {content}
       </span>
@@ -67,7 +69,9 @@ export function TypewriterText({
   return (
     <span className={cn("inline", className)}>
       {renderWithBranding(displayedText)}
-      {cursor && <span className="animate-blink ml-0.5 inline-block">{cursor}</span>}
+      {cursor && (
+        <span className="animate-blink ml-0.5 inline-block">{cursor}</span>
+      )}
     </span>
   );
 }

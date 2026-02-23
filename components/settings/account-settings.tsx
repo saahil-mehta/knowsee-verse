@@ -1,18 +1,18 @@
 "use client";
 
+import { BadgeCheck, Loader2 } from "lucide-react";
 import { useState } from "react";
-import { Loader2, BadgeCheck } from "lucide-react";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
 } from "@/components/ui/dialog";
-import { GradientAvatar } from "./gradient-avatar";
+import { Input } from "@/components/ui/input";
 import { authClient, useSession } from "@/lib/auth-client";
+import { GradientAvatar } from "./gradient-avatar";
 
 function SettingsRow({
   label,
@@ -27,18 +27,27 @@ function SettingsRow({
     <div className="flex items-center justify-between gap-6 py-4">
       <div className="min-w-0 flex-1">
         <p className="text-sm font-medium text-foreground">{label}</p>
-        {description && <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>}
+        {description && (
+          <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+        )}
       </div>
       <div className="shrink-0">{children}</div>
     </div>
   );
 }
 
-function PillButton({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+function PillButton({
+  children,
+  onClick,
+}: {
+  children: React.ReactNode;
+  onClick: () => void;
+}) {
   return (
     <button
-      onClick={onClick}
       className="rounded-full border border-border/50 bg-accent/60 px-5 py-2 text-sm font-medium text-muted-foreground transition-all duration-150 hover:bg-accent hover:text-foreground"
+      onClick={onClick}
+      type="button"
     >
       {children}
     </button>
@@ -90,7 +99,9 @@ function ChangePasswordDialog({
       resetForm();
       onOpenChange(false);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to change password");
+      setError(
+        err instanceof Error ? err.message : "Failed to change password"
+      );
     } finally {
       setLoading(false);
     }
@@ -98,49 +109,62 @@ function ChangePasswordDialog({
 
   return (
     <Dialog
-      open={open}
       onOpenChange={(isOpen) => {
-        if (!isOpen) resetForm();
+        if (!isOpen) {
+          resetForm();
+        }
         onOpenChange(isOpen);
       }}
+      open={open}
     >
       <DialogContent className="border-0 sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Change password</DialogTitle>
-          <DialogDescription>Enter your current password and choose a new one.</DialogDescription>
+          <DialogDescription>
+            Enter your current password and choose a new one.
+          </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="mt-2 space-y-4">
+        <form className="mt-2 space-y-4" onSubmit={handleSubmit}>
           <div className="space-y-4">
             <div className="space-y-2">
-              <label className="text-sm font-medium">Current password</label>
+              <label className="text-sm font-medium" htmlFor="current-password">
+                Current password
+              </label>
               <Input
+                id="current-password"
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                placeholder="Enter current password"
+                required
                 type="password"
                 value={currentPassword}
-                onChange={(e) => setCurrentPassword(e.target.value)}
-                required
-                placeholder="Enter current password"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">New password</label>
+              <label className="text-sm font-medium" htmlFor="new-password">
+                New password
+              </label>
               <Input
+                id="new-password"
+                minLength={8}
+                onChange={(e) => setNewPassword(e.target.value)}
+                placeholder="At least 8 characters"
+                required
                 type="password"
                 value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                required
-                minLength={8}
-                placeholder="At least 8 characters"
               />
             </div>
             <div className="space-y-2">
-              <label className="text-sm font-medium">Confirm new password</label>
+              <label className="text-sm font-medium" htmlFor="confirm-password">
+                Confirm new password
+              </label>
               <Input
+                id="confirm-password"
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="Confirm new password"
+                required
                 type="password"
                 value={confirmPassword}
-                onChange={(e) => setConfirmPassword(e.target.value)}
-                required
-                placeholder="Confirm new password"
               />
             </div>
           </div>
@@ -149,14 +173,14 @@ function ChangePasswordDialog({
 
           <div className="flex justify-end gap-3 pt-2">
             <Button
+              disabled={loading}
+              onClick={() => onOpenChange(false)}
               type="button"
               variant="ghost"
-              onClick={() => onOpenChange(false)}
-              disabled={loading}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={loading}>
+            <Button disabled={loading} type="submit">
               {loading && <Loader2 className="mr-2 size-4 animate-spin" />}
               Update password
             </Button>
@@ -189,28 +213,32 @@ export function AccountSettings() {
       setProfileSuccess(true);
       setTimeout(() => setProfileSuccess(false), 3000);
     } catch (err) {
-      setProfileError(err instanceof Error ? err.message : "Failed to update profile");
+      setProfileError(
+        err instanceof Error ? err.message : "Failed to update profile"
+      );
     } finally {
       setProfileLoading(false);
     }
   };
 
-  const handleImageChange = async (file: File) => {
+  const handleImageChange = (file: File) => {
     console.log("Image upload not yet implemented:", file.name);
   };
 
-  if (!user) return null;
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="space-y-0">
       {/* Profile Header */}
       <div className="flex flex-col items-center py-6">
         <GradientAvatar
-          name={user.name || user.email}
-          image={user.image}
-          size="lg"
           editable
+          image={user.image}
+          name={user.name || user.email}
           onImageChange={handleImageChange}
+          size="lg"
         />
         <div className="mt-3 text-center">
           <p className="text-lg font-medium">{user.name || "User"}</p>
@@ -221,19 +249,22 @@ export function AccountSettings() {
       <div className="border-b border-border/40" />
 
       {/* Display Name */}
-      <SettingsRow label="Display name" description="Knowsee will know you by this name">
+      <SettingsRow
+        description="Knowsee will know you by this name"
+        label="Display name"
+      >
         <div className="flex items-center">
           <Input
-            value={name}
+            className="h-9 w-44 rounded-r-none border-r-0 text-sm focus-visible:z-10"
             onChange={(e) => setName(e.target.value)}
             placeholder="Your name"
-            className="h-9 w-44 rounded-r-none border-r-0 text-sm focus-visible:z-10"
+            value={name}
           />
           <Button
-            size="sm"
-            onClick={handleProfileSubmit}
-            disabled={profileLoading || name === user.name}
             className="h-9 rounded-l-none px-4"
+            disabled={profileLoading || name === user.name}
+            onClick={handleProfileSubmit}
+            size="sm"
           >
             {profileLoading ? (
               <Loader2 className="size-4 animate-spin" />
@@ -245,12 +276,17 @@ export function AccountSettings() {
           </Button>
         </div>
       </SettingsRow>
-      {profileError && <p className="-mt-3 pb-2 text-sm text-destructive">{profileError}</p>}
+      {profileError && (
+        <p className="-mt-3 pb-2 text-sm text-destructive">{profileError}</p>
+      )}
 
       <div className="border-b border-border/40" />
 
       {/* Email */}
-      <SettingsRow label="Email" description="Your account identifier. Cannot be changed.">
+      <SettingsRow
+        description="Your account identifier. Cannot be changed."
+        label="Email"
+      >
         <div className="text-right">
           <p className="text-sm text-muted-foreground">{user.email}</p>
           {user.emailVerified && (
@@ -265,11 +301,16 @@ export function AccountSettings() {
       <div className="border-b border-border/40" />
 
       {/* Password */}
-      <SettingsRow label="Password" description="Secure your account">
-        <PillButton onClick={() => setPasswordDialogOpen(true)}>Manage</PillButton>
+      <SettingsRow description="Secure your account" label="Password">
+        <PillButton onClick={() => setPasswordDialogOpen(true)}>
+          Manage
+        </PillButton>
       </SettingsRow>
 
-      <ChangePasswordDialog open={passwordDialogOpen} onOpenChange={setPasswordDialogOpen} />
+      <ChangePasswordDialog
+        onOpenChange={setPasswordDialogOpen}
+        open={passwordDialogOpen}
+      />
     </div>
   );
 }

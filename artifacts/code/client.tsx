@@ -19,9 +19,11 @@ import { generateUUID } from "@/lib/utils";
 const PYODIDE_VERSION = "0.27.5";
 const PYODIDE_CDN = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full`;
 
-async function ensurePyodideLoaded(): Promise<void> {
+function ensurePyodideLoaded(): Promise<void> {
   // @ts-expect-error - loadPyodide is loaded dynamically via CDN script
-  if (typeof globalThis.loadPyodide === "function") return;
+  if (typeof globalThis.loadPyodide === "function") {
+    return Promise.resolve();
+  }
 
   return new Promise((resolve, reject) => {
     const script = document.createElement("script");

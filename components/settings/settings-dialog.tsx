@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
 import { UserIcon, XIcon } from "lucide-react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
@@ -16,22 +15,19 @@ const tabs = [{ id: "account" as const, label: "Account", icon: UserIcon }];
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const activeTab = "account";
 
-  useEffect(() => {
-    // Reset state when dialog opens (future-proofs for when more tabs are added)
-  }, [open]);
-
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog onOpenChange={onOpenChange} open={open}>
       <DialogContent
         className="h-[80vh] max-h-[600px] max-w-3xl gap-0 overflow-hidden border border-sidebar-border bg-sidebar p-0"
-        showCloseButton={false}
         onOpenAutoFocus={(e) => e.preventDefault()}
+        showCloseButton={false}
       >
         <DialogTitle className="sr-only">Settings</DialogTitle>
 
         <button
-          onClick={() => onOpenChange(false)}
           className="absolute top-4 left-4 z-10 rounded-sm p-1 opacity-70 ring-offset-background transition-opacity hover:opacity-100 focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:outline-none"
+          onClick={() => onOpenChange(false)}
+          type="button"
         >
           <XIcon className="size-5" />
           <span className="sr-only">Close</span>
@@ -51,8 +47,9 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                         "flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-sm transition-all duration-150 ease-out",
                         isActive
                           ? "bg-accent font-medium text-foreground"
-                          : "text-muted-foreground hover:bg-accent/50 hover:text-foreground",
+                          : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                       )}
+                      type="button"
                     >
                       <Icon className="size-4" />
                       {tab.label}

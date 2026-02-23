@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { cn } from "@/lib/utils";
 import { CameraIcon } from "lucide-react";
+import Image from "next/image";
+import { useRef, useState } from "react";
+import { cn } from "@/lib/utils";
 
 interface GradientAvatarProps {
   name: string;
@@ -69,21 +70,29 @@ export function GradientAvatar({
   };
 
   return (
-    <div
+    <button
       className={cn(
-        "relative flex items-center justify-center rounded-full font-medium text-white select-none",
+        "relative flex items-center justify-center rounded-full border-0 bg-transparent p-0 font-medium text-white select-none",
         sizeClasses[size],
-        editable && "cursor-pointer",
+        editable && "cursor-pointer"
       )}
-      style={{
-        background: image ? undefined : generateGradient(name),
-      }}
       onClick={handleClick}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      style={{
+        background: image ? undefined : generateGradient(name),
+      }}
+      tabIndex={editable ? 0 : -1}
+      type="button"
     >
       {image ? (
-        <img src={image} alt={name} className="size-full rounded-full object-cover" />
+        <Image
+          alt={name}
+          className="size-full rounded-full object-cover"
+          height={80}
+          src={image}
+          width={80}
+        />
       ) : (
         <span>{getInitials(name)}</span>
       )}
@@ -96,13 +105,13 @@ export function GradientAvatar({
 
       {editable && (
         <input
-          ref={fileInputRef}
-          type="file"
           accept="image/*"
           className="hidden"
           onChange={handleFileChange}
+          ref={fileInputRef}
+          type="file"
         />
       )}
-    </div>
+    </button>
   );
 }

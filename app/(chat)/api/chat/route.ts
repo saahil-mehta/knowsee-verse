@@ -161,7 +161,9 @@ export async function POST(request: Request) {
           },
         });
 
-        dataStream.merge(result.toUIMessageStream({ sendReasoning: true }));
+        dataStream.merge(
+          result.toUIMessageStream({ sendReasoning: true, sendSources: true })
+        );
 
         if (titlePromise) {
           const title = await titlePromise;

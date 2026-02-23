@@ -52,10 +52,16 @@ export default defineConfig({
   /* Configure projects */
   projects: [
     {
+      name: "setup",
+      testMatch: /auth\.setup\.ts/,
+    },
+    {
       name: "e2e",
       testMatch: /e2e\/.*.test.ts/,
+      dependencies: ["setup"],
       use: {
         ...devices["Desktop Chrome"],
+        storageState: "tests/.auth/user.json",
       },
     },
 

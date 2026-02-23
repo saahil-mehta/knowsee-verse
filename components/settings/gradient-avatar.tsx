@@ -69,22 +69,21 @@ export function GradientAvatar({
     }
   };
 
-  return (
-    <button
-      className={cn(
-        "relative flex items-center justify-center rounded-full border-0 bg-transparent p-0 font-medium text-white select-none",
-        sizeClasses[size],
-        editable && "cursor-pointer"
-      )}
-      onClick={handleClick}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        background: image ? undefined : generateGradient(name),
-      }}
-      tabIndex={editable ? 0 : -1}
-      type="button"
-    >
+  const sharedProps = {
+    className: cn(
+      "relative flex items-center justify-center rounded-full border-0 bg-transparent p-0 font-medium text-white select-none",
+      sizeClasses[size],
+      editable && "cursor-pointer"
+    ),
+    onMouseEnter: () => setIsHovered(true),
+    onMouseLeave: () => setIsHovered(false),
+    style: {
+      background: image ? undefined : generateGradient(name),
+    },
+  };
+
+  const children = (
+    <>
       {image ? (
         <Image
           alt={name}
@@ -112,6 +111,16 @@ export function GradientAvatar({
           type="file"
         />
       )}
-    </button>
+    </>
   );
+
+  if (editable) {
+    return (
+      <button {...sharedProps} onClick={handleClick} type="button">
+        {children}
+      </button>
+    );
+  }
+
+  return <div {...sharedProps}>{children}</div>;
 }

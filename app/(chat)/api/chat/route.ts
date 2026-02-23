@@ -13,6 +13,7 @@ import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
+import { createServerTools } from "@/lib/ai/tools/server-tools";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { getSession } from "@/lib/auth";
 import { isProductionEnvironment } from "@/lib/constants";
@@ -101,6 +102,8 @@ export async function POST(request: Request) {
       country,
     };
 
+    const serverTools = createServerTools(requestHints);
+
     if (message?.role === "user") {
       await saveMessages({
         messages: [
@@ -129,10 +132,16 @@ export async function POST(request: Request) {
           model: getLanguageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
           messages: modelMessages,
-          stopWhen: stepCountIs(5),
+          stopWhen: stepCountIs(8),
           experimental_activeTools: isReasoningModel
             ? []
-            : ["createDocument", "updateDocument", "requestSuggestions"],
+            : [
+                "createDocument",
+                "updateDocument",
+                "requestSuggestions",
+                "web_search",
+                "web_fetch",
+              ],
           providerOptions: isReasoningModel
             ? {
                 anthropic: {
@@ -141,6 +150,7 @@ export async function POST(request: Request) {
               }
             : undefined,
           tools: {
+            ...serverTools,
             createDocument: createDocument({ session, dataStream }),
             updateDocument: updateDocument({ session, dataStream }),
             requestSuggestions: requestSuggestions({ session, dataStream }),

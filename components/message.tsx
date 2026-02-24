@@ -1,9 +1,17 @@
 "use client";
 import type { UseChatHelpers } from "@ai-sdk/react";
 import { useMemo, useState } from "react";
+import type { AuditResult, ComparisonResult } from "@/lib/ai/commerce/schemas";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
+import {
+  BrowsingStep,
+  ComparisonTable,
+  ProductCard,
+  PurchaseDecision,
+  ReadinessScorecard,
+} from "./commerce";
 import { useDataStream } from "./data-stream-provider";
 import { DocumentToolResult } from "./document";
 import { DocumentPreview } from "./document-preview";
@@ -81,6 +89,9 @@ const PurePreviewMessage = ({
       "tool-createDocument",
       "tool-updateDocument",
       "tool-requestSuggestions",
+      "tool-browse_site",
+      "tool-extract_product",
+      "tool-analyse_commerce",
     ]);
 
     const hasVisibleContent = processed.some((part) => {
@@ -338,6 +349,124 @@ const PurePreviewMessage = ({
                   : undefined;
 
               return <WebFetchCard key={key} state={part.state} url={url} />;
+            }
+
+            if (type === "tool-browse_site") {
+              const output =
+                part.state === "output-available" ? part.output : null;
+              const input =
+                part.state !== "input-streaming"
+                  ? (part.input as { url: string; objective: string })
+                  : undefined;
+
+              if (output && "error" in output) {
+                return (
+                  <div
+                    className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-950/50 dark:text-red-400"
+                    key={key}
+                  >
+                    Failed to browse {input?.url ?? "site"}:{" "}
+                    {String(output.error)}
+                  </div>
+                );
+              }
+
+              const data = output ?? {
+                url: input?.url ?? "",
+                siteName: input?.url
+                  ? (() => {
+                      try {
+                        return new URL(input.url).hostname;
+                      } catch {
+                        return input.url;
+                      }
+                    })()
+                  : "Loading...",
+                description: input?.objective ?? "Browsing...",
+                productsFound: 0,
+              };
+
+              return <BrowsingStep data={data} key={key} state={part.state} />;
+            }
+
+            if (type === "tool-extract_product") {
+              const output =
+                part.state === "output-available" ? part.output : null;
+
+              if (output && "error" in output) {
+                return (
+                  <div
+                    className="rounded-lg border border-red-200 bg-red-50 p-3 text-sm text-red-600 dark:border-red-800 dark:bg-red-950/50 dark:text-red-400"
+                    key={key}
+                  >
+                    Failed to extract product data: {String(output.error)}
+                  </div>
+                );
+              }
+
+              if (!output) {
+                return (
+                  <ProductCard
+                    data={{
+                      name: "Loading...",
+                      price: 0,
+                      currency: "GBP",
+                      availability: "unknown",
+                      sourceUrl: "",
+                      retailer: "",
+                      features: [],
+                    }}
+                    key={key}
+                    state={part.state}
+                  />
+                );
+              }
+
+              return <ProductCard data={output} key={key} state={part.state} />;
+            }
+
+            if (type === "tool-analyse_commerce") {
+              if (part.state !== "output-available" || !part.output) {
+                return (
+                  <div
+                    className="my-2 flex animate-pulse items-center gap-2 text-sm text-muted-foreground"
+                    key={key}
+                  >
+                    <span>Analysing commerce data...</span>
+                  </div>
+                );
+              }
+
+              const output = part.output as ComparisonResult | AuditResult;
+
+              if (output.type === "comparison") {
+                const comparison = output as ComparisonResult;
+                return (
+                  <div key={key}>
+                    <ComparisonTable data={comparison} />
+                    {comparison.winner && (
+                      <PurchaseDecision
+                        confidence={75}
+                        reasoning={
+                          comparison.winner.reasoning
+                            ? [comparison.winner.reasoning]
+                            : []
+                        }
+                        recommendation={`Go with ${comparison.winner.name}`}
+                        savingsEstimate={comparison.savingsEstimate}
+                      />
+                    )}
+                  </div>
+                );
+              }
+
+              if (output.type === "audit") {
+                return (
+                  <ReadinessScorecard data={output as AuditResult} key={key} />
+                );
+              }
+
+              return null;
             }
 
             return null;

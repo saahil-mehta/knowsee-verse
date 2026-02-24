@@ -11,6 +11,7 @@ import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { createCommerceTools } from "@/lib/ai/tools/commerce";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { createServerTools } from "@/lib/ai/tools/server-tools";
@@ -34,7 +35,7 @@ import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
-export const maxDuration = 60;
+export const maxDuration = 300;
 
 function getStreamContext() {
   try {
@@ -57,8 +58,14 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { id, message, messages, selectedChatModel, selectedVisibilityType } =
-      requestBody;
+    const {
+      id,
+      message,
+      messages,
+      selectedChatModel,
+      selectedVisibilityType,
+      selectedChatMode,
+    } = requestBody;
 
     const session = await getSession();
 
@@ -85,6 +92,7 @@ export async function POST(request: Request) {
         userId: session.user.id,
         title: "New chat",
         visibility: selectedVisibilityType,
+        mode: selectedChatMode,
       });
       titlePromise = generateTitleFromUserMessage({ message });
     }
@@ -103,6 +111,7 @@ export async function POST(request: Request) {
     };
 
     const serverTools = createServerTools(requestHints);
+    const isCommerce = selectedChatMode === "commerce";
 
     if (message?.role === "user") {
       await saveMessages({
@@ -124,20 +133,33 @@ export async function POST(request: Request) {
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
+        const commerceTools = createCommerceTools({ session, dataStream });
+
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
+          system: systemPrompt({
+            selectedChatModel,
+            requestHints,
+            chatMode: selectedChatMode,
+          }),
           messages: modelMessages,
-          stopWhen: stepCountIs(8),
+          stopWhen: stepCountIs(isCommerce ? 15 : 8),
           experimental_activeTools: [
             "createDocument",
             "updateDocument",
             "requestSuggestions",
             "web_search",
-            "web_fetch",
+            ...(isCommerce
+              ? ([
+                  "browse_site",
+                  "extract_product",
+                  "analyse_commerce",
+                ] as const)
+              : ["web_fetch" as const]),
           ],
           tools: {
             ...serverTools,
+            ...commerceTools,
             createDocument: createDocument({ session, dataStream }),
             updateDocument: updateDocument({ session, dataStream }),
             requestSuggestions: requestSuggestions({ session, dataStream }),
@@ -196,7 +218,12 @@ export async function POST(request: Request) {
           });
         }
       },
-      onError: () => "Oops, an error occurred!",
+      onError: (error) => {
+        console.error("[chat stream error]", error);
+        return error instanceof Error
+          ? error.message
+          : "Oops, an error occurred!";
+      },
     });
 
     return createUIMessageStreamResponse({

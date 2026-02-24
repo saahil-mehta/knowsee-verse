@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import useSWR, { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
 import { ChatHeader } from "@/components/chat-header";
+import type { ChatMode } from "@/components/chat-mode-selector";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,6 +38,7 @@ export function Chat({
   initialMessages,
   initialChatModel,
   initialVisibilityType,
+  initialChatMode = "standard",
   isReadonly,
   autoResume,
 }: {
@@ -44,6 +46,7 @@ export function Chat({
   initialMessages: ChatMessage[];
   initialChatModel: string;
   initialVisibilityType: VisibilityType;
+  initialChatMode?: ChatMode;
   isReadonly: boolean;
   autoResume: boolean;
 }) {
@@ -72,10 +75,17 @@ export function Chat({
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
   const currentModelIdRef = useRef(currentModelId);
+  const [currentChatMode, setCurrentChatMode] =
+    useState<ChatMode>(initialChatMode);
+  const currentChatModeRef = useRef(currentChatMode);
 
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
   }, [currentModelId]);
+
+  useEffect(() => {
+    currentChatModeRef.current = currentChatMode;
+  }, [currentChatMode]);
 
   const {
     messages,
@@ -126,6 +136,7 @@ export function Chat({
               : { message: lastMessage }),
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibilityType,
+            selectedChatMode: currentChatModeRef.current,
             ...request.body,
           },
         };
@@ -190,7 +201,10 @@ export function Chat({
       <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
         <ChatHeader
           chatId={id}
+          isChatModeLocked={initialMessages.length > 0}
           isReadonly={isReadonly}
+          onChatModeChange={setCurrentChatMode}
+          selectedChatMode={currentChatMode}
           selectedVisibilityType={initialVisibilityType}
         />
 

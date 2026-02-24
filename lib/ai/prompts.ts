@@ -2,10 +2,11 @@
 // This file exists solely so existing imports from "@/lib/ai/prompts" continue
 // to resolve without changes across the codebase.
 
-export type { RequestHints } from "./instructions";
+export type { ChatMode, RequestHints } from "./instructions";
 export {
   artifactsPrompt,
   codePrompt,
+  commercePrompt,
   getRequestPromptFromHints,
   regularPrompt,
   sheetPrompt,

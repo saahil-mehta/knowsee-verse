@@ -1,6 +1,7 @@
 import type { InferUITool, UIMessage } from "ai";
 import { z } from "zod";
 import type { ArtifactKind } from "@/components/artifact";
+import type { createCommerceTools } from "./ai/tools/commerce";
 import type { createDocument } from "./ai/tools/create-document";
 import type { requestSuggestions } from "./ai/tools/request-suggestions";
 import type { createServerTools } from "./ai/tools/server-tools";
@@ -25,12 +26,20 @@ type ServerTools = ReturnType<typeof createServerTools>;
 type webSearchTool = InferUITool<ServerTools["web_search"]>;
 type webFetchTool = InferUITool<ServerTools["web_fetch"]>;
 
+type CommerceTools = ReturnType<typeof createCommerceTools>;
+type browseSiteTool = InferUITool<CommerceTools["browse_site"]>;
+type extractProductTool = InferUITool<CommerceTools["extract_product"]>;
+type analyseCommerceTool = InferUITool<CommerceTools["analyse_commerce"]>;
+
 export type ChatTools = {
   createDocument: createDocumentTool;
   updateDocument: updateDocumentTool;
   requestSuggestions: requestSuggestionsTool;
   web_search: webSearchTool;
   web_fetch: webFetchTool;
+  browse_site: browseSiteTool;
+  extract_product: extractProductTool;
+  analyse_commerce: analyseCommerceTool;
 };
 
 export type CustomUIDataTypes = {

@@ -3,6 +3,10 @@
 import { useRouter } from "next/navigation";
 import { memo } from "react";
 import { useWindowSize } from "usehooks-ts";
+import {
+  type ChatMode,
+  ChatModeSelector,
+} from "@/components/chat-mode-selector";
 import { SidebarToggle } from "@/components/sidebar-toggle";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "./icons";
@@ -12,10 +16,16 @@ import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
 function PureChatHeader({
   chatId,
   selectedVisibilityType,
+  selectedChatMode,
+  onChatModeChange,
+  isChatModeLocked,
   isReadonly,
 }: {
   chatId: string;
   selectedVisibilityType: VisibilityType;
+  selectedChatMode: ChatMode;
+  onChatModeChange: (mode: ChatMode) => void;
+  isChatModeLocked: boolean;
   isReadonly: boolean;
 }) {
   const router = useRouter();
@@ -42,11 +52,19 @@ function PureChatHeader({
       )}
 
       {!isReadonly && (
-        <VisibilitySelector
-          chatId={chatId}
-          className="order-1 md:order-2"
-          selectedVisibilityType={selectedVisibilityType}
-        />
+        <>
+          <ChatModeSelector
+            className="order-1 md:order-2"
+            disabled={isChatModeLocked}
+            onChatModeChange={onChatModeChange}
+            selectedChatMode={selectedChatMode}
+          />
+          <VisibilitySelector
+            chatId={chatId}
+            className="order-1 md:order-3"
+            selectedVisibilityType={selectedVisibilityType}
+          />
+        </>
       )}
     </header>
   );
@@ -56,6 +74,8 @@ export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
   return (
     prevProps.chatId === nextProps.chatId &&
     prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
+    prevProps.selectedChatMode === nextProps.selectedChatMode &&
+    prevProps.isChatModeLocked === nextProps.isChatModeLocked &&
     prevProps.isReadonly === nextProps.isReadonly
   );
 });

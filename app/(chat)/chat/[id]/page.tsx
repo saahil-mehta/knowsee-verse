@@ -59,6 +59,7 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
         <Chat
           autoResume={true}
           id={chat.id}
+          initialChatMode={chat.mode as "standard" | "commerce"}
           initialChatModel={DEFAULT_CHAT_MODEL}
           initialMessages={uiMessages}
           initialVisibilityType={chat.visibility}
@@ -74,6 +75,7 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
       <Chat
         autoResume={true}
         id={chat.id}
+        initialChatMode={chat.mode as "standard" | "commerce"}
         initialChatModel={chatModelFromCookie.value}
         initialMessages={uiMessages}
         initialVisibilityType={chat.visibility}

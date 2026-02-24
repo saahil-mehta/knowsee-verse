@@ -90,6 +90,9 @@ export const chat = pgTable("Chat", {
   visibility: varchar("visibility", { enum: ["public", "private"] })
     .notNull()
     .default("private"),
+  mode: varchar("mode", { enum: ["standard", "commerce"] })
+    .notNull()
+    .default("standard"),
 });
 
 export type Chat = InferSelectModel<typeof chat>;

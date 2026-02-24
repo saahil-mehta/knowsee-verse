@@ -39,6 +39,7 @@ const artifactsTemplate = loadInstruction("artifacts.md");
 const codeTemplate = loadInstruction("code.md");
 const sheetTemplate = loadInstruction("sheet.md");
 const titleTemplate = loadInstruction("title.md");
+const commerceTemplate = loadInstruction("commerce.md");
 
 // ---------------------------------------------------------------------------
 // Exported prompt constants — drop-in replacements for the old prompts.ts
@@ -65,6 +66,9 @@ export const sheetPrompt = sheetTemplate;
 /** Chat title generation system prompt. */
 export const titlePrompt = titleTemplate;
 
+/** Commerce mode instructions (shopping + audit flows). */
+export const commercePrompt = commerceTemplate;
+
 // ---------------------------------------------------------------------------
 // Geo-context helper
 // ---------------------------------------------------------------------------
@@ -88,14 +92,24 @@ About the origin of user's request:
 // System prompt composer — the main entry point used by the chat route.
 // ---------------------------------------------------------------------------
 
+export type ChatMode = "standard" | "commerce";
+
 export const systemPrompt = ({
   requestHints,
+  chatMode = "standard",
 }: {
   selectedChatModel: string;
   requestHints: RequestHints;
+  chatMode?: ChatMode;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
-  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+  const base = `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+
+  if (chatMode === "commerce") {
+    return `${base}\n\n${commercePrompt}`;
+  }
+
+  return base;
 };
 
 // ---------------------------------------------------------------------------

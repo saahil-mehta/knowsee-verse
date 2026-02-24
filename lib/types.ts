@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { ArtifactKind } from "@/components/artifact";
 import type { createDocument } from "./ai/tools/create-document";
 import type { requestSuggestions } from "./ai/tools/request-suggestions";
+import type { createServerTools } from "./ai/tools/server-tools";
 import type { updateDocument } from "./ai/tools/update-document";
 import type { Suggestion } from "./db/schema";
 
@@ -20,10 +21,16 @@ type requestSuggestionsTool = InferUITool<
   ReturnType<typeof requestSuggestions>
 >;
 
+type ServerTools = ReturnType<typeof createServerTools>;
+type webSearchTool = InferUITool<ServerTools["web_search"]>;
+type webFetchTool = InferUITool<ServerTools["web_fetch"]>;
+
 export type ChatTools = {
   createDocument: createDocumentTool;
   updateDocument: updateDocumentTool;
   requestSuggestions: requestSuggestionsTool;
+  web_search: webSearchTool;
+  web_fetch: webFetchTool;
 };
 
 export type CustomUIDataTypes = {

@@ -9,16 +9,16 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
+    id: "anthropic/claude-opus-4-6",
+    name: "Claude Opus 4.6",
+    provider: "anthropic",
+    description: "Most capable for complex tasks",
+  },
+  {
     id: "anthropic/claude-sonnet-4-6",
     name: "Claude Sonnet 4.6",
     provider: "anthropic",
     description: "Balanced quality, speed, and cost",
-  },
-  {
-    id: "anthropic/claude-sonnet-4-6-thinking",
-    name: "Claude Sonnet 4.6 Thinking",
-    provider: "anthropic",
-    description: "Extended thinking for complex reasoning",
   },
   {
     id: "anthropic/claude-haiku-4-5",

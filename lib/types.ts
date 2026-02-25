@@ -33,6 +33,13 @@ export type ChatTools = {
   web_fetch: webFetchTool;
 };
 
+export type UsageData = {
+  inputTokens: number;
+  outputTokens: number;
+  reasoningTokens?: number;
+  cachedInputTokens?: number;
+};
+
 export type CustomUIDataTypes = {
   textDelta: string;
   imageDelta: string;
@@ -46,6 +53,7 @@ export type CustomUIDataTypes = {
   clear: null;
   finish: null;
   "chat-title": string;
+  usage: UsageData;
 };
 
 export type ChatMessage = UIMessage<

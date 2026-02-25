@@ -9,6 +9,7 @@ import {
 } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
+import { compactMessages } from "@/lib/ai/context";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createDocument } from "@/lib/ai/tools/create-document";
@@ -120,6 +121,7 @@ export async function POST(request: Request) {
     }
 
     const modelMessages = await convertToModelMessages(uiMessages);
+    const prunedMessages = compactMessages(modelMessages);
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
@@ -127,7 +129,7 @@ export async function POST(request: Request) {
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
           system: systemPrompt({ selectedChatModel, requestHints }),
-          messages: modelMessages,
+          messages: prunedMessages,
           stopWhen: stepCountIs(8),
           experimental_activeTools: [
             "createDocument",
@@ -151,6 +153,17 @@ export async function POST(request: Request) {
         dataStream.merge(
           result.toUIMessageStream({ sendReasoning: true, sendSources: true })
         );
+
+        const totalUsage = await result.totalUsage;
+        dataStream.write({
+          type: "data-usage",
+          data: {
+            inputTokens: totalUsage.inputTokens ?? 0,
+            outputTokens: totalUsage.outputTokens ?? 0,
+            reasoningTokens: totalUsage.outputTokenDetails?.reasoningTokens,
+            cachedInputTokens: totalUsage.inputTokenDetails?.cacheReadTokens,
+          },
+        });
 
         if (titlePromise) {
           const title = await titlePromise;

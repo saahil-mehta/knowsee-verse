@@ -32,8 +32,9 @@ import {
   DEFAULT_CHAT_MODEL,
   modelsByProvider,
 } from "@/lib/ai/models";
-import type { Attachment, ChatMessage } from "@/lib/types";
+import type { Attachment, ChatMessage, UsageData } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { ContextIndicator } from "./elements/context-indicator";
 import {
   PromptInput,
   PromptInputSubmit,
@@ -68,6 +69,7 @@ function PureMultimodalInput({
   selectedVisibilityType,
   selectedModelId,
   onModelChange,
+  usage,
 }: {
   chatId: string;
   input: string;
@@ -83,6 +85,7 @@ function PureMultimodalInput({
   selectedVisibilityType: VisibilityType;
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
+  usage: UsageData | null;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -386,21 +389,37 @@ function PureMultimodalInput({
             />
           </PromptInputTools>
 
-          {status === "submitted" ? (
-            <StopButton setMessages={setMessages} stop={stop} />
-          ) : (
-            <PromptInputSubmit
-              className="group size-8 rounded-full bg-primary text-primary-foreground transition-all duration-200 ease-out hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:scale-[0.95] disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
-              data-testid="send-button"
-              disabled={!input.trim() || uploadQueue.length > 0}
-              status={status}
-            >
-              <ArrowUpIcon
-                className="transition-transform duration-200 group-hover:-translate-y-0.5"
-                size={14}
-              />
-            </PromptInputSubmit>
-          )}
+          <div className="flex items-center gap-1.5">
+            {(() => {
+              const model =
+                chatModels.find((m) => m.id === selectedModelId) ??
+                chatModels[0];
+              return (
+                <ContextIndicator
+                  maxContextTokens={model.maxContextTokens}
+                  messageCount={messages.length}
+                  modelName={model.name}
+                  pricing={model.pricing}
+                  usage={usage}
+                />
+              );
+            })()}
+            {status === "submitted" ? (
+              <StopButton setMessages={setMessages} stop={stop} />
+            ) : (
+              <PromptInputSubmit
+                className="group size-8 rounded-full bg-primary text-primary-foreground transition-all duration-200 ease-out hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:scale-[0.95] disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+                data-testid="send-button"
+                disabled={!input.trim() || uploadQueue.length > 0}
+                status={status}
+              >
+                <ArrowUpIcon
+                  className="transition-transform duration-200 group-hover:-translate-y-0.5"
+                  size={14}
+                />
+              </PromptInputSubmit>
+            )}
+          </div>
         </PromptInputToolbar>
       </PromptInput>
     </div>
@@ -423,6 +442,9 @@ export const MultimodalInput = memo(
       return false;
     }
     if (prevProps.selectedModelId !== nextProps.selectedModelId) {
+      return false;
+    }
+    if (prevProps.usage !== nextProps.usage) {
       return false;
     }
 

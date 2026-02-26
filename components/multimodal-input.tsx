@@ -384,6 +384,7 @@ function PureMultimodalInput({
           <PromptInputTools className="gap-0 sm:gap-0.5">
             <AttachmentsButton fileInputRef={fileInputRef} status={status} />
             <ModelSelectorCompact
+              disabled={messages.length > 0}
               onModelChange={onModelChange}
               selectedModelId={selectedModelId}
             />
@@ -480,9 +481,11 @@ const AttachmentsButton = memo(PureAttachmentsButton);
 function PureModelSelectorCompact({
   selectedModelId,
   onModelChange,
+  disabled,
 }: {
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -498,9 +501,19 @@ function PureModelSelectorCompact({
   };
 
   return (
-    <ModelSelector onOpenChange={setOpen} open={open}>
+    <ModelSelector
+      onOpenChange={disabled ? undefined : setOpen}
+      open={disabled ? false : open}
+    >
       <ModelSelectorTrigger asChild>
-        <Button className="h-8 gap-1.5 px-2" variant="ghost">
+        <Button
+          className={cn(
+            "h-8 gap-1.5 px-2",
+            disabled && "cursor-default opacity-60"
+          )}
+          disabled={disabled}
+          variant="ghost"
+        >
           {provider && <ModelSelectorLogo provider={provider} />}
           <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
         </Button>

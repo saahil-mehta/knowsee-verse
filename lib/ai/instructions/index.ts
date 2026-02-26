@@ -40,6 +40,13 @@ const codeTemplate = loadInstruction("code.md");
 const sheetTemplate = loadInstruction("sheet.md");
 const titleTemplate = loadInstruction("title.md");
 
+// Model-specific guidance — keyed by model ID suffix for easy lookup.
+// Convention: model-<family>-<version>.md
+const modelGuidanceFiles: Record<string, string> = {
+  "anthropic/claude-haiku-4-5": loadInstruction("model-haiku-4-5.md"),
+  "anthropic/claude-sonnet-4-6": loadInstruction("model-sonnet-4-6.md"),
+};
+
 // ---------------------------------------------------------------------------
 // Exported prompt constants — drop-in replacements for the old prompts.ts
 // ---------------------------------------------------------------------------
@@ -89,13 +96,15 @@ About the origin of user's request:
 // ---------------------------------------------------------------------------
 
 export const systemPrompt = ({
+  selectedChatModel,
   requestHints,
 }: {
   selectedChatModel: string;
   requestHints: RequestHints;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
-  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}`;
+  const guidance = modelGuidanceFiles[selectedChatModel] ?? "";
+  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}${guidance ? `\n\n${guidance}` : ""}`;
 };
 
 // ---------------------------------------------------------------------------

@@ -16,7 +16,7 @@ type CreateDocumentProps = {
 export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
   tool({
     description:
-      "Create a document for a writing or content creation activities. This tool will call other functions that will generate the contents of the document based on the title and kind.",
+      "Create a new document for writing or content creation. This tool generates the document contents based on the title and kind. IMPORTANT: Only call this tool ONCE per response. If a document already exists in this conversation, use updateDocument instead.",
     inputSchema: z.object({
       title: z.string(),
       kind: z.enum(artifactKinds),
@@ -70,7 +70,7 @@ export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
         id,
         title,
         kind,
-        content: "A document was created and is now visible to the user.",
+        content: `Document created successfully (id: ${id}). The document is now visible to the user. On future turns, use updateDocument with this ID to modify it — do NOT create a new document.`,
       };
     },
   });

@@ -12,7 +12,8 @@ type UpdateDocumentProps = {
 
 export const updateDocument = ({ session, dataStream }: UpdateDocumentProps) =>
   tool({
-    description: "Update a document with the given description.",
+    description:
+      "Update an existing document. Use this instead of createDocument when a document already exists in the conversation. Find the document ID from a previous createDocument or updateDocument result in the message history.",
     inputSchema: z.object({
       id: z.string().describe("The ID of the document to update"),
       description: z

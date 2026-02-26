@@ -5,7 +5,6 @@ export function compactMessages(messages: ModelMessage[]): ModelMessage[] {
   return pruneMessages({
     messages,
     reasoning: "before-last-message",
-    toolCalls: "before-last-2-messages",
     emptyMessages: "remove",
   });
 }

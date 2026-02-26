@@ -415,7 +415,7 @@ Wire the existing `components/ai-elements/chain-of-thought.tsx` into audit tool 
 
 ---
 
-### Task 1: Context Management Foundation
+### Task 1: Context Management Foundation — DONE
 
 Add `pruneMessages()` to the chat route and establish the `toModelOutput()` pattern for all future tools.
 
@@ -1423,9 +1423,9 @@ feat(ads): integrate Google Ads MCP server for ad platform data
 
 ---
 
-### Task 11: Context Visibility — `<Context>` Component
+### Task 11: Context Visibility — `<Context>` Component — DONE
 
-Integrate the AI Elements `<Context>` component to show token usage in the chat header.
+Integrated as `ContextIndicator` in the input toolbar (not chat header). Shows circular progress ring, hover card with model info, token breakdown, message count, and estimated cost. Uses HoverCard with Portal for proper layering.
 
 **Files:**
 - Copy or import: Context component from `ai-elements` package

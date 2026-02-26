@@ -112,7 +112,7 @@ const PurePreviewMessage = ({
         })}
       >
         <div
-          className={cn("flex flex-col", {
+          className={cn("flex min-w-0 flex-col", {
             "gap-2 md:gap-4": processedParts?.some(
               (p) => p.type === "text" && p.text?.trim()
             ),
@@ -123,7 +123,7 @@ const PurePreviewMessage = ({
                 ) ||
                   processedParts?.some((p) => p.type.startsWith("tool-")))) ||
               mode === "edit",
-            "max-w-[calc(100%-2.5rem)] sm:max-w-[min(fit-content,80%)]":
+            "max-w-full sm:max-w-[min(fit-content,80%)]":
               message.role === "user" && mode !== "edit",
           })}
         >

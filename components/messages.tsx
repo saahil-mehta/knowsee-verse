@@ -3,9 +3,11 @@ import { ArrowDownIcon } from "lucide-react";
 import { useMessages } from "@/hooks/use-messages";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
+import { BranchOriginBar } from "./branch-origin-bar";
 import { useDataStream } from "./data-stream-provider";
 import { Greeting } from "./greeting";
 import { PreviewMessage, ThinkingMessage } from "./message";
+import type { VisibilityType } from "./visibility-selector";
 
 type MessagesProps = {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
@@ -18,6 +20,9 @@ type MessagesProps = {
   isReadonly: boolean;
   isArtifactVisible: boolean;
   selectedModelId: string;
+  chatTitle: string;
+  visibility: VisibilityType;
+  parentChat: { id: string; title: string } | null;
 };
 
 function PureMessages({
@@ -29,7 +34,10 @@ function PureMessages({
   setMessages,
   regenerate,
   isReadonly,
-  selectedModelId: _selectedModelId,
+  selectedModelId,
+  chatTitle,
+  visibility,
+  parentChat,
 }: MessagesProps) {
   const {
     containerRef: messagesContainerRef,
@@ -43,6 +51,8 @@ function PureMessages({
 
   useDataStream();
 
+  const canBranch = messages.length >= 4;
+
   return (
     <div className="relative flex-1">
       <div
@@ -50,12 +60,16 @@ function PureMessages({
         ref={messagesContainerRef}
       >
         <div className="mx-auto flex min-w-0 max-w-4xl flex-col gap-4 px-2 py-4 md:gap-6 md:px-4">
+          {parentChat && <BranchOriginBar parentChat={parentChat} />}
+
           {messages.length === 0 && <Greeting />}
 
           {messages.map((message, index) => (
             <PreviewMessage
               addToolApprovalResponse={addToolApprovalResponse}
+              canBranch={canBranch}
               chatId={chatId}
+              chatTitle={chatTitle}
               isLoading={
                 status === "streaming" && messages.length - 1 === index
               }
@@ -66,7 +80,9 @@ function PureMessages({
               requiresScrollPadding={
                 hasSentMessage && index === messages.length - 1
               }
+              selectedChatModel={selectedModelId}
               setMessages={setMessages}
+              visibility={visibility}
               vote={
                 votes
                   ? votes.find((vote) => vote.messageId === message.id)

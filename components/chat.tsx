@@ -39,6 +39,8 @@ export function Chat({
   initialVisibilityType,
   isReadonly,
   autoResume,
+  chatTitle,
+  parentChat,
 }: {
   id: string;
   initialMessages: ChatMessage[];
@@ -46,6 +48,8 @@ export function Chat({
   initialVisibilityType: VisibilityType;
   isReadonly: boolean;
   autoResume: boolean;
+  chatTitle: string;
+  parentChat: { id: string; title: string } | null;
 }) {
   const router = useRouter();
 
@@ -202,13 +206,16 @@ export function Chat({
         <Messages
           addToolApprovalResponse={addToolApprovalResponse}
           chatId={id}
+          chatTitle={chatTitle}
           isArtifactVisible={isArtifactVisible}
           isReadonly={isReadonly}
           messages={messages}
+          parentChat={parentChat}
           regenerate={regenerate}
-          selectedModelId={initialChatModel}
+          selectedModelId={currentModelId}
           setMessages={setMessages}
           status={status}
+          visibility={visibilityType}
           votes={votes}
         />
 
@@ -217,6 +224,7 @@ export function Chat({
             <MultimodalInput
               attachments={attachments}
               chatId={id}
+              chatTitle={chatTitle}
               input={input}
               messages={messages}
               onModelChange={setCurrentModelId}

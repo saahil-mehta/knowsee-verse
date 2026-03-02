@@ -27,12 +27,14 @@ async function NewChatPage() {
       <>
         <Chat
           autoResume={false}
+          chatTitle=""
           id={id}
           initialChatModel={DEFAULT_CHAT_MODEL}
           initialMessages={[]}
           initialVisibilityType="private"
           isReadonly={false}
           key={id}
+          parentChat={null}
         />
         <DataStreamHandler />
       </>
@@ -43,12 +45,14 @@ async function NewChatPage() {
     <>
       <Chat
         autoResume={false}
+        chatTitle=""
         id={id}
         initialChatModel={modelIdFromCookie.value}
         initialMessages={[]}
         initialVisibilityType="private"
         isReadonly={false}
         key={id}
+        parentChat={null}
       />
       <DataStreamHandler />
     </>

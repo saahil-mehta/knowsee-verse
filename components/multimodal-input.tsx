@@ -34,6 +34,8 @@ import {
 } from "@/lib/ai/models";
 import type { Attachment, ChatMessage, UsageData } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { BranchChatCard } from "./branch-chat-card";
+import { ContextWarningBanner } from "./context-warning-banner";
 import { ContextIndicator } from "./elements/context-indicator";
 import {
   PromptInput,
@@ -70,6 +72,7 @@ function PureMultimodalInput({
   selectedModelId,
   onModelChange,
   usage,
+  chatTitle,
 }: {
   chatId: string;
   input: string;
@@ -86,6 +89,7 @@ function PureMultimodalInput({
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
   usage: UsageData | null;
+  chatTitle: string;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -298,6 +302,15 @@ function PureMultimodalInput({
     return () => textarea.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
+  const [showBannerBranch, setShowBannerBranch] = useState(false);
+
+  const model =
+    chatModels.find((m) => m.id === selectedModelId) ?? chatModels[0];
+  const usedTokens = usage ? usage.inputTokens + usage.outputTokens : 0;
+  const contextPercent = usage
+    ? Math.min(usedTokens / model.maxContextTokens, 1)
+    : 0;
+
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
       {messages.length === 0 &&
@@ -309,6 +322,23 @@ function PureMultimodalInput({
             sendMessage={sendMessage}
           />
         )}
+
+      {showBannerBranch && (
+        <BranchChatCard
+          chatId={chatId}
+          chatTitle={chatTitle}
+          onClose={() => setShowBannerBranch(false)}
+          selectedChatModel={selectedModelId}
+          visibility={selectedVisibilityType}
+        />
+      )}
+
+      {!showBannerBranch && (
+        <ContextWarningBanner
+          onBranch={() => setShowBannerBranch(true)}
+          percent={contextPercent}
+        />
+      )}
 
       <input
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"

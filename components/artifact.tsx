@@ -339,6 +339,7 @@ function PureArtifact({
                   <MultimodalInput
                     attachments={attachments}
                     chatId={chatId}
+                    chatTitle=""
                     className="bg-background dark:bg-muted"
                     input={input}
                     messages={messages}

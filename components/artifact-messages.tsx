@@ -48,7 +48,9 @@ function PureArtifactMessages({
       {messages.map((message, index) => (
         <PreviewMessage
           addToolApprovalResponse={addToolApprovalResponse}
+          canBranch={false}
           chatId={chatId}
+          chatTitle=""
           isLoading={status === "streaming" && index === messages.length - 1}
           isReadonly={isReadonly}
           key={message.id}
@@ -57,7 +59,9 @@ function PureArtifactMessages({
           requiresScrollPadding={
             hasSentMessage && index === messages.length - 1
           }
+          selectedChatModel=""
           setMessages={setMessages}
+          visibility="private"
           vote={
             votes
               ? votes.find((vote) => vote.messageId === message.id)

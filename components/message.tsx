@@ -28,6 +28,7 @@ import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
+import type { VisibilityType } from "./visibility-selector";
 
 const PurePreviewMessage = ({
   addToolApprovalResponse: _addToolApprovalResponse,
@@ -39,6 +40,10 @@ const PurePreviewMessage = ({
   regenerate,
   isReadonly,
   requiresScrollPadding: _requiresScrollPadding,
+  chatTitle,
+  canBranch,
+  selectedChatModel,
+  visibility,
 }: {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   chatId: string;
@@ -49,6 +54,10 @@ const PurePreviewMessage = ({
   regenerate: UseChatHelpers<ChatMessage>["regenerate"];
   isReadonly: boolean;
   requiresScrollPadding: boolean;
+  chatTitle: string;
+  canBranch: boolean;
+  selectedChatModel: string;
+  visibility: VisibilityType;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
 
@@ -360,11 +369,15 @@ const PurePreviewMessage = ({
 
           {!isReadonly && (
             <MessageActions
+              canBranch={canBranch}
               chatId={chatId}
+              chatTitle={chatTitle}
               isLoading={isLoading}
               key={`action-${message.id}`}
               message={message}
+              selectedChatModel={selectedChatModel}
               setMode={setMode}
+              visibility={visibility}
               vote={vote}
             />
           )}

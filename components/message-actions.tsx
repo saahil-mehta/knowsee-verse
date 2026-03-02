@@ -1,12 +1,20 @@
 import equal from "fast-deep-equal";
-import { memo } from "react";
+import { memo, useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { useCopyToClipboard } from "usehooks-ts";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
+import { BranchChatCard } from "./branch-chat-card";
 import { Action, Actions } from "./elements/actions";
-import { CopyIcon, PencilEditIcon, ThumbDownIcon, ThumbUpIcon } from "./icons";
+import {
+  BranchIcon,
+  CopyIcon,
+  PencilEditIcon,
+  ThumbDownIcon,
+  ThumbUpIcon,
+} from "./icons";
+import type { VisibilityType } from "./visibility-selector";
 
 export function PureMessageActions({
   chatId,
@@ -14,15 +22,24 @@ export function PureMessageActions({
   vote,
   isLoading,
   setMode,
+  chatTitle,
+  canBranch,
+  selectedChatModel,
+  visibility,
 }: {
   chatId: string;
   message: ChatMessage;
   vote: Vote | undefined;
   isLoading: boolean;
   setMode?: (mode: "view" | "edit") => void;
+  chatTitle: string;
+  canBranch: boolean;
+  selectedChatModel: string;
+  visibility: VisibilityType;
 }) {
   const { mutate } = useSWRConfig();
   const [_, copyToClipboard] = useCopyToClipboard();
+  const [showBranchCard, setShowBranchCard] = useState(false);
 
   if (isLoading) {
     return null;
@@ -68,109 +85,132 @@ export function PureMessageActions({
   }
 
   return (
-    <Actions className="-ml-0.5">
-      <Action onClick={handleCopy} tooltip="Copy">
-        <CopyIcon />
-      </Action>
+    <>
+      <Actions className="-ml-0.5">
+        <Action onClick={handleCopy} tooltip="Copy">
+          <CopyIcon />
+        </Action>
 
-      <Action
-        data-testid="message-upvote"
-        disabled={vote?.isUpvoted}
-        onClick={() => {
-          const upvote = fetch("/api/vote", {
-            method: "PATCH",
-            body: JSON.stringify({
-              chatId,
-              messageId: message.id,
-              type: "up",
-            }),
-          });
+        <Action
+          data-testid="message-upvote"
+          disabled={vote?.isUpvoted}
+          onClick={() => {
+            const upvote = fetch("/api/vote", {
+              method: "PATCH",
+              body: JSON.stringify({
+                chatId,
+                messageId: message.id,
+                type: "up",
+              }),
+            });
 
-          toast.promise(upvote, {
-            loading: "Upvoting Response...",
-            success: () => {
-              mutate<Vote[]>(
-                `/api/vote?chatId=${chatId}`,
-                (currentVotes) => {
-                  if (!currentVotes) {
-                    return [];
-                  }
+            toast.promise(upvote, {
+              loading: "Upvoting Response...",
+              success: () => {
+                mutate<Vote[]>(
+                  `/api/vote?chatId=${chatId}`,
+                  (currentVotes) => {
+                    if (!currentVotes) {
+                      return [];
+                    }
 
-                  const votesWithoutCurrent = currentVotes.filter(
-                    (currentVote) => currentVote.messageId !== message.id
-                  );
+                    const votesWithoutCurrent = currentVotes.filter(
+                      (currentVote) => currentVote.messageId !== message.id
+                    );
 
-                  return [
-                    ...votesWithoutCurrent,
-                    {
-                      chatId,
-                      messageId: message.id,
-                      isUpvoted: true,
-                    },
-                  ];
-                },
-                { revalidate: false }
-              );
+                    return [
+                      ...votesWithoutCurrent,
+                      {
+                        chatId,
+                        messageId: message.id,
+                        isUpvoted: true,
+                      },
+                    ];
+                  },
+                  { revalidate: false }
+                );
 
-              return "Upvoted Response!";
-            },
-            error: "Failed to upvote response.",
-          });
-        }}
-        tooltip="Upvote Response"
-      >
-        <ThumbUpIcon />
-      </Action>
+                return "Upvoted Response!";
+              },
+              error: "Failed to upvote response.",
+            });
+          }}
+          tooltip="Upvote Response"
+        >
+          <ThumbUpIcon />
+        </Action>
 
-      <Action
-        data-testid="message-downvote"
-        disabled={vote && !vote.isUpvoted}
-        onClick={() => {
-          const downvote = fetch("/api/vote", {
-            method: "PATCH",
-            body: JSON.stringify({
-              chatId,
-              messageId: message.id,
-              type: "down",
-            }),
-          });
+        <Action
+          data-testid="message-downvote"
+          disabled={vote && !vote.isUpvoted}
+          onClick={() => {
+            const downvote = fetch("/api/vote", {
+              method: "PATCH",
+              body: JSON.stringify({
+                chatId,
+                messageId: message.id,
+                type: "down",
+              }),
+            });
 
-          toast.promise(downvote, {
-            loading: "Downvoting Response...",
-            success: () => {
-              mutate<Vote[]>(
-                `/api/vote?chatId=${chatId}`,
-                (currentVotes) => {
-                  if (!currentVotes) {
-                    return [];
-                  }
+            toast.promise(downvote, {
+              loading: "Downvoting Response...",
+              success: () => {
+                mutate<Vote[]>(
+                  `/api/vote?chatId=${chatId}`,
+                  (currentVotes) => {
+                    if (!currentVotes) {
+                      return [];
+                    }
 
-                  const votesWithoutCurrent = currentVotes.filter(
-                    (currentVote) => currentVote.messageId !== message.id
-                  );
+                    const votesWithoutCurrent = currentVotes.filter(
+                      (currentVote) => currentVote.messageId !== message.id
+                    );
 
-                  return [
-                    ...votesWithoutCurrent,
-                    {
-                      chatId,
-                      messageId: message.id,
-                      isUpvoted: false,
-                    },
-                  ];
-                },
-                { revalidate: false }
-              );
+                    return [
+                      ...votesWithoutCurrent,
+                      {
+                        chatId,
+                        messageId: message.id,
+                        isUpvoted: false,
+                      },
+                    ];
+                  },
+                  { revalidate: false }
+                );
 
-              return "Downvoted Response!";
-            },
-            error: "Failed to downvote response.",
-          });
-        }}
-        tooltip="Downvote Response"
-      >
-        <ThumbDownIcon />
-      </Action>
-    </Actions>
+                return "Downvoted Response!";
+              },
+              error: "Failed to downvote response.",
+            });
+          }}
+          tooltip="Downvote Response"
+        >
+          <ThumbDownIcon />
+        </Action>
+
+        {canBranch && (
+          <Action
+            data-testid="message-branch"
+            onClick={() => setShowBranchCard((s) => !s)}
+            tooltip="Branch conversation"
+          >
+            <BranchIcon />
+          </Action>
+        )}
+      </Actions>
+
+      {showBranchCard && (
+        <BranchChatCard
+          chatId={chatId}
+          chatTitle={chatTitle}
+          messageId={message.id}
+          onClose={() => setShowBranchCard(false)}
+          selectedChatModel={selectedChatModel}
+          visibility={visibility}
+        />
+      )}
+    </>
   );
 }
 
@@ -181,6 +221,12 @@ export const MessageActions = memo(
       return false;
     }
     if (prevProps.isLoading !== nextProps.isLoading) {
+      return false;
+    }
+    if (prevProps.canBranch !== nextProps.canBranch) {
+      return false;
+    }
+    if (prevProps.chatTitle !== nextProps.chatTitle) {
       return false;
     }
 

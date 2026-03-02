@@ -80,17 +80,27 @@ export const verification = pgTable(
 
 // ─── Application Tables ─────────────────────────────────────────────────────
 
-export const chat = pgTable("Chat", {
-  id: uuid("id").primaryKey().notNull().defaultRandom(),
-  createdAt: timestamp("createdAt").notNull(),
-  title: text("title").notNull(),
-  userId: uuid("userId")
-    .notNull()
-    .references(() => user.id),
-  visibility: varchar("visibility", { enum: ["public", "private"] })
-    .notNull()
-    .default("private"),
-});
+export const chat = pgTable(
+  "Chat",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    createdAt: timestamp("createdAt").notNull(),
+    title: text("title").notNull(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id),
+    visibility: varchar("visibility", { enum: ["public", "private"] })
+      .notNull()
+      .default("private"),
+    parentChatId: uuid("parentChatId"),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.parentChatId],
+      foreignColumns: [table.id],
+    }).onDelete("set null"),
+  ]
+);
 
 export type Chat = InferSelectModel<typeof chat>;
 

@@ -38,11 +38,13 @@ export async function saveChat({
   userId,
   title,
   visibility,
+  parentChatId,
 }: {
   id: string;
   userId: string;
   title: string;
   visibility: VisibilityType;
+  parentChatId?: string;
 }) {
   try {
     return await db.insert(chat).values({
@@ -51,6 +53,7 @@ export async function saveChat({
       userId,
       title,
       visibility,
+      parentChatId,
     });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to save chat");
@@ -194,6 +197,10 @@ export async function getChatById({ id }: { id: string }) {
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to get chat by id");
   }
+}
+
+export function getParentChat({ parentChatId }: { parentChatId: string }) {
+  return getChatById({ id: parentChatId });
 }
 
 export async function saveMessages({ messages }: { messages: DBMessage[] }) {

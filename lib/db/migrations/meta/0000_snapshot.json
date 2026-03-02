@@ -1,6 +1,6 @@
 {
-  "id": "7aca9104-feb4-42fd-9998-1c7c80dced61",
-  "prevId": "00000000-0000-0000-0000-000000000000",
+  "id": "6f3ef407-f2a2-41cf-a986-62a085014c28",
+  "prevId": "7aca9104-feb4-42fd-9998-1c7c80dced61",
   "version": "7",
   "dialect": "postgresql",
   "tables": {
@@ -158,6 +158,12 @@
           "primaryKey": false,
           "notNull": true,
           "default": "'private'"
+        },
+        "parentChatId": {
+          "name": "parentChatId",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": false
         }
       },
       "indexes": {},
@@ -169,6 +175,15 @@
           "columnsFrom": ["userId"],
           "columnsTo": ["id"],
           "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "Chat_parentChatId_Chat_id_fk": {
+          "name": "Chat_parentChatId_Chat_id_fk",
+          "tableFrom": "Chat",
+          "tableTo": "Chat",
+          "columnsFrom": ["parentChatId"],
+          "columnsTo": ["id"],
+          "onDelete": "set null",
           "onUpdate": "no action"
         }
       },

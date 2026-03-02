@@ -9,6 +9,7 @@ export {
   getRequestPromptFromHints,
   regularPrompt,
   sheetPrompt,
+  summaryPrompt,
   systemPrompt,
   titlePrompt,
   updateDocumentPrompt,

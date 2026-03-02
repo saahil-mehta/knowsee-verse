@@ -39,6 +39,7 @@ const artifactsTemplate = loadInstruction("artifacts.md");
 const codeTemplate = loadInstruction("code.md");
 const sheetTemplate = loadInstruction("sheet.md");
 const titleTemplate = loadInstruction("title.md");
+const summaryTemplate = loadInstruction("summary.md");
 
 // Model-specific guidance — keyed by model ID suffix for easy lookup.
 // Convention: model-<family>-<version>.md
@@ -71,6 +72,13 @@ export const sheetPrompt = sheetTemplate;
 
 /** Chat title generation system prompt. */
 export const titlePrompt = titleTemplate;
+
+/** Conversation summary prompt for branch-and-continue. */
+export function summaryPrompt(focusPrompt?: string): string {
+  return injectContext(summaryTemplate, {
+    focus: focusPrompt ? `The user wants to focus on: ${focusPrompt}` : "",
+  });
+}
 
 // ---------------------------------------------------------------------------
 // Geo-context helper

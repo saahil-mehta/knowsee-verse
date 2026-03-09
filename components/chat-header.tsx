@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeftIcon } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { memo } from "react";
 import { useWindowSize } from "usehooks-ts";
@@ -12,11 +12,13 @@ import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
 
 function PureChatHeader({
   chatId,
+  chatTitle,
   selectedVisibilityType,
   isReadonly,
   projectContext,
 }: {
   chatId: string;
+  chatTitle: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
   projectContext?: { projectId: string; projectName: string } | null;
@@ -31,17 +33,18 @@ function PureChatHeader({
       <SidebarToggle />
 
       {projectContext && (
-        <Button
-          className="gap-1.5 text-muted-foreground"
-          onClick={() => router.push(`/project/${projectContext.projectId}`)}
-          size="sm"
-          variant="ghost"
-        >
-          <ChevronLeftIcon className="size-4" />
-          <span className="hidden text-sm md:inline">
+        <div className="flex min-w-0 items-center gap-1 text-sm">
+          <Link
+            className="shrink-0 text-muted-foreground transition hover:text-foreground"
+            href={`/project/${projectContext.projectId}`}
+          >
             {projectContext.projectName}
+          </Link>
+          <span className="text-muted-foreground/50">/</span>
+          <span className="truncate text-muted-foreground">
+            {chatTitle || "New chat"}
           </span>
-        </Button>
+        </div>
       )}
 
       {(!open || windowWidth < 768) && (
@@ -72,6 +75,7 @@ function PureChatHeader({
 export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
   return (
     prevProps.chatId === nextProps.chatId &&
+    prevProps.chatTitle === nextProps.chatTitle &&
     prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
     prevProps.isReadonly === nextProps.isReadonly &&
     prevProps.projectContext?.projectId === nextProps.projectContext?.projectId

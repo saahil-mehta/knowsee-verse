@@ -6,6 +6,16 @@ import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
 import { MoreHorizontalIcon, PlusIcon, TrashIcon } from "@/components/icons";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -254,7 +264,7 @@ export function SidebarProjects({ user }: { user: User | undefined }) {
         </DialogContent>
       </Dialog>
 
-      <Dialog
+      <AlertDialog
         onOpenChange={(open) => {
           if (!open) {
             setDeleteId(null);
@@ -262,31 +272,28 @@ export function SidebarProjects({ user }: { user: User | undefined }) {
         }}
         open={!!deleteId}
       >
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Delete project</DialogTitle>
-            <DialogDescription>
-              This will permanently delete the project, its brand profile, and
-              all associated chats. This action cannot be undone.
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter>
-            <Button onClick={() => setDeleteId(null)} variant="ghost">
-              Cancel
-            </Button>
-            <Button
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the
+              project, its brand profile, and all associated chats.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
               onClick={() => {
                 if (deleteId) {
                   handleDelete(deleteId);
                 }
               }}
-              variant="destructive"
             >
-              Delete
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }

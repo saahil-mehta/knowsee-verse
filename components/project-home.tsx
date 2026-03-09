@@ -1,13 +1,32 @@
 "use client";
 
 import { formatDistanceToNow } from "date-fns";
+import { MoreHorizontalIcon } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { BrandProfileForm } from "@/components/brand-profile-form";
+import { TrashIcon } from "@/components/icons";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import type { BrandProfile, Chat, Project } from "@/lib/db/schema";
+import { toast } from "./toast";
 
 export function ProjectHome({
   project,
@@ -20,6 +39,22 @@ export function ProjectHome({
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+
+  const handleDeleteChat = (id: string) => {
+    fetch(`/api/chat?id=${id}`, { method: "DELETE" })
+      .then((res) => {
+        if (!res.ok) {
+          throw new Error("Failed");
+        }
+        setDeleteId(null);
+        router.refresh();
+        toast({ type: "success", description: "Chat deleted." });
+      })
+      .catch(() => {
+        toast({ type: "error", description: "Failed to delete chat." });
+      });
+  };
 
   if (editing) {
     return (
@@ -117,22 +152,77 @@ export function ProjectHome({
         ) : (
           <div className="space-y-1">
             {chats.map((c) => (
-              <Link
-                className="flex items-center justify-between rounded-md px-3 py-2 text-sm hover:bg-muted"
-                href={`/chat/${c.id}`}
+              <div
+                className="group relative flex items-center rounded-md hover:bg-muted"
                 key={c.id}
               >
-                <span className="truncate">{c.title}</span>
-                <span className="shrink-0 text-xs text-muted-foreground">
-                  {formatDistanceToNow(new Date(c.createdAt), {
-                    addSuffix: true,
-                  })}
-                </span>
-              </Link>
+                <Link
+                  className="flex min-w-0 flex-1 items-center justify-between px-3 py-2 text-sm"
+                  href={`/chat/${c.id}`}
+                >
+                  <span className="truncate">{c.title}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    {formatDistanceToNow(new Date(c.createdAt), {
+                      addSuffix: true,
+                    })}
+                  </span>
+                </Link>
+                <DropdownMenu modal>
+                  <DropdownMenuTrigger asChild>
+                    <button
+                      className="mr-2 shrink-0 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 data-[state=open]:opacity-100"
+                      type="button"
+                    >
+                      <MoreHorizontalIcon className="size-4" />
+                      <span className="sr-only">More</span>
+                    </button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" side="bottom">
+                    <DropdownMenuItem
+                      className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
+                      onSelect={() => setDeleteId(c.id)}
+                    >
+                      <TrashIcon />
+                      <span>Delete</span>
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
             ))}
           </div>
         )}
       </div>
+
+      <AlertDialog
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteId(null);
+          }
+        }}
+        open={!!deleteId}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your
+              chat and remove it from our servers.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                if (deleteId) {
+                  handleDeleteChat(deleteId);
+                }
+              }}
+            >
+              Continue
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

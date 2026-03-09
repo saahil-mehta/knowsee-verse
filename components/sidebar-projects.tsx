@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
-import { PlusIcon } from "@/components/icons";
+import { MoreHorizontalIcon, PlusIcon, TrashIcon } from "@/components/icons";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,11 +15,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import {
   SidebarGroup,
   SidebarGroupContent,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   useSidebar,
@@ -51,6 +58,7 @@ export function SidebarProjects({ user }: { user: User | undefined }) {
   const [newName, setNewName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   // Auto-focus input when dialog opens
   useEffect(() => {
@@ -62,6 +70,23 @@ export function SidebarProjects({ user }: { user: User | undefined }) {
   if (!user) {
     return null;
   }
+
+  const handleDelete = (id: string) => {
+    const deletePromise = fetch(`/api/project/${id}`, { method: "DELETE" });
+
+    toast.promise(deletePromise, {
+      loading: "Deleting project...",
+      success: async () => {
+        setDeleteId(null);
+        await mutate();
+        if (activeId === id) {
+          router.push("/");
+        }
+        return "Project deleted";
+      },
+      error: "Failed to delete project",
+    });
+  };
 
   const handleCreate = () => {
     const name = newName.trim();
@@ -156,6 +181,27 @@ export function SidebarProjects({ user }: { user: User | undefined }) {
                       <span className="truncate">{proj.name}</span>
                     </Link>
                   </SidebarMenuButton>
+
+                  <DropdownMenu modal>
+                    <DropdownMenuTrigger asChild>
+                      <SidebarMenuAction
+                        className="mr-0.5 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                        showOnHover={proj.id !== activeId}
+                      >
+                        <MoreHorizontalIcon />
+                        <span className="sr-only">More</span>
+                      </SidebarMenuAction>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" side="bottom">
+                      <DropdownMenuItem
+                        className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
+                        onSelect={() => setDeleteId(proj.id)}
+                      >
+                        <TrashIcon />
+                        <span>Delete</span>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </SidebarMenuItem>
               ))
             ) : (
@@ -205,6 +251,40 @@ export function SidebarProjects({ user }: { user: User | undefined }) {
               </Button>
             </DialogFooter>
           </form>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) {
+            setDeleteId(null);
+          }
+        }}
+        open={!!deleteId}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete project</DialogTitle>
+            <DialogDescription>
+              This will permanently delete the project, its brand profile, and
+              all associated chats. This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setDeleteId(null)} variant="ghost">
+              Cancel
+            </Button>
+            <Button
+              onClick={() => {
+                if (deleteId) {
+                  handleDelete(deleteId);
+                }
+              }}
+              variant="destructive"
+            >
+              Delete
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </>

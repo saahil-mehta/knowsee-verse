@@ -160,9 +160,7 @@ export function ProjectHome({
                   className="flex min-w-0 flex-1 items-center justify-between px-3 py-2 text-sm"
                   href={`/chat/${c.id}`}
                 >
-                  <span className="truncate">
-                    {c.title || "Untitled chat"}
-                  </span>
+                  <span className="truncate">{c.title || "Untitled chat"}</span>
                   <span className="shrink-0 text-xs text-muted-foreground">
                     {formatDistanceToNow(new Date(c.createdAt), {
                       addSuffix: true,

@@ -1,6 +1,6 @@
 import { notFound, redirect } from "next/navigation";
 import { Suspense } from "react";
-import { BrandProfileForm } from "@/components/brand-profile-form";
+import { BrandProfileSetup } from "@/components/brand-profile-setup";
 import { ProjectHome } from "@/components/project-home";
 import { getSession } from "@/lib/auth";
 import {
@@ -40,7 +40,7 @@ async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
   if (!profile) {
     return (
       <div className="flex h-dvh min-w-0 flex-col bg-background">
-        <BrandProfileForm projectId={id} />
+        <BrandProfileSetup projectId={id} />
       </div>
     );
   }

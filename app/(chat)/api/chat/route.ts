@@ -12,6 +12,7 @@ import { createResumableStreamContext } from "resumable-stream";
 import { compactMessages } from "@/lib/ai/context";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { createBrandAudit } from "@/lib/ai/tools/brand-audit";
 import { createDocument } from "@/lib/ai/tools/create-document";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { createServerTools } from "@/lib/ai/tools/server-tools";
@@ -21,6 +22,7 @@ import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
   deleteChatById,
+  getBrandProfileByProjectId,
   getChatById,
   getMessagesByChatId,
   saveChat,
@@ -28,7 +30,7 @@ import {
   updateChatTitleById,
   updateMessage,
 } from "@/lib/db/queries";
-import type { DBMessage } from "@/lib/db/schema";
+import type { BrandProfile, DBMessage } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
@@ -86,8 +88,16 @@ export async function POST(request: Request) {
         userId: session.user.id,
         title: "New chat",
         visibility: selectedVisibilityType,
+        projectId: requestBody.projectId,
       });
       titlePromise = generateTitleFromUserMessage({ message });
+    }
+
+    // Resolve brand profile for project-scoped chats
+    const projectId = chat?.projectId ?? requestBody.projectId;
+    let brandProfile: BrandProfile | null = null;
+    if (projectId) {
+      brandProfile = await getBrandProfileByProjectId({ projectId });
     }
 
     const uiMessages = isToolApprovalFlow
@@ -103,7 +113,9 @@ export async function POST(request: Request) {
       country,
     };
 
-    const serverTools = createServerTools(requestHints);
+    const serverTools = createServerTools(requestHints, {
+      projectMode: !!brandProfile,
+    });
 
     if (message?.role === "user") {
       await saveMessages({
@@ -128,21 +140,35 @@ export async function POST(request: Request) {
       execute: async ({ writer: dataStream }) => {
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
+          system: systemPrompt({
+            selectedChatModel,
+            requestHints,
+            brandProfile: brandProfile ?? undefined,
+          }),
           messages: prunedMessages,
-          stopWhen: stepCountIs(8),
+          stopWhen: stepCountIs(brandProfile ? 12 : 8),
           experimental_activeTools: [
             "createDocument",
             "updateDocument",
             "requestSuggestions",
             "web_search",
             "web_fetch",
+            ...(brandProfile ? (["brand_audit"] as const) : []),
           ],
           tools: {
             ...serverTools,
             createDocument: createDocument({ session, dataStream }),
             updateDocument: updateDocument({ session, dataStream }),
             requestSuggestions: requestSuggestions({ session, dataStream }),
+            ...(brandProfile
+              ? {
+                  brand_audit: createBrandAudit({
+                    session,
+                    dataStream,
+                    brandProfile,
+                  }),
+                }
+              : {}),
           },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,

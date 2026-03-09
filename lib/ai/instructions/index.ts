@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Geo } from "@vercel/functions";
 import type { ArtifactKind } from "@/components/artifact";
+import type { BrandProfile } from "@/lib/db/schema";
 
 // ---------------------------------------------------------------------------
 // Markdown loader — reads instruction files relative to this directory.
@@ -40,6 +41,7 @@ const codeTemplate = loadInstruction("code.md");
 const sheetTemplate = loadInstruction("sheet.md");
 const titleTemplate = loadInstruction("title.md");
 const summaryTemplate = loadInstruction("summary.md");
+const brandModeTemplate = loadInstruction("brand-mode.md");
 
 // Model-specific guidance — keyed by model ID suffix for easy lookup.
 // Convention: model-<family>-<version>.md
@@ -103,16 +105,30 @@ About the origin of user's request:
 // System prompt composer — the main entry point used by the chat route.
 // ---------------------------------------------------------------------------
 
+function brandContextPrompt(bp: BrandProfile): string {
+  return injectContext(brandModeTemplate, {
+    brand_name: bp.brandName,
+    website_url: bp.websiteUrl,
+    country: bp.country,
+    categories: (bp.categories as string[]).join(", "),
+    competitors: (bp.competitors as string[]).join(", "),
+    retailers: (bp.retailers as string[]).join(", "),
+  });
+}
+
 export const systemPrompt = ({
   selectedChatModel,
   requestHints,
+  brandProfile,
 }: {
   selectedChatModel: string;
   requestHints: RequestHints;
+  brandProfile?: BrandProfile;
 }) => {
   const requestPrompt = getRequestPromptFromHints(requestHints);
   const guidance = modelGuidanceFiles[selectedChatModel] ?? "";
-  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}${guidance ? `\n\n${guidance}` : ""}`;
+  const brand = brandProfile ? `\n\n${brandContextPrompt(brandProfile)}` : "";
+  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}${guidance ? `\n\n${guidance}` : ""}${brand}`;
 };
 
 // ---------------------------------------------------------------------------

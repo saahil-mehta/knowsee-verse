@@ -4,6 +4,12 @@ import { useMemo, useState } from "react";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
+import {
+  ChainOfThought,
+  ChainOfThoughtContent,
+  ChainOfThoughtHeader,
+  ChainOfThoughtStep,
+} from "./ai-elements/chain-of-thought";
 import { useDataStream } from "./data-stream-provider";
 import { DocumentToolResult } from "./document";
 import { DocumentPreview } from "./document-preview";
@@ -87,6 +93,7 @@ const PurePreviewMessage = ({
     }
 
     const renderedToolTypes = new Set([
+      "tool-brand_audit",
       "tool-createDocument",
       "tool-updateDocument",
       "tool-requestSuggestions",
@@ -347,6 +354,56 @@ const PurePreviewMessage = ({
                   : undefined;
 
               return <WebFetchCard key={key} state={part.state} url={url} />;
+            }
+
+            if (type === "tool-brand_audit") {
+              if (
+                part.state === "input-available" ||
+                part.state === "input-streaming"
+              ) {
+                return (
+                  <div
+                    className="flex items-center gap-1 text-muted-foreground text-sm"
+                    key={key}
+                  >
+                    <span className="animate-pulse">
+                      Generating research plan...
+                    </span>
+                  </div>
+                );
+              }
+
+              if (part.state === "output-available") {
+                const output = part.output as {
+                  brandName: string;
+                  phases: {
+                    name: string;
+                    description: string;
+                  }[];
+                } | null;
+
+                if (!output?.phases) {
+                  return null;
+                }
+
+                return (
+                  <ChainOfThought defaultOpen={true} key={key}>
+                    <ChainOfThoughtHeader>
+                      Research: {output.brandName} Agentic Commerce Audit
+                    </ChainOfThoughtHeader>
+                    <ChainOfThoughtContent>
+                      {output.phases.map((phase) => (
+                        <ChainOfThoughtStep
+                          description={phase.description}
+                          key={phase.name}
+                          label={phase.name}
+                          status="pending"
+                        />
+                      ))}
+                    </ChainOfThoughtContent>
+                  </ChainOfThought>
+                );
+              }
             }
 
             return null;

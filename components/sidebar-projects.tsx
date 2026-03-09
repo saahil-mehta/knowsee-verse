@@ -5,7 +5,12 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import useSWR from "swr";
-import { MoreHorizontalIcon, PlusIcon, TrashIcon } from "@/components/icons";
+import {
+  MoreHorizontalIcon,
+  PencilEditIcon,
+  PlusIcon,
+  TrashIcon,
+} from "@/components/icons";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -65,17 +70,21 @@ export function SidebarProjects({ user }: { user: User | undefined }) {
   } = useSWR<Project[]>(user ? "/api/project" : null, fetcher);
 
   const [showDialog, setShowDialog] = useState(false);
+  const [renameId, setRenameId] = useState<string | null>(null);
   const [newName, setNewName] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
 
+  const isRename = !!renameId;
+  const dialogOpen = showDialog || isRename;
+
   // Auto-focus input when dialog opens
   useEffect(() => {
-    if (showDialog) {
+    if (dialogOpen) {
       setTimeout(() => inputRef.current?.focus(), 0);
     }
-  }, [showDialog]);
+  }, [dialogOpen]);
 
   if (!user) {
     return null;
@@ -98,13 +107,39 @@ export function SidebarProjects({ user }: { user: User | undefined }) {
     });
   };
 
-  const handleCreate = () => {
+  const closeDialog = () => {
+    setShowDialog(false);
+    setRenameId(null);
+    setNewName("");
+  };
+
+  const handleSubmitDialog = () => {
     const name = newName.trim();
     if (!name || submitting) {
       return;
     }
 
     setSubmitting(true);
+
+    if (renameId) {
+      const renamePromise = fetch(`/api/project/${renameId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name }),
+      });
+
+      toast.promise(renamePromise, {
+        loading: "Renaming project...",
+        success: async () => {
+          closeDialog();
+          await mutate();
+          return "Project renamed";
+        },
+        error: "Failed to rename project",
+        finally: () => setSubmitting(false),
+      });
+      return;
+    }
 
     const createPromise = fetch("/api/project", {
       method: "POST",
@@ -116,8 +151,7 @@ export function SidebarProjects({ user }: { user: User | undefined }) {
       loading: "Creating project...",
       success: async (res) => {
         const created = await res.json();
-        setShowDialog(false);
-        setNewName("");
+        closeDialog();
         await mutate();
         setOpenMobile(false);
         router.push(`/project/${created.id}`);
@@ -204,6 +238,16 @@ export function SidebarProjects({ user }: { user: User | undefined }) {
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end" side="bottom">
                       <DropdownMenuItem
+                        className="cursor-pointer"
+                        onSelect={() => {
+                          setRenameId(proj.id);
+                          setNewName(proj.name);
+                        }}
+                      >
+                        <PencilEditIcon size={12} />
+                        <span>Rename</span>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem
                         className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
                         onSelect={() => setDeleteId(proj.id)}
                       >
@@ -223,18 +267,29 @@ export function SidebarProjects({ user }: { user: User | undefined }) {
         </SidebarGroupContent>
       </SidebarGroup>
 
-      <Dialog onOpenChange={setShowDialog} open={showDialog}>
+      <Dialog
+        onOpenChange={(open) => {
+          if (!open) {
+            closeDialog();
+          }
+        }}
+        open={dialogOpen}
+      >
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>New project</DialogTitle>
+            <DialogTitle>
+              {isRename ? "Rename project" : "New project"}
+            </DialogTitle>
             <DialogDescription>
-              Give your brand project a name. You can change it later.
+              {isRename
+                ? "Enter a new name for the project."
+                : "Give your brand project a name. You can change it later."}
             </DialogDescription>
           </DialogHeader>
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleCreate();
+              handleSubmitDialog();
             }}
           >
             <Input
@@ -246,18 +301,11 @@ export function SidebarProjects({ user }: { user: User | undefined }) {
               value={newName}
             />
             <DialogFooter className="mt-4">
-              <Button
-                onClick={() => {
-                  setShowDialog(false);
-                  setNewName("");
-                }}
-                type="button"
-                variant="ghost"
-              >
+              <Button onClick={closeDialog} type="button" variant="ghost">
                 Cancel
               </Button>
               <Button disabled={!newName.trim() || submitting} type="submit">
-                Create
+                {isRename ? "Rename" : "Create"}
               </Button>
             </DialogFooter>
           </form>

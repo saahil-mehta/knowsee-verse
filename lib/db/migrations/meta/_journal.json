@@ -8,6 +8,13 @@
       "when": 1772196129271,
       "tag": "0000_vengeful_reavers",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1773071229944,
+      "tag": "0001_black_vermin",
+      "breakpoints": true
     }
   ]
 }

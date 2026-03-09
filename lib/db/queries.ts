@@ -9,6 +9,7 @@ import {
   gt,
   gte,
   inArray,
+  isNull,
   lt,
   type SQL,
 } from "drizzle-orm";
@@ -18,11 +19,14 @@ import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
 import {
+  type BrandProfile,
+  brandProfile,
   type Chat,
   chat,
   type DBMessage,
   document,
   message,
+  project,
   type Suggestion,
   stream,
   suggestion,
@@ -39,12 +43,14 @@ export async function saveChat({
   title,
   visibility,
   parentChatId,
+  projectId,
 }: {
   id: string;
   userId: string;
   title: string;
   visibility: VisibilityType;
   parentChatId?: string;
+  projectId?: string;
 }) {
   try {
     return await db.insert(chat).values({
@@ -54,6 +60,7 @@ export async function saveChat({
       title,
       visibility,
       parentChatId,
+      projectId,
     });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to save chat");
@@ -129,9 +136,11 @@ export async function getChatsByUserId({
         .select()
         .from(chat)
         .where(
-          whereCondition
-            ? and(whereCondition, eq(chat.userId, id))
-            : eq(chat.userId, id)
+          and(
+            eq(chat.userId, id),
+            isNull(chat.projectId),
+            ...(whereCondition ? [whereCondition] : [])
+          )
         )
         .orderBy(desc(chat.createdAt))
         .limit(extendedLimit);
@@ -558,6 +567,229 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get stream ids by chat id"
+    );
+  }
+}
+
+// ─── Project Queries ──────────────────────────────────────────────────────────
+
+export async function createProject({
+  name,
+  userId,
+}: {
+  name: string;
+  userId: string;
+}) {
+  try {
+    const [created] = await db
+      .insert(project)
+      .values({ name, userId })
+      .returning();
+    return created;
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to create project");
+  }
+}
+
+export async function getProjectsByUserId({ userId }: { userId: string }) {
+  try {
+    return await db
+      .select()
+      .from(project)
+      .where(eq(project.userId, userId))
+      .orderBy(desc(project.updatedAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get projects by user id"
+    );
+  }
+}
+
+export async function getProjectById({ id }: { id: string }) {
+  try {
+    const [selected] = await db
+      .select()
+      .from(project)
+      .where(eq(project.id, id));
+    if (!selected) return null;
+    return selected;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get project by id"
+    );
+  }
+}
+
+export async function updateProject({
+  id,
+  name,
+}: {
+  id: string;
+  name: string;
+}) {
+  try {
+    const [updated] = await db
+      .update(project)
+      .set({ name, updatedAt: new Date() })
+      .where(eq(project.id, id))
+      .returning();
+    return updated;
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to update project");
+  }
+}
+
+export async function deleteProjectById({ id }: { id: string }) {
+  try {
+    await db.delete(brandProfile).where(eq(brandProfile.projectId, id));
+    await db
+      .update(chat)
+      .set({ projectId: null })
+      .where(eq(chat.projectId, id));
+    await db.delete(project).where(eq(project.id, id));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to delete project by id"
+    );
+  }
+}
+
+// ─── Brand Profile Queries ────────────────────────────────────────────────────
+
+export async function createBrandProfile({
+  projectId: pid,
+  brandName,
+  websiteUrl,
+  country,
+  categories,
+  competitors,
+  retailers,
+}: {
+  projectId: string;
+  brandName: string;
+  websiteUrl: string;
+  country: string;
+  categories: string[];
+  competitors: string[];
+  retailers: string[];
+}) {
+  try {
+    const [created] = await db
+      .insert(brandProfile)
+      .values({
+        projectId: pid,
+        brandName,
+        websiteUrl,
+        country,
+        categories,
+        competitors,
+        retailers,
+      })
+      .returning();
+    return created;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create brand profile"
+    );
+  }
+}
+
+export async function getBrandProfileByProjectId({
+  projectId: pid,
+}: {
+  projectId: string;
+}) {
+  try {
+    const [selected] = await db
+      .select()
+      .from(brandProfile)
+      .where(eq(brandProfile.projectId, pid));
+    if (!selected) return null;
+    return selected;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get brand profile by project id"
+    );
+  }
+}
+
+export async function updateBrandProfile({
+  projectId: pid,
+  ...fields
+}: {
+  projectId: string;
+  brandName?: string;
+  websiteUrl?: string;
+  country?: string;
+  categories?: string[];
+  competitors?: string[];
+  retailers?: string[];
+}) {
+  try {
+    const [updated] = await db
+      .update(brandProfile)
+      .set({ ...fields, updatedAt: new Date() })
+      .where(eq(brandProfile.projectId, pid))
+      .returning();
+    return updated;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update brand profile"
+    );
+  }
+}
+
+// ─── Composite Project Queries ────────────────────────────────────────────────
+
+export async function getProjectWithBrandProfile({
+  projectId: pid,
+}: {
+  projectId: string;
+}) {
+  try {
+    const [row] = await db
+      .select({
+        project,
+        brandProfile,
+      })
+      .from(project)
+      .leftJoin(brandProfile, eq(brandProfile.projectId, project.id))
+      .where(eq(project.id, pid));
+
+    if (!row) return null;
+    return {
+      project: row.project,
+      brandProfile: row.brandProfile as BrandProfile | null,
+    };
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get project with brand profile"
+    );
+  }
+}
+
+export async function getChatsByProjectId({
+  projectId: pid,
+}: {
+  projectId: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(chat)
+      .where(eq(chat.projectId, pid))
+      .orderBy(desc(chat.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get chats by project id"
     );
   }
 }

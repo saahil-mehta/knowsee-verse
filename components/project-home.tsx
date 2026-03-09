@@ -170,7 +170,7 @@ export function ProjectHome({
                 <DropdownMenu modal>
                   <DropdownMenuTrigger asChild>
                     <button
-                      className="mr-2 shrink-0 rounded p-1 text-muted-foreground opacity-0 transition-opacity hover:text-foreground group-hover:opacity-100 data-[state=open]:opacity-100"
+                      className="mr-2 shrink-0 rounded p-1 text-muted-foreground hover:text-foreground"
                       type="button"
                     >
                       <MoreHorizontalIcon className="size-4" />

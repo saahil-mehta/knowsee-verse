@@ -32,6 +32,13 @@ function PureChatHeader({
     <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
       <SidebarToggle />
 
+      {!isReadonly && (
+        <VisibilitySelector
+          chatId={chatId}
+          selectedVisibilityType={selectedVisibilityType}
+        />
+      )}
+
       {projectContext && (
         <div className="flex min-w-0 items-center gap-1 text-sm">
           <Link
@@ -49,7 +56,7 @@ function PureChatHeader({
 
       {(!open || windowWidth < 768) && (
         <Button
-          className="order-2 ml-auto h-8 px-2 md:order-1 md:ml-0 md:h-fit md:px-2"
+          className="ml-auto h-8 px-2 md:h-fit md:px-2"
           onClick={() => {
             router.push("/");
             router.refresh();
@@ -59,14 +66,6 @@ function PureChatHeader({
           <PlusIcon />
           <span className="md:sr-only">New Chat</span>
         </Button>
-      )}
-
-      {!isReadonly && (
-        <VisibilitySelector
-          chatId={chatId}
-          className="order-1 md:order-2"
-          selectedVisibilityType={selectedVisibilityType}
-        />
       )}
     </header>
   );

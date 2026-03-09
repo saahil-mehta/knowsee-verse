@@ -46,6 +46,7 @@ export function BrandProfileForm({
   const [brandName, setBrandName] = useState(initialData?.brandName ?? "");
   const [websiteUrl, setWebsiteUrl] = useState(initialData?.websiteUrl ?? "");
   const [country, setCountry] = useState(initialData?.country ?? "");
+  const [market, setMarket] = useState(initialData?.market ?? "");
   const [categories, setCategories] = useState<string[]>(
     (initialData?.categories as string[]) ?? []
   );
@@ -79,6 +80,7 @@ export function BrandProfileForm({
           brandName,
           websiteUrl,
           country,
+          market: market || undefined,
           categories,
           competitors,
           retailers,
@@ -134,6 +136,16 @@ export function BrandProfileForm({
             </option>
           ))}
         </select>
+      ),
+    },
+    {
+      label: "Market",
+      content: (
+        <Input
+          onChange={(e) => setMarket(e.target.value)}
+          placeholder="e.g. GB, US, IN"
+          value={market}
+        />
       ),
     },
     {

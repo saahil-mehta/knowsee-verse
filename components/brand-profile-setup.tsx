@@ -21,6 +21,7 @@ type Suggestion = {
 type EnrichmentData = {
   logoUrl: string;
   country: string;
+  market: string;
   categories: string[];
   competitors: string[];
   retailers: string[];
@@ -36,6 +37,7 @@ export function BrandProfileSetup({ projectId }: { projectId: string }) {
   const [websiteUrl, setWebsiteUrl] = useState("");
   const [logoUrl, setLogoUrl] = useState("");
   const [country, setCountry] = useState("");
+  const [market, setMarket] = useState("");
   const [categories, setCategories] = useState<string[]>([]);
   const [competitors, setCompetitors] = useState<string[]>([]);
   const [retailers, setRetailers] = useState<string[]>([]);
@@ -48,6 +50,7 @@ export function BrandProfileSetup({ projectId }: { projectId: string }) {
     setWebsiteUrl("");
     setLogoUrl("");
     setCountry("");
+    setMarket("");
     setCategories([]);
     setCompetitors([]);
     setRetailers([]);
@@ -73,6 +76,7 @@ export function BrandProfileSetup({ projectId }: { projectId: string }) {
       const data: EnrichmentData = await res.json();
       setLogoUrl(data.logoUrl);
       setCountry(data.country);
+      setMarket(data.market);
       setCategories(data.categories);
       setCompetitors(data.competitors);
       setRetailers(data.retailers);
@@ -111,6 +115,7 @@ export function BrandProfileSetup({ projectId }: { projectId: string }) {
           websiteUrl,
           logoUrl: logoUrl || undefined,
           country,
+          market: market || undefined,
           categories,
           competitors,
           retailers,
@@ -232,14 +237,18 @@ export function BrandProfileSetup({ projectId }: { projectId: string }) {
                     </div>
                   </div>
                   <div className="mt-4 border-t pt-4 space-y-3">
-                    {["country", "categories", "competitors", "retailers"].map(
-                      (field) => (
-                        <div className="flex items-center gap-3" key={field}>
-                          <Skeleton className="h-3 w-20" />
-                          <Skeleton className="h-3 w-40" />
-                        </div>
-                      )
-                    )}
+                    {[
+                      "country",
+                      "market",
+                      "categories",
+                      "competitors",
+                      "retailers",
+                    ].map((field) => (
+                      <div className="flex items-center gap-3" key={field}>
+                        <Skeleton className="h-3 w-20" />
+                        <Skeleton className="h-3 w-40" />
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>
@@ -290,6 +299,10 @@ export function BrandProfileSetup({ projectId }: { projectId: string }) {
                     <DetailRow
                       label="Country"
                       value={country || "Not detected"}
+                    />
+                    <DetailRow
+                      label="Market"
+                      value={market || "Not detected"}
                     />
                     <BadgeRow
                       label="Categories"
@@ -350,6 +363,13 @@ export function BrandProfileSetup({ projectId }: { projectId: string }) {
                       onChange={(e) => setCountry(e.target.value)}
                       placeholder="e.g. US, GB, IN"
                       value={country}
+                    />
+                  </FieldRow>
+                  <FieldRow label="Market">
+                    <Input
+                      onChange={(e) => setMarket(e.target.value)}
+                      placeholder="e.g. GB, US, IN"
+                      value={market}
                     />
                   </FieldRow>
                   <FieldRow label="Categories">

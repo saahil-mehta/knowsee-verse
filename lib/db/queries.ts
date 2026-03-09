@@ -665,6 +665,7 @@ export async function createBrandProfile({
   websiteUrl,
   logoUrl,
   country,
+  market,
   categories,
   competitors,
   retailers,
@@ -674,6 +675,7 @@ export async function createBrandProfile({
   websiteUrl: string;
   logoUrl?: string;
   country: string;
+  market?: string;
   categories: string[];
   competitors: string[];
   retailers: string[];
@@ -687,6 +689,7 @@ export async function createBrandProfile({
         websiteUrl,
         logoUrl,
         country,
+        market,
         categories,
         competitors,
         retailers,
@@ -730,6 +733,7 @@ export async function updateBrandProfile({
   websiteUrl?: string;
   logoUrl?: string;
   country?: string;
+  market?: string;
   categories?: string[];
   competitors?: string[];
   retailers?: string[];

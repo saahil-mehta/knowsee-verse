@@ -10,10 +10,58 @@ export const maxDuration = 60;
 
 const enrichmentSchema = z.object({
   country: z.string().max(64).default(""),
+  market: z.string().max(64).default(""),
   categories: z.array(z.string().max(100)).max(20).default([]),
   competitors: z.array(z.string().max(100)).max(20).default([]),
   retailers: z.array(z.string().max(100)).max(20).default([]),
 });
+
+/**
+ * Extract a 2-letter market code from the URL's TLD or path.
+ * e.g. samsung.com/uk → GB, nike.co.uk → GB, amazon.de → DE
+ */
+const TLD_TO_MARKET: Record<string, string> = {
+  uk: "GB",
+  au: "AU",
+  br: "BR",
+  ca: "CA",
+  cn: "CN",
+  de: "DE",
+  es: "ES",
+  fr: "FR",
+  in: "IN",
+  it: "IT",
+  jp: "JP",
+  kr: "KR",
+  mx: "MX",
+  nl: "NL",
+  ru: "RU",
+  sa: "SA",
+  se: "SE",
+  sg: "SG",
+  za: "ZA",
+  us: "US",
+};
+
+function extractMarketFromUrl(websiteUrl: string): string {
+  try {
+    const url = new URL(websiteUrl);
+    // Check path first: samsung.com/uk → "uk"
+    const pathSegment = url.pathname.split("/")[1]?.toLowerCase();
+    if (pathSegment && TLD_TO_MARKET[pathSegment]) {
+      return TLD_TO_MARKET[pathSegment];
+    }
+    // Check ccTLD: nike.co.uk → "uk", amazon.de → "de"
+    const parts = url.hostname.split(".");
+    const tld = parts.at(-1)?.toLowerCase() ?? "";
+    if (tld !== "com" && tld !== "org" && tld !== "net" && TLD_TO_MARKET[tld]) {
+      return TLD_TO_MARKET[tld];
+    }
+    return "";
+  } catch {
+    return "";
+  }
+}
 
 async function getOwnedProject(id: string) {
   const session = await getSession();
@@ -61,6 +109,7 @@ export async function POST(
     }
 
     const logoUrl = `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
+    const marketHint = extractMarketFromUrl(websiteUrl);
 
     const { text } = await generateText({
       model: gateway("anthropic/claude-haiku-4-5"),
@@ -77,13 +126,14 @@ export async function POST(
 1. First, fetch the website at ${websiteUrl} to understand what the brand does, their product categories, and their market.
 2. Then search the web for "${brandName} competitors" and "${brandName} retailers stockists" to find their competitive landscape and retail partners.
 3. Finally, return a JSON object with:
-   - "country": the brand's primary country of origin as a 2-letter ISO code (e.g. "US", "GB", "IN")
+   - "country": the brand's country of origin as a 2-letter ISO code (e.g. "KR" for Samsung, "US" for Apple)
+   - "market": the regional market this website serves as a 2-letter ISO code (e.g. "GB" for samsung.com/uk, "IN" for samsung.com/in)${marketHint ? ` — the URL suggests market "${marketHint}"` : ""}
    - "categories": array of product/service categories (e.g. ["Athletic Footwear", "Sportswear"])
-   - "competitors": array of direct competitor brand names (e.g. ["Adidas", "Puma"])
-   - "retailers": array of major retailers/stockists that carry this brand (e.g. ["Amazon", "Foot Locker"])
+   - "competitors": array of direct competitor brand names in this market (e.g. ["Adidas", "Puma"])
+   - "retailers": array of major retailers/stockists that carry this brand in this market (e.g. ["Amazon", "Foot Locker"])
 
 Return ONLY the JSON object, no other text. Example:
-{"country": "US", "categories": ["Athletic Footwear"], "competitors": ["Adidas"], "retailers": ["Amazon"]}
+{"country": "KR", "market": "GB", "categories": ["Smartphones"], "competitors": ["Apple"], "retailers": ["Amazon UK"]}
 
 If you cannot determine a field, use an empty array or empty string.`,
     });
@@ -94,6 +144,7 @@ If you cannot determine a field, use an empty array or empty string.`,
       return Response.json({
         logoUrl,
         country: "",
+        market: marketHint,
         categories: [],
         competitors: [],
         retailers: [],
@@ -106,6 +157,7 @@ If you cannot determine a field, use an empty array or empty string.`,
       return Response.json({
         logoUrl,
         country: "",
+        market: marketHint,
         categories: [],
         competitors: [],
         retailers: [],

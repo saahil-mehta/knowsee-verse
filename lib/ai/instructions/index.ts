@@ -110,6 +110,7 @@ function brandContextPrompt(bp: BrandProfile): string {
     brand_name: bp.brandName,
     website_url: bp.websiteUrl,
     country: bp.country,
+    market: bp.market ?? bp.country,
     categories: (bp.categories as string[]).join(", "),
     competitors: (bp.competitors as string[]).join(", "),
     retailers: (bp.retailers as string[]).join(", "),

@@ -133,6 +133,7 @@ export function SidebarProjects({ user }: { user: User | undefined }) {
         success: async () => {
           closeDialog();
           await mutate();
+          router.refresh();
           return "Project renamed";
         },
         error: "Failed to rename project",

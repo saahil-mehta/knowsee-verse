@@ -73,6 +73,7 @@ function PureMultimodalInput({
   onModelChange,
   usage,
   chatTitle,
+  projectId,
 }: {
   chatId: string;
   input: string;
@@ -90,6 +91,7 @@ function PureMultimodalInput({
   onModelChange?: (modelId: string) => void;
   usage: UsageData | null;
   chatTitle: string;
+  projectId?: string;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -318,6 +320,7 @@ function PureMultimodalInput({
         uploadQueue.length === 0 && (
           <SuggestedActions
             chatId={chatId}
+            projectId={projectId}
             selectedVisibilityType={selectedVisibilityType}
             sendMessage={sendMessage}
           />
@@ -476,6 +479,9 @@ export const MultimodalInput = memo(
       return false;
     }
     if (prevProps.usage !== nextProps.usage) {
+      return false;
+    }
+    if (prevProps.projectId !== nextProps.projectId) {
       return false;
     }
 

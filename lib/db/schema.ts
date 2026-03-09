@@ -106,6 +106,7 @@ export const brandProfile = pgTable("BrandProfile", {
   websiteUrl: varchar("websiteUrl", { length: 512 }).notNull(),
   logoUrl: varchar("logoUrl", { length: 512 }),
   country: varchar("country", { length: 64 }).notNull(),
+  market: varchar("market", { length: 64 }),
   categories: json("categories").notNull(),
   competitors: json("competitors").notNull(),
   retailers: json("retailers").notNull(),

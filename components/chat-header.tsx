@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronLeftIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { memo } from "react";
 import { useWindowSize } from "usehooks-ts";
@@ -13,10 +14,12 @@ function PureChatHeader({
   chatId,
   selectedVisibilityType,
   isReadonly,
+  projectContext,
 }: {
   chatId: string;
   selectedVisibilityType: VisibilityType;
   isReadonly: boolean;
+  projectContext?: { projectId: string; projectName: string } | null;
 }) {
   const router = useRouter();
   const { open } = useSidebar();
@@ -26,6 +29,20 @@ function PureChatHeader({
   return (
     <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
       <SidebarToggle />
+
+      {projectContext && (
+        <Button
+          className="gap-1.5 text-muted-foreground"
+          onClick={() => router.push(`/project/${projectContext.projectId}`)}
+          size="sm"
+          variant="ghost"
+        >
+          <ChevronLeftIcon className="size-4" />
+          <span className="hidden text-sm md:inline">
+            {projectContext.projectName}
+          </span>
+        </Button>
+      )}
 
       {(!open || windowWidth < 768) && (
         <Button
@@ -56,6 +73,7 @@ export const ChatHeader = memo(PureChatHeader, (prevProps, nextProps) => {
   return (
     prevProps.chatId === nextProps.chatId &&
     prevProps.selectedVisibilityType === nextProps.selectedVisibilityType &&
-    prevProps.isReadonly === nextProps.isReadonly
+    prevProps.isReadonly === nextProps.isReadonly &&
+    prevProps.projectContext?.projectId === nextProps.projectContext?.projectId
   );
 });

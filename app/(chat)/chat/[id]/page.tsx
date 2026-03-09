@@ -9,6 +9,7 @@ import {
   getChatById,
   getMessagesByChatId,
   getParentChat,
+  getProjectById,
 } from "@/lib/db/queries";
 import { convertToUIMessages } from "@/lib/utils";
 
@@ -61,6 +62,15 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
     }
   }
 
+  // Resolve project context for back navigation
+  let projectContext: { projectId: string; projectName: string } | null = null;
+  if (chat.projectId) {
+    const proj = await getProjectById({ id: chat.projectId });
+    if (proj) {
+      projectContext = { projectId: proj.id, projectName: proj.name };
+    }
+  }
+
   const cookieStore = await cookies();
   const chatModelFromCookie = cookieStore.get("chat-model");
 
@@ -80,6 +90,8 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
           initialVisibilityType={chat.visibility}
           isReadonly={session?.user?.id !== chat.userId}
           parentChat={parentChat}
+          projectContext={projectContext}
+          projectId={chat.projectId ?? undefined}
         />
         <DataStreamHandler />
       </>
@@ -97,6 +109,8 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
         initialVisibilityType={chat.visibility}
         isReadonly={session?.user?.id !== chat.userId}
         parentChat={parentChat}
+        projectContext={projectContext}
+        projectId={chat.projectId ?? undefined}
       />
       <DataStreamHandler />
     </>

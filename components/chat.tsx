@@ -41,6 +41,8 @@ export function Chat({
   autoResume,
   chatTitle,
   parentChat,
+  projectId,
+  projectContext,
 }: {
   id: string;
   initialMessages: ChatMessage[];
@@ -50,6 +52,8 @@ export function Chat({
   autoResume: boolean;
   chatTitle: string;
   parentChat: { id: string; title: string } | null;
+  projectId?: string;
+  projectContext?: { projectId: string; projectName: string } | null;
 }) {
   const router = useRouter();
 
@@ -131,6 +135,7 @@ export function Chat({
               : { message: lastMessage }),
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibilityType,
+            ...(projectId ? { projectId } : {}),
             ...request.body,
           },
         };
@@ -200,6 +205,7 @@ export function Chat({
         <ChatHeader
           chatId={id}
           isReadonly={isReadonly}
+          projectContext={projectContext}
           selectedVisibilityType={initialVisibilityType}
         />
 

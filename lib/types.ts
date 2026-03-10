@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { ArtifactKind } from "@/components/artifact";
 import type { createBrandAudit } from "./ai/tools/brand-audit";
 import type { createDocument } from "./ai/tools/create-document";
+import type { generatePptx } from "./ai/tools/generate-pptx";
 import type { requestSuggestions } from "./ai/tools/request-suggestions";
 import type { createServerTools } from "./ai/tools/server-tools";
 import type { updateDocument } from "./ai/tools/update-document";
@@ -26,11 +27,13 @@ type ServerTools = ReturnType<typeof createServerTools>;
 type webSearchTool = InferUITool<ServerTools["web_search"]>;
 type webFetchTool = InferUITool<ServerTools["web_fetch"]>;
 type brandAuditTool = InferUITool<ReturnType<typeof createBrandAudit>>;
+type generatePptxTool = InferUITool<ReturnType<typeof generatePptx>>;
 
 export type ChatTools = {
   createDocument: createDocumentTool;
   updateDocument: updateDocumentTool;
   requestSuggestions: requestSuggestionsTool;
+  generatePptx: generatePptxTool;
   web_search: webSearchTool;
   web_fetch: webFetchTool;
   brand_audit: brandAuditTool;

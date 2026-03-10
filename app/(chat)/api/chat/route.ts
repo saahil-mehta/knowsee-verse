@@ -14,6 +14,7 @@ import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createBrandAudit } from "@/lib/ai/tools/brand-audit";
 import { createDocument } from "@/lib/ai/tools/create-document";
+import { generatePptx } from "@/lib/ai/tools/generate-pptx";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { createServerTools } from "@/lib/ai/tools/server-tools";
 import { updateDocument } from "@/lib/ai/tools/update-document";
@@ -152,6 +153,7 @@ export async function POST(request: Request) {
             "createDocument",
             "updateDocument",
             "requestSuggestions",
+            "generatePptx",
             "web_search",
             "web_fetch",
             ...(brandProfile ? (["brand_audit"] as const) : []),
@@ -161,6 +163,7 @@ export async function POST(request: Request) {
             createDocument: createDocument({ session, dataStream }),
             updateDocument: updateDocument({ session, dataStream }),
             requestSuggestions: requestSuggestions({ session, dataStream }),
+            generatePptx: generatePptx({ session, dataStream }),
             ...(brandProfile
               ? {
                   brand_audit: createBrandAudit({

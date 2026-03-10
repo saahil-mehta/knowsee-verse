@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Shimmer } from "@/components/ai-elements/shimmer";
 import { BrandSearchInput } from "@/components/brand-search-input";
+import { Loader } from "@/components/elements/loader";
 import { TagInput } from "@/components/tag-input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -224,7 +225,8 @@ export function BrandProfileSetup({ projectId }: { projectId: string }) {
                   >
                     {`Verifying ${brandName}...`}
                   </Shimmer>
-                  <p className="mt-1 text-sm text-muted-foreground">
+                  <p className="mt-1 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <Loader size={14} />
                     Knowsee is gathering real-time brand intelligence.
                   </p>
                 </div>

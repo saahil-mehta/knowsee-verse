@@ -17,6 +17,14 @@ export type ChatModel = {
 
 export const chatModels: ChatModel[] = [
   {
+    id: "anthropic/claude-opus-4-6",
+    name: "Claude Opus 4.6",
+    provider: "anthropic",
+    description: "Most capable, for complex tasks",
+    maxContextTokens: 200_000,
+    pricing: { inputPerMTok: 5, outputPerMTok: 25, cacheReadPerMTok: 0.5 },
+  },
+  {
     id: "anthropic/claude-sonnet-4-6",
     name: "Claude Sonnet 4.6",
     provider: "anthropic",
@@ -30,7 +38,7 @@ export const chatModels: ChatModel[] = [
     provider: "anthropic",
     description: "Fast and lightweight",
     maxContextTokens: 200_000,
-    pricing: { inputPerMTok: 0.8, outputPerMTok: 4, cacheReadPerMTok: 0.08 },
+    pricing: { inputPerMTok: 1, outputPerMTok: 5, cacheReadPerMTok: 0.1 },
   },
 ];
 

@@ -13,8 +13,10 @@ type CreateDocumentProps = {
   dataStream: UIMessageStreamWriter<ChatMessage>;
 };
 
-export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
-  tool({
+export const createDocument = ({ session, dataStream }: CreateDocumentProps) => {
+  let createdDocumentId: string | null = null;
+
+  return tool({
     description:
       "Create a new document for writing or content creation. This tool generates the document contents based on the title and kind. IMPORTANT: Only call this tool ONCE per response. If a document already exists in this conversation, use updateDocument instead.",
     inputSchema: z.object({
@@ -22,7 +24,17 @@ export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
       kind: z.enum(artifactKinds),
     }),
     execute: async ({ title, kind }) => {
+      if (createdDocumentId) {
+        return {
+          id: createdDocumentId,
+          title,
+          kind,
+          error: `A document was already created in this response (id: ${createdDocumentId}). Use updateDocument with this ID to modify it.`,
+        };
+      }
+
       const id = generateUUID();
+      createdDocumentId = id;
 
       dataStream.write({
         type: "data-kind",
@@ -74,3 +86,4 @@ export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
       };
     },
   });
+};

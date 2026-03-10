@@ -20,23 +20,30 @@ export function ContextWarningBanner({
   return (
     <div
       className={cn(
-        "flex items-center justify-between rounded-2xl border p-3 text-sm transition-colors",
-        isRed
-          ? "border-red-500/30 bg-red-500/5 text-red-600 dark:text-red-400"
-          : "border-amber-500/30 bg-amber-500/5 text-amber-600 dark:text-amber-400"
+        "absolute inset-x-0 bottom-full z-0 animate-in slide-in-from-bottom-2 fade-in duration-300",
+        "translate-y-3"
       )}
     >
-      <span>
-        Context <span className="font-medium">{displayPct}%</span> full
-      </span>
-      <button
-        className="inline-flex items-center gap-1.5 font-medium transition-opacity hover:opacity-80"
-        onClick={onBranch}
-        type="button"
+      <div
+        className={cn(
+          "flex items-center justify-between rounded-t-2xl border border-b-0 px-4 pb-5 pt-2.5 text-sm",
+          isRed
+            ? "border-red-800/50 bg-neutral-950 text-red-400"
+            : "border-amber-800/50 bg-neutral-950 text-amber-400"
+        )}
       >
-        <BranchIcon size={14} />
-        Summarise and continue
-      </button>
+        <span>
+          Context <span className="font-medium">{displayPct}%</span> full
+        </span>
+        <button
+          className="inline-flex items-center gap-1.5 font-medium transition-opacity hover:opacity-80"
+          onClick={onBranch}
+          type="button"
+        >
+          <BranchIcon size={14} />
+          Summarise and continue
+        </button>
+      </div>
     </div>
   );
 }

@@ -34,13 +34,13 @@ function formatCost(usd: number): string {
 }
 
 function calculateCost(usage: UsageData, pricing: ModelPricing): number {
+  const cached = usage.totalCachedInputTokens ?? 0;
   const inputCost =
-    ((usage.inputTokens - (usage.cachedInputTokens ?? 0)) / 1_000_000) *
-    pricing.inputPerMTok;
-  const outputCost = (usage.outputTokens / 1_000_000) * pricing.outputPerMTok;
+    ((usage.totalInputTokens - cached) / 1_000_000) * pricing.inputPerMTok;
+  const outputCost =
+    (usage.totalOutputTokens / 1_000_000) * pricing.outputPerMTok;
   const cacheCost =
-    ((usage.cachedInputTokens ?? 0) / 1_000_000) *
-    (pricing.cacheReadPerMTok ?? pricing.inputPerMTok);
+    (cached / 1_000_000) * (pricing.cacheReadPerMTok ?? pricing.inputPerMTok);
   return inputCost + outputCost + cacheCost;
 }
 

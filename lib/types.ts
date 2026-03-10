@@ -37,10 +37,15 @@ export type ChatTools = {
 };
 
 export type UsageData = {
+  /** Last-step tokens — actual context window occupancy. */
   inputTokens: number;
   outputTokens: number;
   reasoningTokens?: number;
   cachedInputTokens?: number;
+  /** Cumulative tokens across all agentic steps — for cost calculation. */
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalCachedInputTokens?: number;
 };
 
 export type CustomUIDataTypes = {

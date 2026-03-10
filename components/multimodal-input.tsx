@@ -336,13 +336,6 @@ function PureMultimodalInput({
         />
       )}
 
-      {!showBannerBranch && (
-        <ContextWarningBanner
-          onBranch={() => setShowBannerBranch(true)}
-          percent={contextPercent}
-        />
-      )}
-
       <input
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
         multiple
@@ -352,8 +345,16 @@ function PureMultimodalInput({
         type="file"
       />
 
-      <PromptInput
-        className="rounded-2xl border border-border bg-background p-3 shadow-xs backdrop-blur-sm transition-all duration-300 ease-out focus-within:border-muted-foreground/40 focus-within:shadow-[0_0_16px_rgba(98,20,217,0.15),0_0_40px_rgba(98,20,217,0.08)]"
+      <div className="relative">
+        {!showBannerBranch && (
+          <ContextWarningBanner
+            onBranch={() => setShowBannerBranch(true)}
+            percent={contextPercent}
+          />
+        )}
+
+        <PromptInput
+          className="relative z-10 rounded-2xl border border-border bg-background p-3 shadow-xs backdrop-blur-sm transition-all duration-300 ease-out focus-within:border-muted-foreground/40 focus-within:shadow-[0_0_16px_rgba(98,20,217,0.15),0_0_40px_rgba(98,20,217,0.08)]"
         onSubmit={(event) => {
           event.preventDefault();
           if (!input.trim() && attachments.length === 0) {
@@ -455,7 +456,8 @@ function PureMultimodalInput({
             )}
           </div>
         </PromptInputToolbar>
-      </PromptInput>
+        </PromptInput>
+      </div>
     </div>
   );
 }

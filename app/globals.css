@@ -232,6 +232,30 @@
   outline: none;
 }
 
+.ProseMirror table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+}
+
+.ProseMirror th,
+.ProseMirror td {
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+.ProseMirror th {
+  font-weight: 600;
+  background-color: var(--muted);
+}
+
+.ProseMirror th p,
+.ProseMirror td p {
+  margin: 0;
+}
+
 .cm-editor,
 .cm-gutters {
   @apply bg-background! dark:bg-zinc-800! outline-hidden! selection:bg-zinc-900!;

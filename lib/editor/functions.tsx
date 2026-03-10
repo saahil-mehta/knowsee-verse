@@ -1,6 +1,9 @@
 "use client";
 
-import { defaultMarkdownSerializer } from "prosemirror-markdown";
+import {
+  MarkdownSerializer,
+  defaultMarkdownSerializer,
+} from "prosemirror-markdown";
 import { DOMParser, type Node } from "prosemirror-model";
 import { Decoration, DecorationSet, type EditorView } from "prosemirror-view";
 import { renderToString } from "react-dom/server";
@@ -9,6 +12,35 @@ import { Response } from "@/components/elements/response";
 
 import { documentSchema } from "./config";
 import { createSuggestionWidget, type UISuggestion } from "./suggestions";
+
+const markdownSerializer = new MarkdownSerializer(
+  {
+    ...defaultMarkdownSerializer.nodes,
+    table(state, node) {
+      let isFirstRow = true;
+      node.forEach((row) => {
+        const cells: string[] = [];
+        row.forEach((cell) => {
+          cells.push(cell.textContent.replace(/\|/g, "\\|").trim());
+        });
+        state.write(`| ${cells.join(" | ")} |`);
+        state.ensureNewLine();
+
+        if (isFirstRow) {
+          state.write(`| ${cells.map(() => "---").join(" | ")} |`);
+          state.ensureNewLine();
+          isFirstRow = false;
+        }
+      });
+      state.closeBlock(node);
+    },
+    // Handled by the table serialiser above
+    table_row() {},
+    table_header() {},
+    table_cell() {},
+  },
+  defaultMarkdownSerializer.marks
+);
 
 export const buildDocumentFromContent = (content: string) => {
   const parser = DOMParser.fromSchema(documentSchema);
@@ -21,7 +53,7 @@ export const buildDocumentFromContent = (content: string) => {
 };
 
 export const buildContentFromDocument = (document: Node) => {
-  return defaultMarkdownSerializer.serialize(document);
+  return markdownSerializer.serialize(document);
 };
 
 export const createDecorations = (

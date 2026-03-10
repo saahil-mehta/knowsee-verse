@@ -302,7 +302,7 @@ function PureArtifact({
                   damping: 30,
                 },
               }}
-              className="relative h-dvh w-[400px] shrink-0 bg-muted dark:bg-background"
+              className="relative h-dvh w-[480px] shrink-0 bg-muted dark:bg-background"
               exit={{
                 opacity: 0,
                 x: 0,
@@ -315,7 +315,7 @@ function PureArtifact({
                 {!isCurrentVersion && (
                   <motion.div
                     animate={{ opacity: 1 }}
-                    className="absolute top-0 left-0 z-50 h-dvh w-[400px] bg-zinc-900/50"
+                    className="absolute top-0 left-0 z-50 h-dvh w-[480px] bg-zinc-900/50"
                     exit={{ opacity: 0 }}
                     initial={{ opacity: 0 }}
                   />
@@ -378,12 +378,12 @@ function PureArtifact({
                   }
                 : {
                     opacity: 1,
-                    x: 400,
+                    x: 480,
                     y: 0,
                     height: windowHeight,
                     width: windowWidth
-                      ? windowWidth - 400
-                      : "calc(100dvw-400px)",
+                      ? windowWidth - 480
+                      : "calc(100dvw-480px)",
                     borderRadius: 0,
                     transition: {
                       delay: 0,
@@ -533,4 +533,5 @@ export const Artifact = memo(PureArtifact, (prevProps, nextProps) => {
   }
 
   return true;
+
 });

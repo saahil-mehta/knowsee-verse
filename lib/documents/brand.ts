@@ -43,20 +43,3 @@ export function getLogoBuffer(): Buffer | null {
   }
 }
 
-// Logo as PNG data URL for PPTX (SVG not supported by pptxgenjs)
-// We embed a minimal inline version — the logo is small enough
-let _logoPngPath: string | null = null;
-
-export function getLogoPngPath(): string | null {
-  if (_logoPngPath) {
-    return _logoPngPath;
-  }
-  try {
-    const path = join(process.cwd(), "public", "icon.svg");
-    readFileSync(path);
-    _logoPngPath = path;
-    return _logoPngPath;
-  } catch {
-    return null;
-  }
-}

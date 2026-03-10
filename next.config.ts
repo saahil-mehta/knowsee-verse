@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   cacheComponents: true,
-  serverExternalPackages: ["pdfkit", "docx", "pptxgenjs"],
+  serverExternalPackages: ["pdfkit", "docx"],
   images: {
     remotePatterns: [
       {

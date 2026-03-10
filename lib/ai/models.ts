@@ -11,6 +11,7 @@ export type ChatModel = {
   name: string;
   provider: string;
   description: string;
+  strengths: string[];
   maxContextTokens: number;
   pricing: ModelPricing;
 };
@@ -21,6 +22,12 @@ export const chatModels: ChatModel[] = [
     name: "Claude Opus 4.6",
     provider: "anthropic",
     description: "Most capable, for complex tasks",
+    strengths: [
+      "Deep analysis",
+      "Long-form writing",
+      "Complex research",
+      "Brand audits",
+    ],
     maxContextTokens: 200_000,
     pricing: { inputPerMTok: 5, outputPerMTok: 25, cacheReadPerMTok: 0.5 },
   },
@@ -29,6 +36,12 @@ export const chatModels: ChatModel[] = [
     name: "Claude Sonnet 4.6",
     provider: "anthropic",
     description: "Balanced quality, speed, and cost",
+    strengths: [
+      "Balanced quality & speed",
+      "Code generation",
+      "Document creation",
+      "Web research",
+    ],
     maxContextTokens: 200_000,
     pricing: { inputPerMTok: 3, outputPerMTok: 15, cacheReadPerMTok: 0.3 },
   },
@@ -37,6 +50,12 @@ export const chatModels: ChatModel[] = [
     name: "Claude Haiku 4.5",
     provider: "anthropic",
     description: "Fast and lightweight",
+    strengths: [
+      "Fast responses",
+      "Quick lookups",
+      "Simple code",
+      "Brainstorming",
+    ],
     maxContextTokens: 200_000,
     pricing: { inputPerMTok: 1, outputPerMTok: 5, cacheReadPerMTok: 0.1 },
   },

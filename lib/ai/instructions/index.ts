@@ -37,17 +37,20 @@ function injectContext(
 
 const identityTemplate = loadInstruction("identity.md");
 const artifactsTemplate = loadInstruction("artifacts.md");
+const toolsTemplate = loadInstruction("tools.md");
 const codeTemplate = loadInstruction("code.md");
 const sheetTemplate = loadInstruction("sheet.md");
 const titleTemplate = loadInstruction("title.md");
 const summaryTemplate = loadInstruction("summary.md");
 const brandModeTemplate = loadInstruction("brand-mode.md");
+const updateDocumentTemplate = loadInstruction("update-document.md");
 
 // Model-specific guidance — keyed by model ID suffix for easy lookup.
 // Convention: model-<family>-<version>.md
 const modelGuidanceFiles: Record<string, string> = {
   "anthropic/claude-haiku-4-5": loadInstruction("model-haiku-4-5.md"),
   "anthropic/claude-sonnet-4-6": loadInstruction("model-sonnet-4-6.md"),
+  "anthropic/claude-opus-4-6": loadInstruction("model-opus-4-6.md"),
 };
 
 // ---------------------------------------------------------------------------
@@ -62,6 +65,9 @@ export const regularPrompt = injectContext(identityTemplate, {
     year: "numeric",
   }),
 });
+
+/** Strategic tool usage guidance. */
+export const toolsPrompt = toolsTemplate;
 
 /** Guidelines for artifact creation/update tools. */
 export const artifactsPrompt = artifactsTemplate;
@@ -129,7 +135,7 @@ export const systemPrompt = ({
   const requestPrompt = getRequestPromptFromHints(requestHints);
   const guidance = modelGuidanceFiles[selectedChatModel] ?? "";
   const brand = brandProfile ? `\n\n${brandContextPrompt(brandProfile)}` : "";
-  return `${regularPrompt}\n\n${requestPrompt}\n\n${artifactsPrompt}${guidance ? `\n\n${guidance}` : ""}${brand}`;
+  return `${regularPrompt}\n\n${requestPrompt}\n\n${toolsPrompt}\n\n${artifactsPrompt}${guidance ? `\n\n${guidance}` : ""}${brand}`;
 };
 
 // ---------------------------------------------------------------------------
@@ -140,13 +146,14 @@ export const updateDocumentPrompt = (
   currentContent: string | null,
   type: ArtifactKind
 ) => {
-  let mediaType = "document";
+  const mediaTypeMap: Record<string, string> = {
+    code: "code snippet",
+    sheet: "spreadsheet",
+  };
+  const mediaType = mediaTypeMap[type] ?? "document";
 
-  if (type === "code") {
-    mediaType = "code snippet";
-  } else if (type === "sheet") {
-    mediaType = "spreadsheet";
-  }
-
-  return `Improve the following contents of the ${mediaType} based on the given prompt.\n\n${currentContent}`;
+  return injectContext(updateDocumentTemplate, {
+    media_type: mediaType,
+    current_content: currentContent ?? "",
+  });
 };

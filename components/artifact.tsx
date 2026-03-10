@@ -533,5 +533,4 @@ export const Artifact = memo(PureArtifact, (prevProps, nextProps) => {
   }
 
   return true;
-
 });

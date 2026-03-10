@@ -14,9 +14,6 @@ import {
   PageNumber,
   Paragraph,
   ShadingType,
-  Tab,
-  TabStopPosition,
-  TabStopType,
   Table,
   TableCell,
   TableLayoutType,
@@ -375,7 +372,12 @@ export async function markdownToDocx(
     );
   }
 
+  let skipFirstH1 = !!title;
   for (const node of ast.children) {
+    if (skipFirstH1 && node.type === "heading" && node.depth === 1) {
+      skipFirstH1 = false;
+      continue;
+    }
     bodyChildren.push(...blockToDocx(node));
   }
 
@@ -385,34 +387,81 @@ export async function markdownToDocx(
   // Logo is 522x161px; scale to 14pt height → ~45pt width (matching PDF)
   const logoHeight = 14;
   const logoWidth = Math.round(logoHeight * (522 / 161));
-  // Right tab position: A4 content width in twips = 9026
-  const rightTabTwips = 9026;
+  // A4 content width in twips = 9026
+  const contentWidthTwips = 9026;
 
-  const headerChildren: (ImageRun | TextRun | Tab)[] = [];
+  const noBorder = {
+    style: BorderStyle.NONE,
+    size: 0,
+    color: "FFFFFF",
+  };
+  const noBorders = {
+    top: noBorder,
+    bottom: noBorder,
+    left: noBorder,
+    right: noBorder,
+  };
+
+  const logoCellChildren: (ImageRun | TextRun)[] = [];
   if (logo) {
-    headerChildren.push(
+    logoCellChildren.push(
       new ImageRun({
         data: logo,
         transformation: { width: logoWidth, height: logoHeight },
         type: "png",
       })
     );
+  } else {
+    logoCellChildren.push(
+      new TextRun({
+        text: "Knowsee",
+        bold: true,
+        font: BRAND.headingFont,
+        size: 16,
+        color: BRAND.purple.replace("#", ""),
+      })
+    );
   }
-  headerChildren.push(
-    new Tab(),
-    new TextRun({
-      text: docTitle,
-      font: BRAND.bodyFont,
-      size: 16,
-      color: "999999",
-    })
-  );
 
   const headerContent = new Header({
     children: [
+      new Table({
+        width: { size: contentWidthTwips, type: WidthType.DXA },
+        layout: TableLayoutType.FIXED,
+        rows: [
+          new TableRow({
+            children: [
+              new TableCell({
+                width: { size: Math.floor(contentWidthTwips / 2), type: WidthType.DXA },
+                borders: noBorders,
+                children: [
+                  new Paragraph({
+                    children: logoCellChildren,
+                  }),
+                ],
+              }),
+              new TableCell({
+                width: { size: Math.floor(contentWidthTwips / 2), type: WidthType.DXA },
+                borders: noBorders,
+                children: [
+                  new Paragraph({
+                    alignment: AlignmentType.RIGHT,
+                    children: [
+                      new TextRun({
+                        text: docTitle,
+                        font: BRAND.bodyFont,
+                        size: 16,
+                        color: "999999",
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
       new Paragraph({
-        tabStops: [{ type: TabStopType.RIGHT, position: rightTabTwips }],
-        spacing: { after: 120 },
         border: {
           bottom: {
             style: BorderStyle.SINGLE,
@@ -421,7 +470,8 @@ export async function markdownToDocx(
             space: 4,
           },
         },
-        children: headerChildren,
+        spacing: { after: 120 },
+        children: [],
       }),
     ],
   });

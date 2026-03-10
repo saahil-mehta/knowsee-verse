@@ -5,6 +5,7 @@ import { DocumentSkeleton } from "@/components/document-skeleton";
 import {
   ClockRewind,
   CopyIcon,
+  DownloadIcon,
   MessageIcon,
   PenIcon,
   RedoIcon,
@@ -142,6 +143,50 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
         navigator.clipboard.writeText(content);
         toast.success("Copied to clipboard!");
       },
+    },
+    {
+      icon: <DownloadIcon size={18} />,
+      label: "DOCX",
+      description: "Export as Word document",
+      onClick: async ({ documentId }) => {
+        const toastId = toast.loading("Generating DOCX...");
+        try {
+          const res = await fetch(
+            `/api/document/export?id=${documentId}&format=docx`
+          );
+          if (!res.ok) {
+            throw new Error("Export failed");
+          }
+          const { url } = await res.json();
+          window.open(url, "_blank");
+          toast.success("DOCX ready", { id: toastId });
+        } catch {
+          toast.error("Failed to export DOCX", { id: toastId });
+        }
+      },
+      isDisabled: ({ content }) => !content || content.trim().length === 0,
+    },
+    {
+      icon: <DownloadIcon size={18} />,
+      label: "PDF",
+      description: "Export as PDF",
+      onClick: async ({ documentId }) => {
+        const toastId = toast.loading("Generating PDF...");
+        try {
+          const res = await fetch(
+            `/api/document/export?id=${documentId}&format=pdf`
+          );
+          if (!res.ok) {
+            throw new Error("Export failed");
+          }
+          const { url } = await res.json();
+          window.open(url, "_blank");
+          toast.success("PDF ready", { id: toastId });
+        } catch {
+          toast.error("Failed to export PDF", { id: toastId });
+        }
+      },
+      isDisabled: ({ content }) => !content || content.trim().length === 0,
     },
   ],
   toolbar: [

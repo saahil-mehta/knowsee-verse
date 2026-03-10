@@ -1,21 +1,45 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import {
   AlignmentType,
   BorderStyle,
   Document,
   ExternalHyperlink,
+  Footer,
+  Header,
   HeadingLevel,
+  ImageRun,
   LevelFormat,
   Packer,
+  PageNumber,
   Paragraph,
   ShadingType,
+  Tab,
+  TabStopPosition,
+  TabStopType,
   Table,
   TableCell,
+  TableLayoutType,
   TableRow,
   TextRun,
   WidthType,
 } from "docx";
 import type { Content, PhrasingContent } from "mdast";
 import { BRAND } from "./brand";
+
+// Cache the wordmark logo buffer for DOCX headers
+let _logoDocx: Buffer | null = null;
+function getLogoForDocx(): Buffer | null {
+  if (_logoDocx) return _logoDocx;
+  try {
+    _logoDocx = readFileSync(
+      join(process.cwd(), "public", "knowsee-logo-light.png")
+    );
+    return _logoDocx;
+  } catch {
+    return null;
+  }
+}
 import { parseMarkdown } from "./parse-markdown";
 
 // ---------------------------------------------------------------------------
@@ -45,9 +69,18 @@ const HEADING_SIZES: Record<number, number> = {
 
 function phrasingToRuns(
   nodes: PhrasingContent[],
-  opts: { bold?: boolean; italics?: boolean } = {}
+  opts: {
+    bold?: boolean;
+    italics?: boolean;
+    color?: string;
+    font?: string;
+    size?: number;
+  } = {}
 ): (TextRun | ExternalHyperlink)[] {
   const runs: (TextRun | ExternalHyperlink)[] = [];
+  const runFont = opts.font ?? BRAND.bodyFont;
+  const runSize = opts.size ?? 22; // 11pt default
+  const runColor = opts.color ?? BRAND.darkGrey;
 
   for (const node of nodes) {
     switch (node.type) {
@@ -57,9 +90,9 @@ function phrasingToRuns(
             text: node.value,
             bold: opts.bold,
             italics: opts.italics,
-            font: BRAND.bodyFont,
-            size: 22, // 11pt
-            color: BRAND.darkGrey,
+            font: runFont,
+            size: runSize,
+            color: runColor,
           })
         );
         break;
@@ -139,47 +172,19 @@ function blockToDocx(node: Content, listLevel?: number): (Paragraph | Table)[] {
   switch (node.type) {
     case "heading": {
       const depth = Math.min(node.depth, 4);
+      const headingColor =
+        depth <= 2 ? BRAND.purple.replace("#", "") : BRAND.darkGrey;
+
       elements.push(
         new Paragraph({
           heading: HEADING_MAP[depth],
           spacing: { before: 240, after: 120 },
-          children: node.children.flatMap((child) =>
-            phrasingToRuns([child], {}).map((run) => {
-              if (run instanceof TextRun) {
-                return new TextRun({
-                  text: "value" in node ? String(node.value) : "",
-                  bold: depth <= 2,
-                  font: BRAND.headingFont,
-                  size: HEADING_SIZES[depth] ?? 22,
-                  color:
-                    depth <= 2 ? BRAND.purple.replace("#", "") : BRAND.darkGrey,
-                  ...("text" in run ? {} : {}),
-                });
-              }
-              return run;
-            })
-          ) as TextRun[],
-        })
-      );
-      // Re-do properly: just use phrasingToRuns with overridden style
-      elements.pop();
-      const headingRuns = phrasingToRuns(node.children).map((run) => {
-        if (run instanceof TextRun) {
-          return new TextRun({
-            ...extractTextRunProps(run),
+          children: phrasingToRuns(node.children, {
             bold: depth <= 2,
             font: BRAND.headingFont,
             size: HEADING_SIZES[depth] ?? 22,
-            color: depth <= 2 ? BRAND.purple.replace("#", "") : BRAND.darkGrey,
-          });
-        }
-        return run;
-      });
-      elements.push(
-        new Paragraph({
-          heading: HEADING_MAP[depth],
-          spacing: { before: 240, after: 120 },
-          children: headingRuns as TextRun[],
+            color: headingColor,
+          }) as TextRun[],
         })
       );
       break;
@@ -287,11 +292,16 @@ function blockToDocx(node: Content, listLevel?: number): (Paragraph | Table)[] {
 
     case "table":
       if (node.children.length > 0) {
+        // A4 content width in twips: 11906 - 2*1440 = 9026
+        const contentWidthTwips = 9026;
+        const colCount = node.children[0]?.children.length ?? 1;
+        const colWidthTwips = Math.floor(contentWidthTwips / colCount);
+
         const rows = node.children.map((row, rowIdx) => {
           const cells = row.children.map(
             (cell) =>
               new TableCell({
-                width: { size: 0, type: WidthType.AUTO },
+                width: { size: colWidthTwips, type: WidthType.DXA },
                 shading:
                   rowIdx === 0
                     ? {
@@ -299,20 +309,18 @@ function blockToDocx(node: Content, listLevel?: number): (Paragraph | Table)[] {
                         color: BRAND.purple.replace("#", ""),
                         fill: BRAND.purple.replace("#", ""),
                       }
-                    : undefined,
+                    : rowIdx % 2 === 0
+                      ? {
+                          type: ShadingType.SOLID,
+                          color: "F5F0FF",
+                          fill: "F5F0FF",
+                        }
+                      : undefined,
                 children: [
                   new Paragraph({
                     children: phrasingToRuns(cell.children, {
                       bold: rowIdx === 0,
-                    }).map((run) => {
-                      if (run instanceof TextRun && rowIdx === 0) {
-                        return new TextRun({
-                          ...extractTextRunProps(run),
-                          color: "ffffff",
-                          bold: true,
-                        });
-                      }
-                      return run;
+                      ...(rowIdx === 0 ? { color: "ffffff" } : {}),
                     }) as TextRun[],
                   }),
                 ],
@@ -322,7 +330,8 @@ function blockToDocx(node: Content, listLevel?: number): (Paragraph | Table)[] {
         });
         elements.push(
           new Table({
-            width: { size: 100, type: WidthType.PERCENTAGE },
+            width: { size: contentWidthTwips, type: WidthType.DXA },
+            layout: TableLayoutType.FIXED,
             rows,
           })
         );
@@ -334,15 +343,6 @@ function blockToDocx(node: Content, listLevel?: number): (Paragraph | Table)[] {
   }
 
   return elements;
-}
-
-// Helper to extract text run properties for re-creation
-// docx TextRun doesn't expose props directly, so we track through our own construction
-function extractTextRunProps(_run: TextRun): Record<string, unknown> {
-  // TextRun is immutable in docx lib — we can't extract props after construction.
-  // Instead, we re-derive from the AST. This helper returns an empty object;
-  // callers override the relevant properties explicitly.
-  return {};
 }
 
 // ---------------------------------------------------------------------------
@@ -378,6 +378,83 @@ export async function markdownToDocx(
   for (const node of ast.children) {
     bodyChildren.push(...blockToDocx(node));
   }
+
+  const docTitle = title ?? "Document";
+
+  const logo = getLogoForDocx();
+  // Logo is 522x161px; scale to 14pt height → ~45pt width (matching PDF)
+  const logoHeight = 14;
+  const logoWidth = Math.round(logoHeight * (522 / 161));
+  // Right tab position: A4 content width in twips = 9026
+  const rightTabTwips = 9026;
+
+  const headerChildren: (ImageRun | TextRun | Tab)[] = [];
+  if (logo) {
+    headerChildren.push(
+      new ImageRun({
+        data: logo,
+        transformation: { width: logoWidth, height: logoHeight },
+        type: "png",
+      })
+    );
+  }
+  headerChildren.push(
+    new Tab(),
+    new TextRun({
+      text: docTitle,
+      font: BRAND.bodyFont,
+      size: 16,
+      color: "999999",
+    })
+  );
+
+  const headerContent = new Header({
+    children: [
+      new Paragraph({
+        tabStops: [{ type: TabStopType.RIGHT, position: rightTabTwips }],
+        spacing: { after: 120 },
+        border: {
+          bottom: {
+            style: BorderStyle.SINGLE,
+            size: 4,
+            color: BRAND.purple.replace("#", ""),
+            space: 4,
+          },
+        },
+        children: headerChildren,
+      }),
+    ],
+  });
+
+  const footerContent = new Footer({
+    children: [
+      new Paragraph({
+        alignment: AlignmentType.CENTER,
+        border: {
+          top: {
+            style: BorderStyle.SINGLE,
+            size: 2,
+            color: "cccccc",
+            space: 4,
+          },
+        },
+        children: [
+          new TextRun({
+            text: "Knowsee  |  Page ",
+            font: BRAND.bodyFont,
+            size: 16,
+            color: "999999",
+          }),
+          new TextRun({
+            children: [PageNumber.CURRENT],
+            font: BRAND.bodyFont,
+            size: 16,
+            color: "999999",
+          }),
+        ],
+      }),
+    ],
+  });
 
   const doc = new Document({
     numbering: {
@@ -460,6 +537,8 @@ export async function markdownToDocx(
             },
           },
         },
+        headers: { default: headerContent },
+        footers: { default: footerContent },
         children: bodyChildren,
       },
     ],

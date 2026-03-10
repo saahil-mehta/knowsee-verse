@@ -1,22 +1,51 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import type { Content, PhrasingContent } from "mdast";
 import PDFDocument from "pdfkit";
 import { BRAND } from "./brand";
 import { parseMarkdown } from "./parse-markdown";
 
+// Full wordmark logo (mark + "Knowsee" text) — cached at module level
+let _logoFull: Buffer | null = null;
+function getLogoFull(): Buffer | null {
+  if (_logoFull) {
+    return _logoFull;
+  }
+  try {
+    _logoFull = readFileSync(
+      join(process.cwd(), "public", "knowsee-logo-light.png")
+    );
+    return _logoFull;
+  } catch {
+    return null;
+  }
+}
+
 // ---------------------------------------------------------------------------
-// Markdown → PDF converter using PDFKit
+// Markdown → PDF converter — matches Knowsee brand style from md_to_docx.py
 // ---------------------------------------------------------------------------
 
+// Font sizes (tuned for PDF — slightly smaller than DOCX equivalents)
 const HEADING_SIZES: Record<number, number> = {
-  1: 22,
-  2: 18,
-  3: 15,
-  4: 13,
+  1: 18, // H1: section titles (DOCX=26pt → PDF=18pt)
+  2: 14, // H2: subsections
+  3: 11, // H3: sub-subsections
+  4: 10, // H4: minor headings
 };
 
-const BODY_SIZE = 11;
-const CODE_SIZE = 9;
-const LINE_GAP = 4;
+const BODY_SIZE = 10;
+const CODE_SIZE = 8.5;
+const TABLE_FONT_SIZE = 9;
+const HEADER_FONT_SIZE = 7.5;
+const FOOTER_FONT_SIZE = 7.5;
+const LINE_GAP = 3;
+const BULLET_INDENT = 24;
+
+// Derived layout constants
+const CONTENT_WIDTH =
+  BRAND.pageSize.width - BRAND.margin.left - BRAND.margin.right;
+const FOOTER_Y = BRAND.pageSize.height - BRAND.margin.bottom + 20;
+const HEADER_Y = BRAND.margin.top - 30;
 
 type InlineSegment = {
   text: string;
@@ -87,7 +116,21 @@ function phrasingToSegments(
 }
 
 // ---------------------------------------------------------------------------
-// Render segments to PDF (inline content on a single conceptual line)
+// Flatten phrasing nodes to plain text (for table cells, headers)
+// ---------------------------------------------------------------------------
+
+function phrasingToText(nodes: PhrasingContent[]): string {
+  return nodes
+    .map((n) => {
+      if ("value" in n && typeof n.value === "string") return n.value;
+      if ("children" in n) return phrasingToText(n.children as PhrasingContent[]);
+      return "";
+    })
+    .join("");
+}
+
+// ---------------------------------------------------------------------------
+// Render segments to PDF (inline content with font switching)
 // ---------------------------------------------------------------------------
 
 function renderSegments(
@@ -111,7 +154,7 @@ function renderSegments(
 
     if (seg.mono) {
       fontName = "Courier";
-      size = CODE_SIZE;
+      size = Math.max(fontSize - 1, CODE_SIZE);
     } else if (seg.bold && seg.italic) {
       fontName = "Helvetica-BoldOblique";
     } else if (seg.bold) {
@@ -140,9 +183,18 @@ function renderSegments(
     }
   }
 
-  // If no segments, ensure we still advance
   if (segments.length === 0) {
     doc.text("", { lineGap: LINE_GAP });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Check if we need a page break before content of given height
+// ---------------------------------------------------------------------------
+
+function ensureSpace(doc: InstanceType<typeof PDFDocument>, height: number) {
+  if (doc.y + height > BRAND.pageSize.height - BRAND.margin.bottom - 20) {
+    doc.addPage();
   }
 }
 
@@ -153,19 +205,43 @@ function renderSegments(
 function renderBlock(
   doc: InstanceType<typeof PDFDocument>,
   node: Content,
-  _listCounter: { ordered: number },
+  _ctx: { skipFirstH1?: boolean },
   listLevel = 0
-) {
+): boolean {
+  // Return true if we skipped a node (for the skipFirstH1 logic)
   switch (node.type) {
     case "heading": {
       const depth = Math.min(node.depth, 4);
+
+      // Skip first H1 if title is already rendered
+      if (depth === 1 && _ctx.skipFirstH1) {
+        _ctx.skipFirstH1 = false;
+        return true;
+      }
+
       const size = HEADING_SIZES[depth] ?? BODY_SIZE;
-      doc.moveDown(0.8);
+      ensureSpace(doc, size + 20);
+
+      // H1: purple accent rule above
+      if (depth === 1) {
+        doc.moveDown(1.2);
+        doc
+          .strokeColor(BRAND.purple)
+          .lineWidth(1.5)
+          .moveTo(BRAND.margin.left, doc.y)
+          .lineTo(BRAND.margin.left + CONTENT_WIDTH, doc.y)
+          .stroke();
+        doc.moveDown(0.5);
+      } else if (depth === 2) {
+        doc.moveDown(0.8);
+      } else {
+        doc.moveDown(0.5);
+      }
 
       const segments = phrasingToSegments(node.children);
       for (const seg of segments) {
         seg.bold = true;
-        seg.color = depth <= 2 ? BRAND.purple : BRAND.darkGrey;
+        seg.color = depth === 1 || depth === 3 ? BRAND.purple : BRAND.darkGrey;
       }
 
       renderSegments(doc, segments, { fontSize: size });
@@ -176,101 +252,100 @@ function renderBlock(
     case "paragraph": {
       const segments = phrasingToSegments(node.children);
       renderSegments(doc, segments);
-      doc.moveDown(0.5);
+      doc.moveDown(0.4);
       break;
     }
 
     case "list": {
-      const counter = { ordered: 0 };
+      let counter = 0;
       for (const item of node.children) {
-        counter.ordered++;
+        counter++;
         for (const child of item.children) {
           if (child.type === "paragraph") {
-            const indent = 20 * (listLevel + 1);
-            const bullet = node.ordered ? `${counter.ordered}. ` : "\u2022 ";
+            const indent = BULLET_INDENT * (listLevel + 1);
+            const bullet = node.ordered ? `${counter}. ` : "\u2022  ";
             const segments = phrasingToSegments(child.children);
             segments.unshift({ text: bullet });
             renderSegments(doc, segments, { indent });
-            doc.moveDown(0.2);
+            doc.moveDown(0.15);
           } else if (child.type === "list") {
-            renderBlock(doc, child, { ordered: 0 }, listLevel + 1);
+            renderBlock(doc, child, _ctx, listLevel + 1);
           } else {
-            renderBlock(doc, child, counter, listLevel);
+            renderBlock(doc, child, _ctx, listLevel);
           }
         }
       }
-      doc.moveDown(0.3);
+      doc.moveDown(0.25);
       break;
     }
 
     case "code": {
-      doc.moveDown(0.3);
+      doc.moveDown(0.2);
 
-      // Background rectangle for code block
       const codeX = doc.x;
-      const codeWidth =
-        BRAND.pageSize.width - BRAND.margin.left - BRAND.margin.right;
-
-      // Measure height first (set font before measuring)
       doc.font("Courier").fontSize(CODE_SIZE);
       const codeHeight = doc.heightOfString(node.value, {
-        width: codeWidth - 16,
+        width: CONTENT_WIDTH - 16,
         lineGap: LINE_GAP,
       });
 
-      // Check for page break
-      if (
-        doc.y + codeHeight + 16 >
-        BRAND.pageSize.height - BRAND.margin.bottom
-      ) {
-        doc.addPage();
-      }
+      ensureSpace(doc, codeHeight + 16);
 
       const rectY = doc.y;
-      doc.rect(codeX, rectY, codeWidth, codeHeight + 16).fill(BRAND.lightGrey);
+      doc
+        .rect(codeX, rectY, CONTENT_WIDTH, codeHeight + 16)
+        .fill(BRAND.lightGrey);
 
       doc
         .font("Courier")
         .fontSize(CODE_SIZE)
         .fillColor(BRAND.darkGrey)
         .text(node.value, codeX + 8, rectY + 8, {
-          width: codeWidth - 16,
+          width: CONTENT_WIDTH - 16,
           lineGap: LINE_GAP,
         });
 
-      doc.moveDown(0.5);
+      doc.moveDown(0.4);
       break;
     }
 
     case "blockquote": {
       const savedX = doc.x;
       const barX = doc.x;
-      doc.x = barX + 16;
 
       for (const child of node.children) {
-        // Draw left bar
         const barY = doc.y;
-        doc.rect(barX, barY, 3, 14).fill(BRAND.purple);
+        // Purple left bar
+        doc.rect(barX, barY, 2.5, 14).fill(BRAND.purple);
 
+        doc.x = barX + 14;
         doc.fillColor(BRAND.darkGrey);
-        renderBlock(doc, child, { ordered: 0 });
+
+        if (child.type === "paragraph") {
+          const segments = phrasingToSegments(child.children);
+          for (const seg of segments) {
+            seg.italic = true;
+          }
+          renderSegments(doc, segments);
+        } else {
+          renderBlock(doc, child, _ctx);
+        }
       }
 
       doc.x = savedX;
+      doc.moveDown(0.2);
       break;
     }
 
     case "thematicBreak": {
-      doc.moveDown(0.5);
-      const ruleWidth =
-        BRAND.pageSize.width - BRAND.margin.left - BRAND.margin.right;
+      doc.moveDown(0.4);
       doc
-        .strokeColor("#cccccc")
-        .lineWidth(0.5)
-        .moveTo(doc.x, doc.y)
-        .lineTo(doc.x + ruleWidth, doc.y)
+        .strokeColor(BRAND.purple)
+        .lineWidth(0.75)
+        .moveTo(BRAND.margin.left, doc.y)
+        .lineTo(BRAND.margin.left + CONTENT_WIDTH, doc.y)
         .stroke();
-      doc.moveDown(0.5);
+      doc.moveDown(0.4);
       break;
     }
 
@@ -280,53 +355,119 @@ function renderBlock(
       }
 
       doc.moveDown(0.3);
-      const tableWidth =
-        BRAND.pageSize.width - BRAND.margin.left - BRAND.margin.right;
       const colCount = node.children[0]?.children.length ?? 1;
-      const colWidth = tableWidth / colCount;
-      const cellPadding = 4;
+      const colWidth = CONTENT_WIDTH / colCount;
+      const cellPad = 5;
+      const rowHeight = 22;
+
+      ensureSpace(doc, rowHeight * Math.min(node.children.length, 4));
 
       for (let rowIdx = 0; rowIdx < node.children.length; rowIdx++) {
         const row = node.children[rowIdx];
         const isHeader = rowIdx === 0;
-        const rowY = doc.y;
 
-        // Draw row background
+        ensureSpace(doc, rowHeight);
+
+        // Row background
         if (isHeader) {
-          doc.rect(BRAND.margin.left, rowY, tableWidth, 20).fill(BRAND.purple);
+          doc
+            .rect(BRAND.margin.left, doc.y, CONTENT_WIDTH, rowHeight)
+            .fill(BRAND.purple);
         } else if (rowIdx % 2 === 0) {
           doc
-            .rect(BRAND.margin.left, rowY, tableWidth, 20)
-            .fill(BRAND.lightGrey);
+            .rect(BRAND.margin.left, doc.y, CONTENT_WIDTH, rowHeight)
+            .fill("#F5F0FF");
         }
 
         // Render cells
+        const cellY = doc.y;
         for (let colIdx = 0; colIdx < row.children.length; colIdx++) {
           const cell = row.children[colIdx];
-          const cellX = BRAND.margin.left + colIdx * colWidth + cellPadding;
-          const text = cell.children
-            .map((c: PhrasingContent) => ("value" in c ? c.value : ""))
-            .join("");
+          const cellX = BRAND.margin.left + colIdx * colWidth + cellPad;
+          const text = phrasingToText(cell.children);
 
           doc
             .font(isHeader ? "Helvetica-Bold" : "Helvetica")
-            .fontSize(CODE_SIZE)
+            .fontSize(TABLE_FONT_SIZE)
             .fillColor(isHeader ? BRAND.white : BRAND.darkGrey)
-            .text(text, cellX, rowY + 4, {
-              width: colWidth - cellPadding * 2,
+            .text(text, cellX, cellY + 5, {
+              width: colWidth - cellPad * 2,
               lineBreak: false,
             });
         }
 
-        doc.y = rowY + 20;
+        doc.y = cellY + rowHeight;
       }
 
-      doc.moveDown(0.5);
+      // Reset X to left margin (cells leave it at last cell position)
+      doc.x = BRAND.margin.left;
+      doc.moveDown(0.4);
       break;
     }
 
     default:
       break;
+  }
+
+  return false;
+}
+
+// ---------------------------------------------------------------------------
+// Add header and footer to all buffered pages
+// ---------------------------------------------------------------------------
+
+function addHeaderFooter(doc: InstanceType<typeof PDFDocument>, title: string) {
+  const range = doc.bufferedPageRange();
+  const logo = getLogoFull();
+
+  for (let i = 0; i < range.count; i++) {
+    doc.switchToPage(i + range.start);
+
+    // --- Header: Knowsee logo (left) + title (right) ---
+    if (logo) {
+      doc.image(logo, BRAND.margin.left, HEADER_Y - 2, { height: 14 });
+    }
+
+    doc
+      .font("Helvetica")
+      .fontSize(HEADER_FONT_SIZE)
+      .fillColor("#999999")
+      .text(title, BRAND.margin.left, HEADER_Y, {
+        width: CONTENT_WIDTH,
+        align: "right",
+        lineBreak: false,
+      });
+
+    // Header bottom rule
+    const headerRuleY = HEADER_Y + 14;
+    doc
+      .strokeColor(BRAND.purple)
+      .lineWidth(0.5)
+      .moveTo(BRAND.margin.left, headerRuleY)
+      .lineTo(BRAND.margin.left + CONTENT_WIDTH, headerRuleY)
+      .stroke();
+
+    // --- Footer: "Knowsee | Page X" centred ---
+    // Temporarily zero the bottom margin so PDFKit doesn't auto-paginate
+    // when writing text below the content area.
+    const savedBottom = doc.page.margins.bottom;
+    doc.page.margins.bottom = 0;
+
+    doc
+      .font("Helvetica")
+      .fontSize(FOOTER_FONT_SIZE)
+      .fillColor("#999999")
+      .text(`Knowsee  |  Page ${i + 1}`, BRAND.margin.left, FOOTER_Y, {
+        width: CONTENT_WIDTH,
+        align: "center",
+        lineBreak: false,
+      });
+
+    doc.page.margins.bottom = savedBottom;
+
+    // Reset cursor to content area
+    doc.x = BRAND.margin.left;
+    doc.y = BRAND.margin.top;
   }
 }
 
@@ -359,41 +500,27 @@ export function markdownToPdf(
     doc.on("end", () => resolve(Buffer.concat(chunks)));
     doc.on("error", reject);
 
-    // Title
+    const ast = parseMarkdown(markdown);
+
+    // Render title from param as the document heading, then skip the
+    // first H1 in the markdown to avoid duplication.
+    const ctx = { skipFirstH1: !!title };
+
     if (title) {
       doc
         .font("Helvetica-Bold")
-        .fontSize(24)
+        .fontSize(HEADING_SIZES[1])
         .fillColor(BRAND.purple)
-        .text(title, { lineGap: 8 });
-      doc.moveDown(1);
+        .text(title, { lineGap: LINE_GAP });
+      doc.moveDown(0.5);
     }
 
-    // Render AST
-    const ast = parseMarkdown(markdown);
     for (const node of ast.children) {
-      renderBlock(doc, node, { ordered: 0 });
+      renderBlock(doc, node, ctx);
     }
 
-    // Page numbers in footer
-    const pageCount = doc.bufferedPageRange().count;
-    for (let i = 0; i < pageCount; i++) {
-      doc.switchToPage(i);
-      doc
-        .font("Helvetica")
-        .fontSize(8)
-        .fillColor("#999999")
-        .text(
-          `${i + 1} / ${pageCount}`,
-          BRAND.margin.left,
-          BRAND.pageSize.height - 50,
-          {
-            width:
-              BRAND.pageSize.width - BRAND.margin.left - BRAND.margin.right,
-            align: "center",
-          }
-        );
-    }
+    // Add headers and footers to all pages (using buffered pages)
+    addHeaderFooter(doc, title ?? "Document");
 
     doc.end();
   });

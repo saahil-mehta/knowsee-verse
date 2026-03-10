@@ -18,3 +18,17 @@ db-migrate:
 
 db-reset:
 	pnpm drizzle-kit push
+
+# ─── Quality ───
+.PHONY: lint format test check
+
+lint:
+	pnpm lint
+
+format:
+	pnpm format
+
+test:
+	pnpm test
+
+check: lint test

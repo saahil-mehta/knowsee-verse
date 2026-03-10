@@ -190,10 +190,8 @@ export async function POST(request: Request) {
           data: {
             inputTokens: lastStepUsage.inputTokens ?? 0,
             outputTokens: lastStepUsage.outputTokens ?? 0,
-            reasoningTokens:
-              lastStepUsage.outputTokenDetails?.reasoningTokens,
-            cachedInputTokens:
-              lastStepUsage.inputTokenDetails?.cacheReadTokens,
+            reasoningTokens: lastStepUsage.outputTokenDetails?.reasoningTokens,
+            cachedInputTokens: lastStepUsage.inputTokenDetails?.cacheReadTokens,
             totalInputTokens: totalUsage.inputTokens ?? 0,
             totalOutputTokens: totalUsage.outputTokens ?? 0,
             totalCachedInputTokens:

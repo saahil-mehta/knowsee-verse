@@ -355,107 +355,107 @@ function PureMultimodalInput({
 
         <PromptInput
           className="relative z-10 rounded-2xl border border-border bg-background p-3 shadow-xs backdrop-blur-sm transition-all duration-300 ease-out focus-within:border-muted-foreground/40 focus-within:shadow-[0_0_16px_rgba(98,20,217,0.15),0_0_40px_rgba(98,20,217,0.08)]"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!input.trim() && attachments.length === 0) {
-            return;
-          }
-          if (status !== "ready") {
-            toast.error("Please wait for the model to finish its response!");
-          } else {
-            submitForm();
-          }
-        }}
-      >
-        {(attachments.length > 0 || uploadQueue.length > 0) && (
-          <div
-            className="flex flex-row items-end gap-2 overflow-x-scroll"
-            data-testid="attachments-preview"
-          >
-            {attachments.map((attachment) => (
-              <PreviewAttachment
-                attachment={attachment}
-                key={attachment.url}
-                onRemove={() => {
-                  setAttachments((currentAttachments) =>
-                    currentAttachments.filter((a) => a.url !== attachment.url)
-                  );
-                  if (fileInputRef.current) {
-                    fileInputRef.current.value = "";
-                  }
-                }}
-              />
-            ))}
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!input.trim() && attachments.length === 0) {
+              return;
+            }
+            if (status !== "ready") {
+              toast.error("Please wait for the model to finish its response!");
+            } else {
+              submitForm();
+            }
+          }}
+        >
+          {(attachments.length > 0 || uploadQueue.length > 0) && (
+            <div
+              className="flex flex-row items-end gap-2 overflow-x-scroll"
+              data-testid="attachments-preview"
+            >
+              {attachments.map((attachment) => (
+                <PreviewAttachment
+                  attachment={attachment}
+                  key={attachment.url}
+                  onRemove={() => {
+                    setAttachments((currentAttachments) =>
+                      currentAttachments.filter((a) => a.url !== attachment.url)
+                    );
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = "";
+                    }
+                  }}
+                />
+              ))}
 
-            {uploadQueue.map((filename) => (
-              <PreviewAttachment
-                attachment={{
-                  url: "",
-                  name: filename,
-                  contentType: "",
-                }}
-                isUploading={true}
-                key={filename}
-              />
-            ))}
-          </div>
-        )}
-        <div className="flex flex-row items-start gap-1 sm:gap-2">
-          <PromptInputTextarea
-            className="grow resize-none border-0! border-none! bg-transparent p-2 text-base outline-none ring-0 [-ms-overflow-style:none] [scrollbar-width:none] placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-scrollbar]:hidden"
-            data-testid="multimodal-input"
-            disableAutoResize={true}
-            maxHeight={200}
-            minHeight={44}
-            onChange={handleInput}
-            placeholder="Send a message..."
-            ref={textareaRef}
-            rows={1}
-            value={input}
-          />
-        </div>
-        <PromptInputToolbar className="border-top-0! border-t-0! p-0 shadow-none dark:border-0 dark:border-transparent!">
-          <PromptInputTools className="gap-0 sm:gap-0.5">
-            <AttachmentsButton fileInputRef={fileInputRef} status={status} />
-            <ModelSelectorCompact
-              disabled={messages.length > 0}
-              onModelChange={onModelChange}
-              selectedModelId={selectedModelId}
+              {uploadQueue.map((filename) => (
+                <PreviewAttachment
+                  attachment={{
+                    url: "",
+                    name: filename,
+                    contentType: "",
+                  }}
+                  isUploading={true}
+                  key={filename}
+                />
+              ))}
+            </div>
+          )}
+          <div className="flex flex-row items-start gap-1 sm:gap-2">
+            <PromptInputTextarea
+              className="grow resize-none border-0! border-none! bg-transparent p-2 text-base outline-none ring-0 [-ms-overflow-style:none] [scrollbar-width:none] placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-scrollbar]:hidden"
+              data-testid="multimodal-input"
+              disableAutoResize={true}
+              maxHeight={200}
+              minHeight={44}
+              onChange={handleInput}
+              placeholder="Send a message..."
+              ref={textareaRef}
+              rows={1}
+              value={input}
             />
-          </PromptInputTools>
-
-          <div className="flex items-center gap-1.5">
-            {(() => {
-              const model =
-                chatModels.find((m) => m.id === selectedModelId) ??
-                chatModels[0];
-              return (
-                <ContextIndicator
-                  maxContextTokens={model.maxContextTokens}
-                  messageCount={messages.length}
-                  modelName={model.name}
-                  pricing={model.pricing}
-                  usage={usage}
-                />
-              );
-            })()}
-            {status === "submitted" ? (
-              <StopButton setMessages={setMessages} stop={stop} />
-            ) : (
-              <PromptInputSubmit
-                className="group size-8 rounded-full bg-primary text-primary-foreground transition-all duration-200 ease-out hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:scale-[0.95] disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
-                data-testid="send-button"
-                disabled={!input.trim() || uploadQueue.length > 0}
-                status={status}
-              >
-                <ArrowUpIcon
-                  className="transition-transform duration-200 group-hover:-translate-y-0.5"
-                  size={14}
-                />
-              </PromptInputSubmit>
-            )}
           </div>
-        </PromptInputToolbar>
+          <PromptInputToolbar className="border-top-0! border-t-0! p-0 shadow-none dark:border-0 dark:border-transparent!">
+            <PromptInputTools className="gap-0 sm:gap-0.5">
+              <AttachmentsButton fileInputRef={fileInputRef} status={status} />
+              <ModelSelectorCompact
+                disabled={messages.length > 0}
+                onModelChange={onModelChange}
+                selectedModelId={selectedModelId}
+              />
+            </PromptInputTools>
+
+            <div className="flex items-center gap-1.5">
+              {(() => {
+                const model =
+                  chatModels.find((m) => m.id === selectedModelId) ??
+                  chatModels[0];
+                return (
+                  <ContextIndicator
+                    maxContextTokens={model.maxContextTokens}
+                    messageCount={messages.length}
+                    modelName={model.name}
+                    pricing={model.pricing}
+                    usage={usage}
+                  />
+                );
+              })()}
+              {status === "submitted" ? (
+                <StopButton setMessages={setMessages} stop={stop} />
+              ) : (
+                <PromptInputSubmit
+                  className="group size-8 rounded-full bg-primary text-primary-foreground transition-all duration-200 ease-out hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:scale-[0.95] disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+                  data-testid="send-button"
+                  disabled={!input.trim() || uploadQueue.length > 0}
+                  status={status}
+                >
+                  <ArrowUpIcon
+                    className="transition-transform duration-200 group-hover:-translate-y-0.5"
+                    size={14}
+                  />
+                </PromptInputSubmit>
+              )}
+            </div>
+          </PromptInputToolbar>
         </PromptInput>
       </div>
     </div>

@@ -13,7 +13,10 @@ type CreateDocumentProps = {
   dataStream: UIMessageStreamWriter<ChatMessage>;
 };
 
-export const createDocument = ({ session, dataStream }: CreateDocumentProps) => {
+export const createDocument = ({
+  session,
+  dataStream,
+}: CreateDocumentProps) => {
   let createdDocumentId: string | null = null;
 
   return tool({

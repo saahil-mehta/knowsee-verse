@@ -89,6 +89,7 @@ export async function POST(request: Request) {
         title: "New chat",
         visibility: selectedVisibilityType,
         projectId: requestBody.projectId,
+        modelId: selectedChatModel,
       });
       titlePromise = generateTitleFromUserMessage({ message });
     }
@@ -180,14 +181,23 @@ export async function POST(request: Request) {
           result.toUIMessageStream({ sendReasoning: true, sendSources: true })
         );
 
-        const totalUsage = await result.totalUsage;
+        const [lastStepUsage, totalUsage] = await Promise.all([
+          result.usage,
+          result.totalUsage,
+        ]);
         dataStream.write({
           type: "data-usage",
           data: {
-            inputTokens: totalUsage.inputTokens ?? 0,
-            outputTokens: totalUsage.outputTokens ?? 0,
-            reasoningTokens: totalUsage.outputTokenDetails?.reasoningTokens,
-            cachedInputTokens: totalUsage.inputTokenDetails?.cacheReadTokens,
+            inputTokens: lastStepUsage.inputTokens ?? 0,
+            outputTokens: lastStepUsage.outputTokens ?? 0,
+            reasoningTokens:
+              lastStepUsage.outputTokenDetails?.reasoningTokens,
+            cachedInputTokens:
+              lastStepUsage.inputTokenDetails?.cacheReadTokens,
+            totalInputTokens: totalUsage.inputTokens ?? 0,
+            totalOutputTokens: totalUsage.outputTokens ?? 0,
+            totalCachedInputTokens:
+              totalUsage.inputTokenDetails?.cacheReadTokens,
           },
         });
 

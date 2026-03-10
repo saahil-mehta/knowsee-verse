@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     sourceChatId,
     branchFromMessageId,
     focusPrompt,
-    selectedChatModel: _selectedChatModel,
+    selectedChatModel,
     visibility,
   } = parsed.data;
 
@@ -112,6 +112,8 @@ export async function POST(request: Request) {
     title,
     visibility,
     parentChatId: sourceChatId,
+    projectId: sourceChat.projectId ?? undefined,
+    modelId: selectedChatModel,
   });
 
   // Save summary as first assistant message

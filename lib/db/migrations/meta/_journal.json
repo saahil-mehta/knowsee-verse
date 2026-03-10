@@ -22,6 +22,13 @@
       "when": 1773079991955,
       "tag": "0002_amazing_demogoblin",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1773147637388,
+      "tag": "0003_good_thaddeus_ross",
+      "breakpoints": true
     }
   ]
 }

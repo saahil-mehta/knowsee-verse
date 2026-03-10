@@ -130,6 +130,7 @@ export const chat = pgTable(
       .default("private"),
     parentChatId: uuid("parentChatId"),
     projectId: uuid("projectId"),
+    modelId: varchar("modelId", { length: 128 }),
   },
   (table) => [
     foreignKey({

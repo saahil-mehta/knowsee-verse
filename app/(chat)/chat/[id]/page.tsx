@@ -71,32 +71,19 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
     }
   }
 
+  // Prefer the model stored on the chat; fall back to cookie then default
   const cookieStore = await cookies();
   const chatModelFromCookie = cookieStore.get("chat-model");
 
-  const isValidModel =
-    chatModelFromCookie &&
-    chatModels.some((m) => m.id === chatModelFromCookie.value);
-
-  if (!isValidModel) {
-    return (
-      <>
-        <Chat
-          autoResume={true}
-          chatTitle={chat.title}
-          id={chat.id}
-          initialChatModel={DEFAULT_CHAT_MODEL}
-          initialMessages={uiMessages}
-          initialVisibilityType={chat.visibility}
-          isReadonly={session?.user?.id !== chat.userId}
-          parentChat={parentChat}
-          projectContext={projectContext}
-          projectId={chat.projectId ?? undefined}
-        />
-        <DataStreamHandler />
-      </>
-    );
-  }
+  const resolvedModel =
+    (chat.modelId && chatModels.some((m) => m.id === chat.modelId)
+      ? chat.modelId
+      : null) ??
+    (chatModelFromCookie &&
+    chatModels.some((m) => m.id === chatModelFromCookie.value)
+      ? chatModelFromCookie.value
+      : null) ??
+    DEFAULT_CHAT_MODEL;
 
   return (
     <>
@@ -104,7 +91,7 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
         autoResume={true}
         chatTitle={chat.title}
         id={chat.id}
-        initialChatModel={chatModelFromCookie.value}
+        initialChatModel={resolvedModel}
         initialMessages={uiMessages}
         initialVisibilityType={chat.visibility}
         isReadonly={session?.user?.id !== chat.userId}

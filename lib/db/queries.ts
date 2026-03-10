@@ -44,6 +44,7 @@ export async function saveChat({
   visibility,
   parentChatId,
   projectId,
+  modelId,
 }: {
   id: string;
   userId: string;
@@ -51,6 +52,7 @@ export async function saveChat({
   visibility: VisibilityType;
   parentChatId?: string;
   projectId?: string;
+  modelId?: string;
 }) {
   try {
     return await db.insert(chat).values({
@@ -61,6 +63,7 @@ export async function saveChat({
       visibility,
       parentChatId,
       projectId,
+      modelId,
     });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to save chat");

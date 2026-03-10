@@ -615,7 +615,9 @@ export async function getProjectById({ id }: { id: string }) {
       .select()
       .from(project)
       .where(eq(project.id, id));
-    if (!selected) return null;
+    if (!selected) {
+      return null;
+    }
     return selected;
   } catch (_error) {
     throw new ChatSDKError(
@@ -717,7 +719,9 @@ export async function getBrandProfileByProjectId({
       .select()
       .from(brandProfile)
       .where(eq(brandProfile.projectId, pid));
-    if (!selected) return null;
+    if (!selected) {
+      return null;
+    }
     return selected;
   } catch (_error) {
     throw new ChatSDKError(
@@ -773,7 +777,9 @@ export async function getProjectWithBrandProfile({
       .leftJoin(brandProfile, eq(brandProfile.projectId, project.id))
       .where(eq(project.id, pid));
 
-    if (!row) return null;
+    if (!row) {
+      return null;
+    }
     return {
       project: row.project,
       brandProfile: row.brandProfile as BrandProfile | null,

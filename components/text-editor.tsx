@@ -41,6 +41,7 @@ function PureEditor({
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
   useEffect(() => {
     if (containerRef.current && !editorRef.current) {
       const state = EditorState.create({
@@ -72,8 +73,6 @@ function PureEditor({
         editorRef.current = null;
       }
     };
-    // NOTE: we only want to run this effect once
-    // eslint-disable-next-line
   }, []);
 
   useEffect(() => {

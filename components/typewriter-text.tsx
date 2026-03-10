@@ -44,7 +44,10 @@ function renderWithBranding(text: string): React.ReactNode {
     }
 
     return (
-      <span key={`${lineIndex}-${line}`}>
+      <span
+        // biome-ignore lint/suspicious/noArrayIndexKey: lines can repeat so index is needed
+        key={`${lineIndex}-${line}`}
+      >
         {lineIndex > 0 && <br />}
         {content}
       </span>

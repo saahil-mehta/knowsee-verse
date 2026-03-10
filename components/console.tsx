@@ -164,7 +164,10 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
                 <div className="flex w-full flex-col gap-2 overflow-x-scroll text-zinc-900 dark:text-zinc-50">
                   {consoleOutput.contents.map((content, contentIndex) =>
                     content.type === "image" ? (
-                      <picture key={`${consoleOutput.id}-${contentIndex}`}>
+                      <picture
+                        // biome-ignore lint/suspicious/noArrayIndexKey: content items lack stable ids
+                        key={`${consoleOutput.id}-${contentIndex}`}
+                      >
                         <img
                           alt="output"
                           className="w-full max-w-(--breakpoint-toast-mobile) rounded-md"
@@ -174,6 +177,7 @@ export function Console({ consoleOutputs, setConsoleOutputs }: ConsoleProps) {
                     ) : (
                       <div
                         className="w-full whitespace-pre-line break-words"
+                        // biome-ignore lint/suspicious/noArrayIndexKey: content items lack stable ids
                         key={`${consoleOutput.id}-${contentIndex}`}
                       >
                         {content.value}

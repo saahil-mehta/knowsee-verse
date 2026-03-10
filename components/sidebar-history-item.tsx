@@ -54,7 +54,7 @@ const PureChatItem = ({
         <DropdownMenuTrigger asChild>
           <SidebarMenuAction
             className="mr-0.5 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            showOnHover={!isActive}
+            showOnHover={!isActive && !chat.projectId}
           >
             <MoreHorizontalIcon />
             <span className="sr-only">More</span>

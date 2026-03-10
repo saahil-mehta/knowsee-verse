@@ -71,16 +71,25 @@ export function ProjectHome({
       {/* Brand profile card */}
       <div className="space-y-4 rounded-lg border p-6">
         <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-xl font-semibold">{brandProfile.brandName}</h1>
-            <a
-              className="text-sm text-muted-foreground underline"
-              href={brandProfile.websiteUrl}
-              rel="noopener noreferrer"
-              target="_blank"
-            >
-              {brandProfile.websiteUrl}
-            </a>
+          <div className="flex items-center gap-3">
+            <BrandLogo
+              brandName={brandProfile.brandName}
+              logoUrl={brandProfile.logoUrl}
+              websiteUrl={brandProfile.websiteUrl}
+            />
+            <div>
+              <h1 className="text-xl font-semibold">
+                {brandProfile.brandName}
+              </h1>
+              <a
+                className="text-sm text-muted-foreground underline"
+                href={brandProfile.websiteUrl}
+                rel="noopener noreferrer"
+                target="_blank"
+              >
+                {brandProfile.websiteUrl}
+              </a>
+            </div>
           </div>
           <Button onClick={() => setEditing(true)} size="sm" variant="ghost">
             Edit
@@ -224,5 +233,47 @@ export function ProjectHome({
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+function BrandLogo({
+  brandName,
+  logoUrl,
+  websiteUrl,
+}: {
+  brandName: string;
+  logoUrl: string | null;
+  websiteUrl: string;
+}) {
+  const [errored, setErrored] = useState(false);
+
+  const faviconUrl = (() => {
+    try {
+      const hostname = new URL(websiteUrl).hostname;
+      return `https://www.google.com/s2/favicons?domain=${hostname}&sz=64`;
+    } catch {
+      return null;
+    }
+  })();
+
+  const src = !errored && logoUrl ? logoUrl : faviconUrl;
+
+  if (!src) {
+    return null;
+  }
+
+  return (
+    // biome-ignore lint/performance/noImgElement: external favicon — Next Image requires remotePatterns config
+    // biome-ignore lint/a11y/noNoninteractiveElementInteractions: onError fallback for broken images
+    <img
+      alt={brandName}
+      className="size-10 shrink-0 rounded-lg"
+      onError={() => {
+        if (!errored && logoUrl) {
+          setErrored(true);
+        }
+      }}
+      src={src}
+    />
   );
 }

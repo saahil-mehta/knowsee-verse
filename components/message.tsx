@@ -387,7 +387,11 @@ const PurePreviewMessage = ({
                 }
 
                 return (
-                  <ChainOfThought defaultOpen={true} key={key}>
+                  <ChainOfThought
+                    className="w-full max-w-full"
+                    defaultOpen={true}
+                    key={key}
+                  >
                     <ChainOfThoughtHeader>
                       Research: {output.brandName} Agentic Commerce Audit
                     </ChainOfThoughtHeader>

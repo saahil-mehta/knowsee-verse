@@ -157,9 +157,17 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
           if (!res.ok) {
             throw new Error("Export failed");
           }
-          const { url } = await res.json();
-          window.open(url, "_blank");
-          toast.success("DOCX ready", { id: toastId });
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download =
+            res.headers
+              .get("Content-Disposition")
+              ?.match(/filename="(.+)"/)?.[1] ?? "document.docx";
+          a.click();
+          URL.revokeObjectURL(url);
+          toast.success("DOCX downloaded", { id: toastId });
         } catch {
           toast.error("Failed to export DOCX", { id: toastId });
         }
@@ -179,9 +187,17 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
           if (!res.ok) {
             throw new Error("Export failed");
           }
-          const { url } = await res.json();
-          window.open(url, "_blank");
-          toast.success("PDF ready", { id: toastId });
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download =
+            res.headers
+              .get("Content-Disposition")
+              ?.match(/filename="(.+)"/)?.[1] ?? "document.pdf";
+          a.click();
+          URL.revokeObjectURL(url);
+          toast.success("PDF downloaded", { id: toastId });
         } catch {
           toast.error("Failed to export PDF", { id: toastId });
         }

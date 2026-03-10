@@ -1,4 +1,3 @@
-import { put } from "@vercel/blob";
 import { getSession } from "@/lib/auth";
 import { getDocumentsById } from "@/lib/db/queries";
 import { markdownToDocx, markdownToPdf } from "@/lib/documents";
@@ -6,6 +5,11 @@ import { ChatSDKError } from "@/lib/errors";
 
 const VALID_FORMATS = ["docx", "pdf"] as const;
 type ExportFormat = (typeof VALID_FORMATS)[number];
+
+const CONTENT_TYPES: Record<ExportFormat, string> = {
+  docx: "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+  pdf: "application/pdf",
+};
 
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
@@ -50,7 +54,12 @@ export async function GET(request: Request) {
 
   const filename = `${document.title.replace(/[^a-zA-Z0-9-_ ]/g, "").trim()}.${format}`;
 
-  const blob = await put(filename, buffer, { access: "public" });
-
-  return Response.json({ url: blob.url, filename }, { status: 200 });
+  return new Response(buffer, {
+    status: 200,
+    headers: {
+      "Content-Type": CONTENT_TYPES[format],
+      "Content-Disposition": `attachment; filename="${filename}"`,
+      "Content-Length": String(buffer.length),
+    },
+  });
 }

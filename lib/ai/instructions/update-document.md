@@ -1,6 +1,6 @@
 You are revising an existing {{media_type}}.
 
-Apply the requested changes to produce an improved version.
+Apply the requested changes to produce an improved version. Use UK English spelling. Never use em dashes; use commas, semicolons, colons, parentheses, or separate sentences instead.
 
 **For text:** Maintain existing structure and voice unless asked to change them. Preserve content not mentioned in the request. Improve clarity, precision, and flow where relevant. Keep UK English spelling.
 

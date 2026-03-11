@@ -52,6 +52,7 @@ export function DataStreamHandler() {
               ...draftArtifact,
               documentId: delta.data,
               status: "streaming",
+              isVisible: true,
             };
 
           case "data-title":

@@ -19,18 +19,15 @@ import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import {
   ModelSelector,
   ModelSelectorContent,
-  ModelSelectorGroup,
   ModelSelectorInput,
   ModelSelectorItem,
   ModelSelectorList,
-  ModelSelectorLogo,
   ModelSelectorName,
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
 import {
   chatModels,
   DEFAULT_CHAT_MODEL,
-  modelsByProvider,
 } from "@/lib/ai/models";
 import type { Attachment, ChatMessage, UsageData } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -531,13 +528,6 @@ function PureModelSelectorCompact({
     chatModels.find((m) => m.id === selectedModelId) ??
     chatModels.find((m) => m.id === DEFAULT_CHAT_MODEL) ??
     chatModels[0];
-  const [provider] = selectedModel.id.split("/");
-
-  // Provider display names
-  const providerNames: Record<string, string> = {
-    anthropic: "Anthropic",
-  };
-
   return (
     <ModelSelector
       onOpenChange={disabled ? undefined : setOpen}
@@ -552,47 +542,33 @@ function PureModelSelectorCompact({
           disabled={disabled}
           variant="ghost"
         >
-          {provider && <ModelSelectorLogo provider={provider} />}
           <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent>
         <ModelSelectorInput placeholder="Search models..." />
         <ModelSelectorList>
-          {Object.entries(modelsByProvider).map(
-            ([providerKey, providerModels]) => (
-              <ModelSelectorGroup
-                heading={providerNames[providerKey] ?? providerKey}
-                key={providerKey}
-              >
-                {providerModels.map((model) => {
-                  const logoProvider = model.id.split("/")[0];
-                  return (
-                    <ModelSelectorItem
-                      key={model.id}
-                      onSelect={() => {
-                        onModelChange?.(model.id);
-                        setCookie("chat-model", model.id);
-                        setOpen(false);
-                      }}
-                      value={model.id}
-                    >
-                      <ModelSelectorLogo provider={logoProvider} />
-                      <div className="flex flex-col gap-0.5">
-                        <ModelSelectorName>{model.name}</ModelSelectorName>
-                        <span className="text-xs text-muted-foreground">
-                          {model.description}
-                        </span>
-                      </div>
-                      {model.id === selectedModel.id && (
-                        <CheckIcon className="ml-auto size-4" />
-                      )}
-                    </ModelSelectorItem>
-                  );
-                })}
-              </ModelSelectorGroup>
-            )
-          )}
+          {chatModels.map((model) => (
+            <ModelSelectorItem
+              key={model.id}
+              onSelect={() => {
+                onModelChange?.(model.id);
+                setCookie("chat-model", model.id);
+                setOpen(false);
+              }}
+              value={model.id}
+            >
+              <div className="flex flex-col gap-0.5">
+                <ModelSelectorName>{model.name}</ModelSelectorName>
+                <span className="text-xs text-muted-foreground">
+                  {model.description}
+                </span>
+              </div>
+              {model.id === selectedModel.id && (
+                <CheckIcon className="ml-auto size-4" />
+              )}
+            </ModelSelectorItem>
+          ))}
         </ModelSelectorList>
       </ModelSelectorContent>
     </ModelSelector>

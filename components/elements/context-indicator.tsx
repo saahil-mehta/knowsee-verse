@@ -141,7 +141,6 @@ function PureContextIndicator({
         </div>
 
         <div className="space-y-1.5 p-3 text-xs">
-          <Row label="Model" value={modelName} />
           <Row label="Messages" value={String(messageCount)} />
           <Row label="Input tokens" value={formatTokens(usage.inputTokens)} />
           <Row label="Output tokens" value={formatTokens(usage.outputTokens)} />

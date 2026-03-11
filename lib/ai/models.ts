@@ -19,8 +19,8 @@ export type ChatModel = {
 export const chatModels: ChatModel[] = [
   {
     id: "anthropic/claude-opus-4-6",
-    name: "Claude Opus 4.6",
-    provider: "anthropic",
+    name: "Advanced",
+    provider: "knowsee",
     description: "Most capable, for complex tasks",
     strengths: [
       "Deep analysis",
@@ -33,8 +33,8 @@ export const chatModels: ChatModel[] = [
   },
   {
     id: "anthropic/claude-sonnet-4-6",
-    name: "Claude Sonnet 4.6",
-    provider: "anthropic",
+    name: "Balanced",
+    provider: "knowsee",
     description: "Balanced quality, speed, and cost",
     strengths: [
       "Balanced quality & speed",
@@ -47,8 +47,8 @@ export const chatModels: ChatModel[] = [
   },
   {
     id: "anthropic/claude-haiku-4-5",
-    name: "Claude Haiku 4.5",
-    provider: "anthropic",
+    name: "Fast",
+    provider: "knowsee",
     description: "Fast and lightweight",
     strengths: [
       "Fast responses",

@@ -1,5 +1,5 @@
 import { getSession } from "@/lib/auth";
-import { getDocumentsById } from "@/lib/db/queries";
+import { getDocumentById } from "@/lib/db/queries";
 import { markdownToDocx, markdownToPdf } from "@/lib/documents";
 import { ChatSDKError } from "@/lib/errors";
 
@@ -29,8 +29,7 @@ export async function GET(request: Request) {
     return new ChatSDKError("unauthorized:document").toResponse();
   }
 
-  const documents = await getDocumentsById({ id });
-  const [document] = documents;
+  const document = await getDocumentById({ id });
 
   if (!document) {
     return new ChatSDKError("not_found:document").toResponse();

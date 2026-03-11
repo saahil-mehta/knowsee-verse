@@ -1,12 +1,14 @@
 "use client";
 
 import {
+  Legend,
   PolarAngleAxis,
   PolarGrid,
   PolarRadiusAxis,
   Radar,
   RadarChart,
   ResponsiveContainer,
+  Tooltip,
 } from "recharts";
 import type { RadarChartSection } from "../types";
 
@@ -40,6 +42,14 @@ export function RadarChartBlock({
             <PolarGrid opacity={0.3} />
             <PolarAngleAxis dataKey={angleKey} tick={{ fontSize: 12 }} />
             <PolarRadiusAxis tick={{ fontSize: 10 }} />
+            <Tooltip
+              contentStyle={{
+                backgroundColor: "var(--card)",
+                border: "1px solid var(--border)",
+                borderRadius: "0.5rem",
+              }}
+            />
+            <Legend />
             {radars.map((radar, i) => (
               <Radar
                 dataKey={radar.dataKey}

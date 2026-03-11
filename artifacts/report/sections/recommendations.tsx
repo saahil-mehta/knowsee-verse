@@ -46,9 +46,12 @@ export function RecommendationList({ title, groups }: RecommendationSection) {
                     <p className="mt-1 text-sm text-muted-foreground">
                       {item.reason}
                     </p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      Impact: {item.impact}
-                    </p>
+                    {item.impact && (
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        <span className="font-semibold">Impact:</span>{" "}
+                        {item.impact}
+                      </p>
+                    )}
                   </div>
                 ))}
               </div>

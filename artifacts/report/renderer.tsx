@@ -56,11 +56,13 @@ function normaliseKPIRow(raw: RawSection): KPIRowSection {
         value: (k.value as string | number) ?? "",
         change: k.change
           ? String(k.change)
-          : k.trendValue
-            ? String(k.trendValue)
-            : k.unit
-              ? String(k.unit)
-              : undefined,
+          : k.delta
+            ? String(k.delta)
+            : k.trendValue
+              ? String(k.trendValue)
+              : k.unit
+                ? String(k.unit)
+                : undefined,
         trend: (k.trend as "up" | "down" | "neutral") ?? undefined,
       }))
     : [];
@@ -70,9 +72,26 @@ function normaliseKPIRow(raw: RawSection): KPIRowSection {
 function normaliseBarChart(raw: RawSection): BarChartSection {
   const data = raw.data as Record<string, unknown>[];
   // Model may provide "bars" (our format) or "dataKeys" (string[])
-  const categoryKey = String(
-    raw.categoryKey ?? raw.xKey ?? raw.categoryField ?? "name"
+  let categoryKey = String(
+    raw.categoryKey ?? raw.xKey ?? raw.categoryField ?? raw.nameKey ?? "name"
   );
+  // If no explicit key matched and data exists, infer from first string-valued field
+  if (
+    !raw.categoryKey &&
+    !raw.xKey &&
+    !raw.categoryField &&
+    !raw.nameKey &&
+    Array.isArray(raw.data) &&
+    (raw.data as Record<string, unknown>[]).length > 0
+  ) {
+    const firstRow = (raw.data as Record<string, unknown>[])[0];
+    for (const [k, v] of Object.entries(firstRow)) {
+      if (typeof v === "string") {
+        categoryKey = k;
+        break;
+      }
+    }
+  }
   let bars: BarChartSection["bars"];
   if (Array.isArray(raw.bars) && typeof raw.bars[0] === "object") {
     bars = raw.bars as BarChartSection["bars"];
@@ -110,12 +129,13 @@ function normaliseRadarChart(raw: RawSection): RadarChartSection {
   const data = raw.data as Record<string, unknown>[];
   // Infer angleKey from data: the first string-valued key in the first row
   let angleKey = String(
-    raw.angleKey ?? raw.axisKey ?? raw.angleField ?? "name"
+    raw.angleKey ?? raw.axisKey ?? raw.angleField ?? raw.nameKey ?? "name"
   );
   if (
     !raw.angleKey &&
     !raw.axisKey &&
     !raw.angleField &&
+    !raw.nameKey &&
     Array.isArray(data) &&
     data.length > 0
   ) {
@@ -238,7 +258,7 @@ function normaliseRecommendations(raw: RawSection): RecommendationSection {
   > = {};
   for (const item of items) {
     const rawTier = String(
-      item.priority ?? item.tier ?? item.level ?? "medium"
+      item.priority ?? item.tier ?? item.severity ?? item.level ?? "medium"
     ).toLowerCase();
     // Normalise tier names: "critical"/"high" -> "high", etc.
     let tier: "high" | "medium" | "low";
@@ -252,10 +272,23 @@ function normaliseRecommendations(raw: RawSection): RecommendationSection {
     if (!tierMap[tier]) {
       tierMap[tier] = [];
     }
+    const reason = String(
+      item.reason ?? item.description ?? item.rationale ?? ""
+    );
+    // Extract impact: prefer explicit field, then try to pull from description
+    let impact = String(item.impact ?? item.effect ?? "");
+    if (!impact) {
+      const impactMatch = reason.match(
+        /Expected impact:\s*(.+?)\.?\s*$/i
+      );
+      if (impactMatch) {
+        impact = impactMatch[1].trim();
+      }
+    }
     tierMap[tier].push({
       action: String(item.action ?? item.title ?? item.name ?? ""),
-      reason: String(item.reason ?? item.description ?? item.rationale ?? ""),
-      impact: String(item.impact ?? item.effect ?? ""),
+      reason,
+      impact,
     });
   }
 

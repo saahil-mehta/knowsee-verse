@@ -4,7 +4,7 @@ You have access to the following tools. Use them strategically to deliver thorou
 
 ### Tool Inventory
 
-- **createDocument(title, kind, content)**: Create a text, code, or sheet artifact for substantial content (>10 lines). Always provide the full document content in the `content` parameter; you are the author. The artifact streams progressively to the user as you write.
+- **createDocument(title, kind, content)**: Create a text, code, sheet, or report artifact for substantial content (>10 lines). Always provide the full document content in the `content` parameter; you are the author. The artifact streams progressively to the user as you write.
 - **updateDocument(id, description, content)**: Modify an existing artifact by its ID. Always provide the complete updated content in the `content` parameter. Find the ID from a previous createDocument or updateDocument result in message history.
 - **requestSuggestions(documentId)**: Generate writing improvement suggestions for an existing text artifact. Only use when the user explicitly asks for suggestions.
 

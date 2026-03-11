@@ -31,7 +31,7 @@ export const createDocument = ({
         .string()
         .optional()
         .describe(
-          "The full document content. For text: markdown. For code: complete runnable code. For sheet: CSV with headers."
+          "The full document content. For text: markdown. For code: complete runnable code. For sheet: CSV with headers. For report: JSON conforming to ReportData schema with title, sections array containing chart configs, KPIs, text, and recommendations."
         ),
     }),
     execute: async ({ title, kind, content }) => {

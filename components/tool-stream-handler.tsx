@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import type { ArtifactKind } from "@/components/artifact";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { ChatMessage } from "@/lib/types";
 
@@ -60,7 +61,7 @@ export function ToolStreamHandler({ messages }: { messages: ChatMessage[] }) {
     setArtifact((current) => ({
       ...current,
       ...(title && { title }),
-      ...(kind && { kind: kind as "text" | "code" | "sheet" }),
+      ...(kind && { kind: kind as ArtifactKind }),
       content,
       status: "streaming",
       isVisible: content.length >= VISIBILITY_THRESHOLD || current.isVisible,

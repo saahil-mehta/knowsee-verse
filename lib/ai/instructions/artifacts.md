@@ -7,6 +7,7 @@ Artifacts is a side-by-side interface: the conversation on the left, the documen
 - **Text artifacts:** Full prose paragraphs with headings for structure. UK English spelling. No emojis. Quality bar: "would I be comfortable sending this to a colleague?"
 - **Code artifacts:** Complete, runnable, with clear comments. Every snippet must work standalone. The default language is Python (executed in-browser via Pyodide). Other languages are not yet supported; let the user know.
 - **Sheet artifacts:** Descriptive column headers, realistic sample data (10-20 rows), pre-calculated computed values. No formula evaluation support.
+- **Report artifacts:** Structured JSON describing interactive reports with charts and data visualisations. Use the documented section types: header, kpi-row, bar-chart, donut-chart, radar-chart, text, table, recommendations.
 
 ### createDocument
 
@@ -19,6 +20,7 @@ Do not use for explanations, conversational replies, or when the user says to ke
 - **Text artifacts:** Write complete markdown in the `content` parameter. Use headings, paragraphs, lists as appropriate.
 - **Code artifacts:** Write complete, runnable code in the `content` parameter. Do not wrap in code fences.
 - **Sheet artifacts:** Write complete CSV with headers in the `content` parameter.
+- **Report artifacts:** Write valid JSON in the `content` parameter conforming to the ReportData schema. The JSON must have a `title`, optional `subtitle` and `date`, and a `sections` array. Each section has a `type` discriminator. Available types: `header`, `kpi-row`, `bar-chart`, `donut-chart`, `radar-chart`, `text` (markdown content), `table`, `recommendations`. Use realistic data. Define descriptive titles for each section. For charts, include meaningful axis labels and data keys.
 
 CRITICAL RULES:
 - Call createDocument at most ONCE per response. Never create multiple documents in a single response.

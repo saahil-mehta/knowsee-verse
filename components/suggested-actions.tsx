@@ -19,10 +19,14 @@ type SuggestedActionsProps = {
 };
 
 const GENERIC_SUGGESTIONS = [
-  "What are the advantages of using Next.js?",
-  "Write code to demonstrate Dijkstra's algorithm",
-  "Help me write an essay about Silicon Valley",
-  "Compare the pros and cons of TypeScript vs JavaScript",
+  "What are the biggest shifts in digital advertising this quarter?",
+  "Write a client-ready campaign measurement framework",
+  "Compare major DSPs for programmatic media buying",
+  "Explain how AI is reshaping search and SEO strategy",
+  "Draft a media plan template for a multi-channel campaign",
+  "Compare multi-touch attribution vs. media mix modelling",
+  "Write a new business pitch outline for a DTC brand",
+  "Summarise the latest changes to Google's ad auction model",
 ];
 
 function generateBrandSuggestions(profile: BrandProfile): string[] {
@@ -109,7 +113,7 @@ function PureSuggestedActions({
 
   const suggestions = useMemo(() => {
     if (!projectId) {
-      return GENERIC_SUGGESTIONS;
+      return seededPick(GENERIC_SUGGESTIONS, chatId, 4);
     }
     if (!brandProfile) {
       return null;

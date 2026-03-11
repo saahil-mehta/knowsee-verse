@@ -550,6 +550,7 @@ function PureModelSelectorCompact({
         <ModelSelectorList>
           {chatModels.map((model) => (
             <ModelSelectorItem
+              className="px-3"
               key={model.id}
               onSelect={() => {
                 onModelChange?.(model.id);

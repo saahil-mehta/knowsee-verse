@@ -28,16 +28,18 @@ export const BRAND = {
   },
 } as const;
 
-// Load SVG logo once at module level
-let _logoBuffer: Buffer | null = null;
+// Wordmark PNG logo — cached at module level, shared by PDF and DOCX exporters
+let _logoPng: Buffer | null = null;
 
-export function getLogoBuffer(): Buffer | null {
-  if (_logoBuffer) {
-    return _logoBuffer;
+export function getLogoPng(): Buffer | null {
+  if (_logoPng) {
+    return _logoPng;
   }
   try {
-    _logoBuffer = readFileSync(join(process.cwd(), "public", "icon.svg"));
-    return _logoBuffer;
+    _logoPng = readFileSync(
+      join(process.cwd(), "public", "knowsee-logo-light.png")
+    );
+    return _logoPng;
   } catch {
     return null;
   }

@@ -1,5 +1,3 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import {
   AlignmentType,
   BorderStyle,
@@ -22,24 +20,7 @@ import {
   WidthType,
 } from "docx";
 import type { Content, PhrasingContent } from "mdast";
-import { BRAND } from "./brand";
-
-// Cache the wordmark logo buffer for DOCX headers
-let _logoDocx: Buffer | null = null;
-function getLogoForDocx(): Buffer | null {
-  if (_logoDocx) {
-    return _logoDocx;
-  }
-  try {
-    _logoDocx = readFileSync(
-      join(process.cwd(), "public", "knowsee-logo-light.png")
-    );
-    return _logoDocx;
-  } catch {
-    return null;
-  }
-}
-
+import { BRAND, getLogoPng } from "./brand";
 import { parseMarkdown } from "./parse-markdown";
 
 // ---------------------------------------------------------------------------
@@ -386,7 +367,7 @@ export async function markdownToDocx(
 
   const docTitle = title ?? "Document";
 
-  const logo = getLogoForDocx();
+  const logo = getLogoPng();
   // Logo is 522x161px; scale to 14pt height → ~45pt width (matching PDF)
   const logoHeight = 14;
   const logoWidth = Math.round(logoHeight * (522 / 161));

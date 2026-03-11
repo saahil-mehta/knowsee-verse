@@ -1,25 +1,7 @@
-import { readFileSync } from "node:fs";
-import { join } from "node:path";
 import type { Content, PhrasingContent } from "mdast";
 import PDFDocument from "pdfkit";
-import { BRAND } from "./brand";
+import { BRAND, getLogoPng } from "./brand";
 import { parseMarkdown } from "./parse-markdown";
-
-// Full wordmark logo (mark + "Knowsee" text) — cached at module level
-let _logoFull: Buffer | null = null;
-function getLogoFull(): Buffer | null {
-  if (_logoFull) {
-    return _logoFull;
-  }
-  try {
-    _logoFull = readFileSync(
-      join(process.cwd(), "public", "knowsee-logo-light.png")
-    );
-    return _logoFull;
-  } catch {
-    return null;
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Markdown → PDF converter — matches Knowsee brand style from md_to_docx.py
@@ -422,7 +404,7 @@ function renderBlock(
 
 function addHeaderFooter(doc: InstanceType<typeof PDFDocument>, title: string) {
   const range = doc.bufferedPageRange();
-  const logo = getLogoFull();
+  const logo = getLogoPng();
 
   for (let i = 0; i < range.count; i++) {
     doc.switchToPage(i + range.start);

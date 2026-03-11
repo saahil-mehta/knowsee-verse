@@ -55,16 +55,19 @@ export async function saveChat({
   modelId?: string;
 }) {
   try {
-    return await db.insert(chat).values({
-      id,
-      createdAt: new Date(),
-      userId,
-      title,
-      visibility,
-      parentChatId,
-      projectId,
-      modelId,
-    });
+    return await db
+      .insert(chat)
+      .values({
+        id,
+        createdAt: new Date(),
+        userId,
+        title,
+        visibility,
+        parentChatId,
+        projectId,
+        modelId,
+      })
+      .onConflictDoNothing({ target: chat.id });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to save chat");
   }
@@ -72,15 +75,17 @@ export async function saveChat({
 
 export async function deleteChatById({ id }: { id: string }) {
   try {
-    await db.delete(vote).where(eq(vote.chatId, id));
-    await db.delete(message).where(eq(message.chatId, id));
-    await db.delete(stream).where(eq(stream.chatId, id));
+    return await db.transaction(async (tx) => {
+      await tx.delete(vote).where(eq(vote.chatId, id));
+      await tx.delete(message).where(eq(message.chatId, id));
+      await tx.delete(stream).where(eq(stream.chatId, id));
 
-    const [chatsDeleted] = await db
-      .delete(chat)
-      .where(eq(chat.id, id))
-      .returning();
-    return chatsDeleted;
+      const [chatsDeleted] = await tx
+        .delete(chat)
+        .where(eq(chat.id, id))
+        .returning();
+      return chatsDeleted;
+    });
   } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
@@ -91,27 +96,29 @@ export async function deleteChatById({ id }: { id: string }) {
 
 export async function deleteAllChatsByUserId({ userId }: { userId: string }) {
   try {
-    const userChats = await db
-      .select({ id: chat.id })
-      .from(chat)
-      .where(eq(chat.userId, userId));
+    return await db.transaction(async (tx) => {
+      const userChats = await tx
+        .select({ id: chat.id })
+        .from(chat)
+        .where(eq(chat.userId, userId));
 
-    if (userChats.length === 0) {
-      return { deletedCount: 0 };
-    }
+      if (userChats.length === 0) {
+        return { deletedCount: 0 };
+      }
 
-    const chatIds = userChats.map((c) => c.id);
+      const chatIds = userChats.map((c) => c.id);
 
-    await db.delete(vote).where(inArray(vote.chatId, chatIds));
-    await db.delete(message).where(inArray(message.chatId, chatIds));
-    await db.delete(stream).where(inArray(stream.chatId, chatIds));
+      await tx.delete(vote).where(inArray(vote.chatId, chatIds));
+      await tx.delete(message).where(inArray(message.chatId, chatIds));
+      await tx.delete(stream).where(inArray(stream.chatId, chatIds));
 
-    const deletedChats = await db
-      .delete(chat)
-      .where(eq(chat.userId, userId))
-      .returning();
+      const deletedChats = await tx
+        .delete(chat)
+        .where(eq(chat.userId, userId))
+        .returning();
 
-    return { deletedCount: deletedChats.length };
+      return { deletedCount: deletedChats.length };
+    });
   } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",
@@ -262,22 +269,17 @@ export async function voteMessage({
   type: "up" | "down";
 }) {
   try {
-    const [existingVote] = await db
-      .select()
-      .from(vote)
-      .where(and(eq(vote.messageId, messageId)));
-
-    if (existingVote) {
-      return await db
-        .update(vote)
-        .set({ isUpvoted: type === "up" })
-        .where(and(eq(vote.messageId, messageId), eq(vote.chatId, chatId)));
-    }
-    return await db.insert(vote).values({
-      chatId,
-      messageId,
-      isUpvoted: type === "up",
-    });
+    return await db
+      .insert(vote)
+      .values({
+        chatId,
+        messageId,
+        isUpvoted: type === "up",
+      })
+      .onConflictDoUpdate({
+        target: [vote.chatId, vote.messageId],
+        set: { isUpvoted: type === "up" },
+      });
   } catch (_error) {
     throw new ChatSDKError("bad_request:database", "Failed to vote message");
   }
@@ -648,12 +650,14 @@ export async function updateProject({
 
 export async function deleteProjectById({ id }: { id: string }) {
   try {
-    await db.delete(brandProfile).where(eq(brandProfile.projectId, id));
-    await db
-      .update(chat)
-      .set({ projectId: null })
-      .where(eq(chat.projectId, id));
-    await db.delete(project).where(eq(project.id, id));
+    await db.transaction(async (tx) => {
+      await tx.delete(brandProfile).where(eq(brandProfile.projectId, id));
+      await tx
+        .update(chat)
+        .set({ projectId: null })
+        .where(eq(chat.projectId, id));
+      await tx.delete(project).where(eq(project.id, id));
+    });
   } catch (_error) {
     throw new ChatSDKError(
       "bad_request:database",

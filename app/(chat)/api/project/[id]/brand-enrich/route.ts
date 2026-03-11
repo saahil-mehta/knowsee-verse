@@ -2,8 +2,7 @@ import { anthropic } from "@ai-sdk/anthropic";
 import { gateway } from "@ai-sdk/gateway";
 import { generateText, stepCountIs } from "ai";
 import { z } from "zod";
-import { getSession } from "@/lib/auth";
-import { getProjectById } from "@/lib/db/queries";
+import { getOwnedProject } from "@/lib/api/project-auth";
 import { ChatSDKError } from "@/lib/errors";
 
 export const maxDuration = 60;
@@ -61,26 +60,6 @@ function extractMarketFromUrl(websiteUrl: string): string {
   } catch {
     return "";
   }
-}
-
-async function getOwnedProject(id: string) {
-  const session = await getSession();
-
-  if (!session?.user) {
-    return { error: new ChatSDKError("unauthorized:project").toResponse() };
-  }
-
-  const proj = await getProjectById({ id });
-
-  if (!proj) {
-    return { error: new ChatSDKError("not_found:project").toResponse() };
-  }
-
-  if (proj.userId !== session.user.id) {
-    return { error: new ChatSDKError("forbidden:project").toResponse() };
-  }
-
-  return { project: proj };
 }
 
 export async function POST(

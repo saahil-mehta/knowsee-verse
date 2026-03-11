@@ -1,32 +1,11 @@
-import { getSession } from "@/lib/auth";
+import { getOwnedProject } from "@/lib/api/project-auth";
 import {
   createBrandProfile,
   getBrandProfileByProjectId,
-  getProjectById,
   updateBrandProfile,
 } from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
 import { brandProfileSchema } from "../../schema";
-
-async function getOwnedProject(id: string) {
-  const session = await getSession();
-
-  if (!session?.user) {
-    return { error: new ChatSDKError("unauthorized:project").toResponse() };
-  }
-
-  const proj = await getProjectById({ id });
-
-  if (!proj) {
-    return { error: new ChatSDKError("not_found:project").toResponse() };
-  }
-
-  if (proj.userId !== session.user.id) {
-    return { error: new ChatSDKError("forbidden:project").toResponse() };
-  }
-
-  return { project: proj };
-}
 
 export async function GET(
   _request: Request,

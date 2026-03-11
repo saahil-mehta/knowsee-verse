@@ -1,9 +1,5 @@
-import { getSession } from "@/lib/auth";
-import {
-  deleteProjectById,
-  getProjectWithBrandProfile,
-  updateProject,
-} from "@/lib/db/queries";
+import { getOwnedProjectWithProfile } from "@/lib/api/project-auth";
+import { deleteProjectById, updateProject } from "@/lib/db/queries";
 import { ChatSDKError } from "@/lib/errors";
 import { updateProjectSchema } from "../schema";
 
@@ -12,23 +8,16 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getSession();
+  const result = await getOwnedProjectWithProfile(id);
 
-  if (!session?.user) {
-    return new ChatSDKError("unauthorized:project").toResponse();
+  if ("error" in result) {
+    return result.error;
   }
 
-  const result = await getProjectWithBrandProfile({ projectId: id });
-
-  if (!result) {
-    return new ChatSDKError("not_found:project").toResponse();
-  }
-
-  if (result.project.userId !== session.user.id) {
-    return new ChatSDKError("forbidden:project").toResponse();
-  }
-
-  return Response.json(result);
+  return Response.json({
+    project: result.project,
+    brandProfile: result.brandProfile,
+  });
 }
 
 export async function PATCH(
@@ -36,20 +25,10 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getSession();
+  const result = await getOwnedProjectWithProfile(id);
 
-  if (!session?.user) {
-    return new ChatSDKError("unauthorized:project").toResponse();
-  }
-
-  const result = await getProjectWithBrandProfile({ projectId: id });
-
-  if (!result) {
-    return new ChatSDKError("not_found:project").toResponse();
-  }
-
-  if (result.project.userId !== session.user.id) {
-    return new ChatSDKError("forbidden:project").toResponse();
+  if ("error" in result) {
+    return result.error;
   }
 
   try {
@@ -67,20 +46,10 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const session = await getSession();
+  const result = await getOwnedProjectWithProfile(id);
 
-  if (!session?.user) {
-    return new ChatSDKError("unauthorized:project").toResponse();
-  }
-
-  const result = await getProjectWithBrandProfile({ projectId: id });
-
-  if (!result) {
-    return new ChatSDKError("not_found:project").toResponse();
-  }
-
-  if (result.project.userId !== session.user.id) {
-    return new ChatSDKError("forbidden:project").toResponse();
+  if ("error" in result) {
+    return result.error;
   }
 
   await deleteProjectById({ id });

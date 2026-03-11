@@ -69,11 +69,16 @@ export const createDocument = ({
         transient: true,
       });
 
-      dataStream.write({
-        type: "data-clear",
-        data: null,
-        transient: true,
-      });
+      // Only emit data-clear for the fallback (inner generation) path.
+      // When content is provided directly, ToolStreamHandler already
+      // streamed the content to the artifact panel during input-streaming.
+      if (!content) {
+        dataStream.write({
+          type: "data-clear",
+          data: null,
+          transient: true,
+        });
+      }
 
       const documentHandler = documentHandlersByArtifactKind.find(
         (documentHandlerByArtifactKind) =>

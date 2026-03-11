@@ -27,7 +27,9 @@ import { BRAND } from "./brand";
 // Cache the wordmark logo buffer for DOCX headers
 let _logoDocx: Buffer | null = null;
 function getLogoForDocx(): Buffer | null {
-  if (_logoDocx) return _logoDocx;
+  if (_logoDocx) {
+    return _logoDocx;
+  }
   try {
     _logoDocx = readFileSync(
       join(process.cwd(), "public", "knowsee-logo-light.png")

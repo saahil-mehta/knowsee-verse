@@ -36,7 +36,7 @@ function PureEditor({
   content,
   onSaveContent,
   suggestions,
-  status,
+  status: _status,
 }: EditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);

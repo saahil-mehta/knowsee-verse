@@ -26,10 +26,10 @@ function ReportSkeleton() {
       <div className="h-10 w-2/3 animate-pulse rounded-lg bg-muted-foreground/20" />
       <div className="h-5 w-1/3 animate-pulse rounded-lg bg-muted-foreground/20" />
       <div className="mt-4 grid grid-cols-2 gap-4 md:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, i) => (
+        {["kpi-a", "kpi-b", "kpi-c", "kpi-d"].map((id) => (
           <div
             className="h-24 animate-pulse rounded-lg bg-muted-foreground/20"
-            key={`kpi-${i}`}
+            key={id}
           />
         ))}
       </div>
@@ -278,9 +278,7 @@ function normaliseRecommendations(raw: RawSection): RecommendationSection {
     // Extract impact: prefer explicit field, then try to pull from description
     let impact = String(item.impact ?? item.effect ?? "");
     if (!impact) {
-      const impactMatch = reason.match(
-        /Expected impact:\s*(.+?)\.?\s*$/i
-      );
+      const impactMatch = reason.match(/Expected impact:\s*(.+?)\.?\s*$/i);
       if (impactMatch) {
         impact = impactMatch[1].trim();
       }

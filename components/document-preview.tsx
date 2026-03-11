@@ -10,11 +10,11 @@ import {
   useRef,
 } from "react";
 import useSWR from "swr";
+import { ReportRenderer } from "@/artifacts/report/renderer";
 import { useArtifact } from "@/hooks/use-artifact";
 import type { Document } from "@/lib/db/schema";
 import { cn, fetcher } from "@/lib/utils";
 import type { ArtifactKind, UIArtifact } from "./artifact";
-import { ReportRenderer } from "@/artifacts/report/renderer";
 import { CodeEditor } from "./code-editor";
 import { DocumentToolCall, DocumentToolResult } from "./document";
 import { InlineDocumentSkeleton } from "./document-skeleton";
@@ -275,7 +275,10 @@ const DocumentContent = ({ document }: { document: Document }) => {
           </div>
         </div>
       ) : document.kind === "report" ? (
-        <div className="pointer-events-none origin-top-left scale-[0.6]" style={{ width: "166.67%" }}>
+        <div
+          className="pointer-events-none origin-top-left scale-[0.6]"
+          style={{ width: "166.67%" }}
+        >
           <ReportRenderer
             content={document.content ?? ""}
             status={artifact.status as "streaming" | "idle"}

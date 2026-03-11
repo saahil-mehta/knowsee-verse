@@ -122,9 +122,12 @@ function phrasingToSegments(
 function phrasingToText(nodes: PhrasingContent[]): string {
   return nodes
     .map((n) => {
-      if ("value" in n && typeof n.value === "string") return n.value;
-      if ("children" in n)
+      if ("value" in n && typeof n.value === "string") {
+        return n.value;
+      }
+      if ("children" in n) {
         return phrasingToText(n.children as PhrasingContent[]);
+      }
       return "";
     })
     .join("");

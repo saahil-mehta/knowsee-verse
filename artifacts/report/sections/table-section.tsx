@@ -26,18 +26,23 @@ export function DataTable({ title, columns, rows }: TableSection) {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row, i) => (
-              <tr
-                className="border-b border-border last:border-0"
-                key={`row-${i}`}
-              >
-                {columns.map((col) => (
-                  <td className="px-3 py-2 text-foreground" key={col.key}>
-                    {String(row[col.key] ?? "")}
-                  </td>
-                ))}
-              </tr>
-            ))}
+            {rows.map((row) => {
+              const rowKey = columns
+                .map((col) => String(row[col.key] ?? ""))
+                .join("|");
+              return (
+                <tr
+                  className="border-b border-border last:border-0"
+                  key={rowKey}
+                >
+                  {columns.map((col) => (
+                    <td className="px-3 py-2 text-foreground" key={col.key}>
+                      {String(row[col.key] ?? "")}
+                    </td>
+                  ))}
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

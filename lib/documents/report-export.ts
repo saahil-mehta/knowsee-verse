@@ -37,10 +37,7 @@ const LIGHT_THEME_VARS = `
  * rgb() values in the clone. This is necessary because serialised SVGs lose
  * access to the page's CSS variables.
  */
-function resolveComputedSvgColours(
-  source: Element,
-  target: Element,
-): void {
+function resolveComputedSvgColours(source: Element, target: Element): void {
   const computed = window.getComputedStyle(source);
   const svgColourProps = ["fill", "stroke", "stop-color", "flood-color"];
 
@@ -98,7 +95,7 @@ async function prepareClone(element: HTMLElement): Promise<HTMLElement> {
   // Inline computed styles on HTML elements
   const inlineComputedStyles = (
     source: HTMLElement,
-    target: HTMLElement,
+    target: HTMLElement
   ): void => {
     const computed = window.getComputedStyle(source);
     const props = [
@@ -144,7 +141,7 @@ async function prepareClone(element: HTMLElement): Promise<HTMLElement> {
       if (sourceChildren[i] instanceof HTMLElement) {
         inlineComputedStyles(
           sourceChildren[i] as HTMLElement,
-          targetChildren[i] as HTMLElement,
+          targetChildren[i] as HTMLElement
         );
       }
     }
@@ -182,6 +179,7 @@ async function prepareClone(element: HTMLElement): Promise<HTMLElement> {
         const canvas = document.createElement("canvas");
         canvas.width = svg.clientWidth * 2;
         canvas.height = svg.clientHeight * 2;
+        // biome-ignore lint/style/noNonNullAssertion: canvas 2d context always exists for in-memory canvas
         const ctx = canvas.getContext("2d")!;
         const image = new Image();
         image.onload = () => {
@@ -227,7 +225,7 @@ async function buildHeaderHtml(title: string): Promise<string> {
 async function buildHtmlDocument(
   element: HTMLElement,
   title: string,
-  extraStyles?: string,
+  extraStyles?: string
 ): Promise<string> {
   const clone = await prepareClone(element);
   const headerHtml = await buildHeaderHtml(title);
@@ -264,7 +262,7 @@ async function buildHtmlDocument(
 
 export async function exportReportAsHtml(
   element: HTMLElement,
-  title: string,
+  title: string
 ): Promise<void> {
   const html = await buildHtmlDocument(element, title);
   const blob = new Blob([html], { type: "text/html" });
@@ -285,7 +283,7 @@ export async function exportReportAsHtml(
  */
 export async function exportReportAsPdf(
   element: HTMLElement,
-  title: string,
+  title: string
 ): Promise<void> {
   const printStyles = `
     @media print {
@@ -300,7 +298,8 @@ export async function exportReportAsPdf(
   const html = await buildHtmlDocument(element, title, printStyles);
 
   const iframe = document.createElement("iframe");
-  iframe.style.cssText = "position:fixed;top:-99999px;left:-99999px;width:0;height:0;border:none;";
+  iframe.style.cssText =
+    "position:fixed;top:-99999px;left:-99999px;width:0;height:0;border:none;";
   document.body.appendChild(iframe);
 
   try {
@@ -323,7 +322,9 @@ export async function exportReportAsPdf(
       let loaded = 0;
       const onLoad = () => {
         loaded++;
-        if (loaded >= images.length) resolve();
+        if (loaded >= images.length) {
+          resolve();
+        }
       };
       for (const img of images) {
         if (img.complete) {

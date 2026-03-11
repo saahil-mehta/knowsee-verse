@@ -25,10 +25,7 @@ import {
   ModelSelectorName,
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
-import {
-  chatModels,
-  DEFAULT_CHAT_MODEL,
-} from "@/lib/ai/models";
+import { chatModels, DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
 import type { Attachment, ChatMessage, UsageData } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BranchChatCard } from "./branch-chat-card";

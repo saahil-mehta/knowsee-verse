@@ -57,7 +57,7 @@ function getUsageColour(percent: number): string {
 function PureContextIndicator({
   maxContextTokens,
   messageCount,
-  modelName,
+  modelName: _modelName,
   pricing,
   usage,
 }: {

@@ -18,11 +18,12 @@ const markdownSerializer = new MarkdownSerializer(
     ...defaultMarkdownSerializer.nodes,
     table(state, node) {
       let isFirstRow = true;
-      node.forEach((row) => {
+      for (let r = 0; r < node.childCount; r++) {
+        const row = node.child(r);
         const cells: string[] = [];
-        row.forEach((cell) => {
-          cells.push(cell.textContent.replace(/\|/g, "\\|").trim());
-        });
+        for (let c = 0; c < row.childCount; c++) {
+          cells.push(row.child(c).textContent.replace(/\|/g, "\\|").trim());
+        }
         state.write(`| ${cells.join(" | ")} |`);
         state.ensureNewLine();
 
@@ -31,13 +32,19 @@ const markdownSerializer = new MarkdownSerializer(
           state.ensureNewLine();
           isFirstRow = false;
         }
-      });
+      }
       state.closeBlock(node);
     },
     // Handled by the table serialiser above
-    table_row() {},
-    table_header() {},
-    table_cell() {},
+    table_row() {
+      /* no-op: serialised by table() */
+    },
+    table_header() {
+      /* no-op: serialised by table() */
+    },
+    table_cell() {
+      /* no-op: serialised by table() */
+    },
   },
   defaultMarkdownSerializer.marks
 );

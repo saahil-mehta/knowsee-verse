@@ -6,12 +6,7 @@ import {
   type ConsoleOutputContent,
 } from "@/components/console";
 import { Artifact } from "@/components/create-artifact";
-import {
-  CopyIcon,
-  PlayIcon,
-  RedoIcon,
-  UndoIcon,
-} from "@/components/icons";
+import { CopyIcon, PlayIcon, RedoIcon, UndoIcon } from "@/components/icons";
 import { generateUUID } from "@/lib/utils";
 
 const PYODIDE_VERSION = "0.27.5";

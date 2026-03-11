@@ -73,8 +73,7 @@ export const reportArtifact = new Artifact<"report">({
         }
         const toastId = toast.loading("Generating HTML...");
         try {
-          const title =
-            JSON.parse(content).title ?? "Report";
+          const title = JSON.parse(content).title ?? "Report";
           await exportReportAsHtml(el as HTMLElement, title);
           toast.success("HTML downloaded", { id: toastId });
         } catch {
@@ -95,8 +94,7 @@ export const reportArtifact = new Artifact<"report">({
         }
         const toastId = toast.loading("Generating PDF...");
         try {
-          const title =
-            JSON.parse(content).title ?? "Report";
+          const title = JSON.parse(content).title ?? "Report";
           await exportReportAsPdf(el as HTMLElement, title);
           toast.success("PDF downloaded", { id: toastId });
         } catch {

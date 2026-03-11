@@ -24,6 +24,7 @@ import { fetcher } from "@/lib/utils";
 import { ArtifactActions } from "./artifact-actions";
 import { ArtifactCloseButton } from "./artifact-close-button";
 import { ArtifactMessages } from "./artifact-messages";
+import { ErrorBoundary } from "./error-boundary";
 import { MultimodalInput } from "./multimodal-input";
 import { Toolbar } from "./toolbar";
 import { useSidebar } from "./ui/sidebar";
@@ -466,25 +467,27 @@ function PureArtifact({
             </div>
 
             <div className="h-full max-w-full! items-center overflow-y-scroll bg-background dark:bg-muted">
-              <artifactDefinition.content
-                content={
-                  isCurrentVersion
-                    ? artifact.content
-                    : getDocumentContentById(currentVersionIndex)
-                }
-                currentVersionIndex={currentVersionIndex}
-                getDocumentContentById={getDocumentContentById}
-                isCurrentVersion={isCurrentVersion}
-                isInline={false}
-                isLoading={isDocumentsFetching && !artifact.content}
-                metadata={metadata}
-                mode={mode}
-                onSaveContent={saveContent}
-                setMetadata={setMetadata}
-                status={artifact.status}
-                suggestions={[]}
-                title={artifact.title}
-              />
+              <ErrorBoundary>
+                <artifactDefinition.content
+                  content={
+                    isCurrentVersion
+                      ? artifact.content
+                      : getDocumentContentById(currentVersionIndex)
+                  }
+                  currentVersionIndex={currentVersionIndex}
+                  getDocumentContentById={getDocumentContentById}
+                  isCurrentVersion={isCurrentVersion}
+                  isInline={false}
+                  isLoading={isDocumentsFetching && !artifact.content}
+                  metadata={metadata}
+                  mode={mode}
+                  onSaveContent={saveContent}
+                  setMetadata={setMetadata}
+                  status={artifact.status}
+                  suggestions={[]}
+                  title={artifact.title}
+                />
+              </ErrorBoundary>
 
               <AnimatePresence>
                 {isCurrentVersion && (
@@ -527,7 +530,7 @@ export const Artifact = memo(PureArtifact, (prevProps, nextProps) => {
   if (prevProps.input !== nextProps.input) {
     return false;
   }
-  if (!equal(prevProps.messages, nextProps.messages.length)) {
+  if (prevProps.messages.length !== nextProps.messages.length) {
     return false;
   }
   if (prevProps.selectedVisibilityType !== nextProps.selectedVisibilityType) {

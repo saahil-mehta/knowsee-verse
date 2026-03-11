@@ -227,6 +227,23 @@ const PurePreviewMessage = ({
             if (type === "tool-createDocument") {
               const { toolCallId } = part;
 
+              // During input-streaming, output is not yet available
+              if ("state" in part && part.state === "input-streaming") {
+                const partialInput = part.input as
+                  | { title?: string; kind?: string }
+                  | undefined;
+                return (
+                  <DocumentPreview
+                    args={{
+                      title: partialInput?.title ?? "Generating...",
+                      kind: partialInput?.kind ?? "text",
+                    }}
+                    isReadonly={isReadonly}
+                    key={toolCallId}
+                  />
+                );
+              }
+
               if (part.output && "error" in part.output) {
                 return (
                   <div
@@ -249,6 +266,11 @@ const PurePreviewMessage = ({
 
             if (type === "tool-updateDocument") {
               const { toolCallId } = part;
+
+              // During input-streaming, output is not yet available
+              if ("state" in part && part.state === "input-streaming") {
+                return null;
+              }
 
               if (part.output && "error" in part.output) {
                 return (

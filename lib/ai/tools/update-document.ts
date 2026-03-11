@@ -24,8 +24,14 @@ export const updateDocument = ({
       description: z
         .string()
         .describe("The description of changes that need to be made"),
+      content: z
+        .string()
+        .optional()
+        .describe(
+          "The full updated document content. For text: markdown. For code: complete runnable code. For sheet: CSV with headers."
+        ),
     }),
-    execute: async ({ id, description }) => {
+    execute: async ({ id, description, content }) => {
       const document = await getDocumentById({ id });
 
       if (!document) {
@@ -52,6 +58,7 @@ export const updateDocument = ({
       await documentHandler.onUpdateDocument({
         document,
         description,
+        content,
         dataStream,
         session,
         modelId,

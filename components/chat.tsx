@@ -30,6 +30,7 @@ import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
 import { getChatHistoryPaginationKey } from "./sidebar-history";
 import { toast } from "./toast";
+import { ToolStreamHandler } from "./tool-stream-handler";
 import type { VisibilityType } from "./visibility-selector";
 
 export function Chat({
@@ -249,6 +250,8 @@ export function Chat({
           )}
         </div>
       </div>
+
+      <ToolStreamHandler messages={messages} />
 
       <Artifact
         addToolApprovalResponse={addToolApprovalResponse}

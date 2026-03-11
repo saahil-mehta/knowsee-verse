@@ -6,7 +6,18 @@ import { createDocumentHandler } from "@/lib/artifacts/server";
 
 export const sheetDocumentHandler = createDocumentHandler<"sheet">({
   kind: "sheet",
-  onCreateDocument: async ({ title, dataStream, modelId }) => {
+  onCreateDocument: async ({ title, content, dataStream, modelId }) => {
+    if (content) {
+      console.log(
+        `[sheet:onCreate] DIRECT — model: ${modelId}, content: ${content.length} chars`
+      );
+      return content;
+    }
+
+    console.log(
+      `[sheet:onCreate] FALLBACK — model: ${modelId}, no content provided, using inner generation`
+    );
+
     let draftContent = "";
 
     const { fullStream } = streamObject({
@@ -45,7 +56,24 @@ export const sheetDocumentHandler = createDocumentHandler<"sheet">({
 
     return draftContent;
   },
-  onUpdateDocument: async ({ document, description, dataStream, modelId }) => {
+  onUpdateDocument: async ({
+    document,
+    description,
+    content,
+    dataStream,
+    modelId,
+  }) => {
+    if (content) {
+      console.log(
+        `[sheet:onUpdate] DIRECT — model: ${modelId}, content: ${content.length} chars`
+      );
+      return content;
+    }
+
+    console.log(
+      `[sheet:onUpdate] FALLBACK — model: ${modelId}, no content provided, using inner generation`
+    );
+
     let draftContent = "";
 
     const { fullStream } = streamObject({

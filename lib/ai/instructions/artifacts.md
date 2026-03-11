@@ -14,6 +14,12 @@ Use when the user wants substantial content (>10 lines), code, or something they
 
 Do not use for explanations, conversational replies, or when the user says to keep it in chat.
 
+**You are the author.** Always provide the complete document content in the `content` parameter. Use all available conversation context, search results, and user preferences to write the best possible content directly. The content streams progressively to the user as you write it.
+
+- **Text artifacts:** Write complete markdown in the `content` parameter. Use headings, paragraphs, lists as appropriate.
+- **Code artifacts:** Write complete, runnable code in the `content` parameter. Do not wrap in code fences.
+- **Sheet artifacts:** Write complete CSV with headers in the `content` parameter.
+
 CRITICAL RULES:
 - Call createDocument at most ONCE per response. Never create multiple documents in a single response.
 - After calling createDocument, do NOT call it again in subsequent tool-use steps within the same response.
@@ -22,6 +28,8 @@ CRITICAL RULES:
 ### updateDocument
 
 Use updateDocument when modifying an existing document. Look at the conversation history for the document ID from a previous createDocument or updateDocument result — pass that same ID.
+
+**You are the author.** Always provide the complete updated content in the `content` parameter. Write the full document with all changes applied — do not provide just a diff or partial update.
 
 Default to full rewrites for major changes. Use targeted edits only for small, isolated fixes. Never update a document immediately after creating it in the same response — wait for user feedback.
 

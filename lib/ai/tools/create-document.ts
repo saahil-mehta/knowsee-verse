@@ -27,8 +27,14 @@ export const createDocument = ({
     inputSchema: z.object({
       title: z.string(),
       kind: z.enum(artifactKinds),
+      content: z
+        .string()
+        .optional()
+        .describe(
+          "The full document content. For text: markdown. For code: complete runnable code. For sheet: CSV with headers."
+        ),
     }),
-    execute: async ({ title, kind }) => {
+    execute: async ({ title, kind, content }) => {
       if (createdDocumentId) {
         console.warn(
           `[createDocument] DUPLICATE BLOCKED: already created ${createdDocumentId}, rejecting "${title}"`
@@ -42,7 +48,7 @@ export const createDocument = ({
       createdDocumentId = id;
 
       console.log(
-        `[createDocument] Creating "${title}" (id: ${id}, model: ${modelId})`
+        `[createDocument] Creating "${title}" (id: ${id}, kind: ${kind}, model: ${modelId}, content: ${content ? `provided (${content.length} chars)` : "none — will use inner generation"})`
       );
 
       dataStream.write({
@@ -81,6 +87,7 @@ export const createDocument = ({
       await documentHandler.onCreateDocument({
         id,
         title,
+        content,
         dataStream,
         session,
         modelId,

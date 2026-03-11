@@ -5,7 +5,18 @@ import { createDocumentHandler } from "@/lib/artifacts/server";
 
 export const textDocumentHandler = createDocumentHandler<"text">({
   kind: "text",
-  onCreateDocument: async ({ title, dataStream, modelId }) => {
+  onCreateDocument: async ({ title, content, dataStream, modelId }) => {
+    if (content) {
+      console.log(
+        `[text:onCreate] DIRECT — model: ${modelId}, content: ${content.length} chars`
+      );
+      return content;
+    }
+
+    console.log(
+      `[text:onCreate] FALLBACK — model: ${modelId}, no content provided, using inner generation`
+    );
+
     let draftContent = "";
 
     const { fullStream } = streamText({
@@ -34,7 +45,24 @@ export const textDocumentHandler = createDocumentHandler<"text">({
 
     return draftContent;
   },
-  onUpdateDocument: async ({ document, description, dataStream, modelId }) => {
+  onUpdateDocument: async ({
+    document,
+    description,
+    content,
+    dataStream,
+    modelId,
+  }) => {
+    if (content) {
+      console.log(
+        `[text:onUpdate] DIRECT — model: ${modelId}, content: ${content.length} chars`
+      );
+      return content;
+    }
+
+    console.log(
+      `[text:onUpdate] FALLBACK — model: ${modelId}, no content provided, using inner generation`
+    );
+
     let draftContent = "";
 
     const { fullStream } = streamText({

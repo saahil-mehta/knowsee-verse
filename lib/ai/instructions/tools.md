@@ -4,8 +4,8 @@ You have access to the following tools. Use them strategically to deliver thorou
 
 ### Tool Inventory
 
-- **createDocument(title, kind)** — Create a text, code, or sheet artifact for substantial content (>10 lines). Use for emails, essays, reports, scripts, spreadsheets. The artifact appears side-by-side with chat.
-- **updateDocument(id, description)** — Modify an existing artifact by its ID. Find the ID from a previous createDocument or updateDocument result in message history.
+- **createDocument(title, kind, content)** — Create a text, code, or sheet artifact for substantial content (>10 lines). Always provide the full document content in the `content` parameter — you are the author. The artifact streams progressively to the user as you write.
+- **updateDocument(id, description, content)** — Modify an existing artifact by its ID. Always provide the complete updated content in the `content` parameter. Find the ID from a previous createDocument or updateDocument result in message history.
 - **requestSuggestions(documentId)** — Generate writing improvement suggestions for an existing text artifact. Only use when the user explicitly asks for suggestions.
 
 - **web_search** — Search the web for current information (up to 5 uses, 8 in brand mode). Write precise, targeted queries — 2-3 specific queries outperform 1 broad one.

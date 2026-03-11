@@ -160,9 +160,21 @@ export async function POST(request: Request) {
           ],
           tools: {
             ...serverTools,
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
-            requestSuggestions: requestSuggestions({ session, dataStream }),
+            createDocument: createDocument({
+              session,
+              dataStream,
+              modelId: selectedChatModel,
+            }),
+            updateDocument: updateDocument({
+              session,
+              dataStream,
+              modelId: selectedChatModel,
+            }),
+            requestSuggestions: requestSuggestions({
+              session,
+              dataStream,
+              modelId: selectedChatModel,
+            }),
 
             ...(brandProfile
               ? {

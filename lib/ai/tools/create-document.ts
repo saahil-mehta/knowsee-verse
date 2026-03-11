@@ -11,33 +11,39 @@ import { generateUUID } from "@/lib/utils";
 type CreateDocumentProps = {
   session: Session;
   dataStream: UIMessageStreamWriter<ChatMessage>;
+  modelId: string;
 };
 
 export const createDocument = ({
   session,
   dataStream,
+  modelId,
 }: CreateDocumentProps) => {
   let createdDocumentId: string | null = null;
 
   return tool({
     description:
-      "Create a new document for writing or content creation. This tool generates the document contents based on the title and kind. IMPORTANT: Only call this tool ONCE per response. If a document already exists in this conversation, use updateDocument instead.",
+      "Create a new document artifact. CRITICAL CONSTRAINT: You may only call this tool ONCE per response — a second call will fail. If a document already exists in this conversation, you MUST use updateDocument instead. Never call createDocument twice.",
     inputSchema: z.object({
       title: z.string(),
       kind: z.enum(artifactKinds),
     }),
     execute: async ({ title, kind }) => {
       if (createdDocumentId) {
+        console.warn(
+          `[createDocument] DUPLICATE BLOCKED: already created ${createdDocumentId}, rejecting "${title}"`
+        );
         return {
-          id: createdDocumentId,
-          title,
-          kind,
           error: `A document was already created in this response (id: ${createdDocumentId}). Use updateDocument with this ID to modify it.`,
         };
       }
 
       const id = generateUUID();
       createdDocumentId = id;
+
+      console.log(
+        `[createDocument] Creating "${title}" (id: ${id}, model: ${modelId})`
+      );
 
       dataStream.write({
         type: "data-kind",
@@ -77,6 +83,7 @@ export const createDocument = ({
         title,
         dataStream,
         session,
+        modelId,
       });
 
       dataStream.write({ type: "data-finish", data: null, transient: true });

@@ -8,9 +8,14 @@ import type { ChatMessage } from "@/lib/types";
 type UpdateDocumentProps = {
   session: Session;
   dataStream: UIMessageStreamWriter<ChatMessage>;
+  modelId: string;
 };
 
-export const updateDocument = ({ session, dataStream }: UpdateDocumentProps) =>
+export const updateDocument = ({
+  session,
+  dataStream,
+  modelId,
+}: UpdateDocumentProps) =>
   tool({
     description:
       "Update an existing document. Use this instead of createDocument when a document already exists in the conversation. Find the document ID from a previous createDocument or updateDocument result in the message history.",
@@ -49,6 +54,7 @@ export const updateDocument = ({ session, dataStream }: UpdateDocumentProps) =>
         description,
         dataStream,
         session,
+        modelId,
       });
 
       dataStream.write({ type: "data-finish", data: null, transient: true });

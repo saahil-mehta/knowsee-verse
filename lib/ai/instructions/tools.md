@@ -4,13 +4,13 @@ You have access to the following tools. Use them strategically to deliver thorou
 
 ### Tool Inventory
 
-- **createDocument(title, kind, content)** — Create a text, code, or sheet artifact for substantial content (>10 lines). Always provide the full document content in the `content` parameter — you are the author. The artifact streams progressively to the user as you write.
-- **updateDocument(id, description, content)** — Modify an existing artifact by its ID. Always provide the complete updated content in the `content` parameter. Find the ID from a previous createDocument or updateDocument result in message history.
-- **requestSuggestions(documentId)** — Generate writing improvement suggestions for an existing text artifact. Only use when the user explicitly asks for suggestions.
+- **createDocument(title, kind, content)**: Create a text, code, or sheet artifact for substantial content (>10 lines). Always provide the full document content in the `content` parameter; you are the author. The artifact streams progressively to the user as you write.
+- **updateDocument(id, description, content)**: Modify an existing artifact by its ID. Always provide the complete updated content in the `content` parameter. Find the ID from a previous createDocument or updateDocument result in message history.
+- **requestSuggestions(documentId)**: Generate writing improvement suggestions for an existing text artifact. Only use when the user explicitly asks for suggestions.
 
-- **web_search** — Search the web for current information (up to 5 uses, 8 in brand mode). Write precise, targeted queries — 2-3 specific queries outperform 1 broad one.
-- **web_fetch** — Fetch content from a specific URL (up to 3 uses, 6 in brand mode). Only fetch URLs confirmed from search results or provided by the user.
-- **brand_audit** — (brand mode only) Generate a structured research plan for brand analysis. Returns a multi-phase plan to execute with web_search and web_fetch.
+- **web_search**: Search the web for current information (up to 5 uses, 8 in brand mode). Write precise, targeted queries; 2-3 specific queries outperform 1 broad one.
+- **web_fetch**: Fetch content from a specific URL (up to 3 uses, 6 in brand mode). Only fetch URLs confirmed from search results or provided by the user.
+- **brand_audit**: (brand mode only) Generate a structured research plan for brand analysis. Returns a multi-phase plan to execute with web_search and web_fetch.
 
 ### Document Export
 

@@ -5,8 +5,6 @@ import {
   ClockRewind,
   CopyIcon,
   DownloadIcon,
-  LineChartIcon,
-  PlusIcon,
   RedoIcon,
   UndoIcon,
 } from "@/components/icons";
@@ -108,36 +106,5 @@ export const reportArtifact = new Artifact<"report">({
       isDisabled: ({ content }) => !content || content.trim().length === 0,
     },
   ],
-  toolbar: [
-    {
-      icon: <LineChartIcon />,
-      description: "Refine charts",
-      onClick: ({ sendMessage }) => {
-        sendMessage({
-          role: "user",
-          parts: [
-            {
-              type: "text",
-              text: "Please improve the chart styling, labels, and data presentation in this report.",
-            },
-          ],
-        });
-      },
-    },
-    {
-      icon: <PlusIcon />,
-      description: "Add section",
-      onClick: ({ sendMessage }) => {
-        sendMessage({
-          role: "user",
-          parts: [
-            {
-              type: "text",
-              text: "Please add a new section to this report with additional analysis.",
-            },
-          ],
-        });
-      },
-    },
-  ],
+  toolbar: [],
 });

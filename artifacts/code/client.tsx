@@ -8,8 +8,6 @@ import {
 import { Artifact } from "@/components/create-artifact";
 import {
   CopyIcon,
-  LogsIcon,
-  MessageIcon,
   PlayIcon,
   RedoIcon,
   UndoIcon,
@@ -265,36 +263,5 @@ export const codeArtifact = new Artifact<"code", Metadata>({
       },
     },
   ],
-  toolbar: [
-    {
-      icon: <MessageIcon />,
-      description: "Add comments",
-      onClick: ({ sendMessage }) => {
-        sendMessage({
-          role: "user",
-          parts: [
-            {
-              type: "text",
-              text: "Add comments to the code snippet for understanding",
-            },
-          ],
-        });
-      },
-    },
-    {
-      icon: <LogsIcon />,
-      description: "Add logs",
-      onClick: ({ sendMessage }) => {
-        sendMessage({
-          role: "user",
-          parts: [
-            {
-              type: "text",
-              text: "Add logs to the code snippet for debugging",
-            },
-          ],
-        });
-      },
-    },
-  ],
+  toolbar: [],
 });

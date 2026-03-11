@@ -7,8 +7,6 @@ import {
   ClockRewind,
   CopyIcon,
   DownloadIcon,
-  MessageIcon,
-  PenIcon,
   RedoIcon,
   UndoIcon,
 } from "@/components/icons";
@@ -216,36 +214,5 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
       isDisabled: ({ content }) => !content || content.trim().length === 0,
     },
   ],
-  toolbar: [
-    {
-      icon: <PenIcon />,
-      description: "Add final polish",
-      onClick: ({ sendMessage }) => {
-        sendMessage({
-          role: "user",
-          parts: [
-            {
-              type: "text",
-              text: "Please add final polish and check for grammar, add section titles for better structure, and ensure everything reads smoothly.",
-            },
-          ],
-        });
-      },
-    },
-    {
-      icon: <MessageIcon />,
-      description: "Request suggestions",
-      onClick: ({ sendMessage }) => {
-        sendMessage({
-          role: "user",
-          parts: [
-            {
-              type: "text",
-              text: "Please add suggestions you have that could improve the writing.",
-            },
-          ],
-        });
-      },
-    },
-  ],
+  toolbar: [],
 });

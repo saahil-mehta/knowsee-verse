@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-const MODEL_BUTTON_REGEX = /Claude/i;
+const MODEL_BUTTON_REGEX = /Advanced|Balanced|Fast/i;
 
 test.describe("Model Selector", () => {
   test.beforeEach(async ({ page }) => {
@@ -33,9 +33,9 @@ test.describe("Model Selector", () => {
     await modelButton.click();
 
     const searchInput = page.getByPlaceholder("Search models...");
-    await searchInput.fill("Claude");
+    await searchInput.fill("Fast");
 
-    await expect(page.getByText("Claude Haiku 4.5").first()).toBeVisible();
+    await expect(page.getByText("Fast").first()).toBeVisible();
   });
 
   test("can close model selector by clicking outside", async ({ page }) => {
@@ -59,7 +59,7 @@ test.describe("Model Selector", () => {
       .first();
     await modelButton.click();
 
-    await expect(page.getByText("Anthropic")).toBeVisible();
+    await expect(page.getByText("knowsee")).toBeVisible();
   });
 
   test("can select a different model", async ({ page }) => {
@@ -69,12 +69,12 @@ test.describe("Model Selector", () => {
       .first();
     await modelButton.click();
 
-    await page.getByText("Claude Haiku 4.5").first().click();
+    await page.getByText("Fast").first().click();
 
     await expect(page.getByPlaceholder("Search models...")).not.toBeVisible();
 
     await expect(
-      page.locator("button").filter({ hasText: "Claude Haiku 4.5" }).first()
+      page.locator("button").filter({ hasText: "Fast" }).first()
     ).toBeVisible();
   });
 });

@@ -95,20 +95,6 @@ function PureEditor({
         editorRef.current.state.doc
       );
 
-      if (status === "streaming") {
-        const newDocument = buildDocumentFromContent(content);
-
-        const transaction = editorRef.current.state.tr.replaceWith(
-          0,
-          editorRef.current.state.doc.content.size,
-          newDocument.content
-        );
-
-        transaction.setMeta("no-save", true);
-        editorRef.current.dispatch(transaction);
-        return;
-      }
-
       if (currentContent !== content) {
         const newDocument = buildDocumentFromContent(content);
 
@@ -122,7 +108,7 @@ function PureEditor({
         editorRef.current.dispatch(transaction);
       }
     }
-  }, [content, status]);
+  }, [content]);
 
   useEffect(() => {
     if (editorRef.current?.state.doc && content) {
@@ -154,7 +140,6 @@ function areEqual(prevProps: EditorProps, nextProps: EditorProps) {
     prevProps.suggestions === nextProps.suggestions &&
     prevProps.currentVersionIndex === nextProps.currentVersionIndex &&
     prevProps.isCurrentVersion === nextProps.isCurrentVersion &&
-    !(prevProps.status === "streaming" && nextProps.status === "streaming") &&
     prevProps.content === nextProps.content &&
     prevProps.onSaveContent === nextProps.onSaveContent
   );

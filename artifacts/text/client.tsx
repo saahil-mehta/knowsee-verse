@@ -2,6 +2,7 @@ import { toast } from "sonner";
 import { Artifact } from "@/components/create-artifact";
 import { DiffView } from "@/components/diffview";
 import { DocumentSkeleton } from "@/components/document-skeleton";
+import { Response } from "@/components/elements/response";
 import {
   ClockRewind,
   CopyIcon,
@@ -74,6 +75,16 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
       const newContent = getDocumentContentById(currentVersionIndex);
 
       return <DiffView newContent={newContent} oldContent={oldContent} />;
+    }
+
+    if (status === "streaming") {
+      return (
+        <div className="flex flex-row px-4 py-8 md:px-10 md:py-12">
+          <div className="prose dark:prose-invert relative max-w-none">
+            <Response>{content}</Response>
+          </div>
+        </div>
+      );
     }
 
     return (

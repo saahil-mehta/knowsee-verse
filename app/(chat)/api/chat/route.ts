@@ -217,45 +217,52 @@ export async function POST(request: Request) {
         if (titlePromise) {
           const title = await titlePromise;
           dataStream.write({ type: "data-chat-title", data: title });
-          updateChatTitleById({ chatId: id, title });
+          // Already logs internally; catch to prevent unhandled rejection
+          updateChatTitleById({ chatId: id, title }).catch(() => undefined);
         }
       },
       generateId: generateUUID,
       onFinish: async ({ messages: finishedMessages }) => {
-        if (isToolApprovalFlow) {
-          for (const finishedMsg of finishedMessages) {
-            const existingMsg = uiMessages.find((m) => m.id === finishedMsg.id);
-            if (existingMsg) {
-              await updateMessage({
-                id: finishedMsg.id,
-                parts: finishedMsg.parts,
-              });
-            } else {
-              await saveMessages({
-                messages: [
-                  {
-                    id: finishedMsg.id,
-                    role: finishedMsg.role,
-                    parts: finishedMsg.parts,
-                    createdAt: new Date(),
-                    attachments: [],
-                    chatId: id,
-                  },
-                ],
-              });
+        try {
+          if (isToolApprovalFlow) {
+            for (const finishedMsg of finishedMessages) {
+              const existingMsg = uiMessages.find(
+                (m) => m.id === finishedMsg.id
+              );
+              if (existingMsg) {
+                await updateMessage({
+                  id: finishedMsg.id,
+                  parts: finishedMsg.parts,
+                });
+              } else {
+                await saveMessages({
+                  messages: [
+                    {
+                      id: finishedMsg.id,
+                      role: finishedMsg.role,
+                      parts: finishedMsg.parts,
+                      createdAt: new Date(),
+                      attachments: [],
+                      chatId: id,
+                    },
+                  ],
+                });
+              }
             }
+          } else if (finishedMessages.length > 0) {
+            await saveMessages({
+              messages: finishedMessages.map((currentMessage) => ({
+                id: currentMessage.id,
+                role: currentMessage.role,
+                parts: currentMessage.parts,
+                createdAt: new Date(),
+                attachments: [],
+                chatId: id,
+              })),
+            });
           }
-        } else if (finishedMessages.length > 0) {
-          await saveMessages({
-            messages: finishedMessages.map((currentMessage) => ({
-              id: currentMessage.id,
-              role: currentMessage.role,
-              parts: currentMessage.parts,
-              createdAt: new Date(),
-              attachments: [],
-              chatId: id,
-            })),
-          });
+        } catch (error) {
+          console.error("Failed to persist messages for chat", id, error);
         }
       },
       onError: () => "Oops, an error occurred!",

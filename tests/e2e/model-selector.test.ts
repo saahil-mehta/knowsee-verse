@@ -35,7 +35,8 @@ test.describe("Model Selector", () => {
     const searchInput = page.getByPlaceholder("Search models...");
     await searchInput.fill("Fast");
 
-    await expect(page.getByText("Fast").first()).toBeVisible();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByText("Fast").first()).toBeVisible();
   });
 
   test("can close model selector by clicking outside", async ({ page }) => {
@@ -59,7 +60,8 @@ test.describe("Model Selector", () => {
       .first();
     await modelButton.click();
 
-    await expect(page.getByText("knowsee")).toBeVisible();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByText("Fast", { exact: true })).toBeVisible();
   });
 
   test("can select a different model", async ({ page }) => {
@@ -69,7 +71,8 @@ test.describe("Model Selector", () => {
       .first();
     await modelButton.click();
 
-    await page.getByText("Fast").first().click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByText("Fast").first().click();
 
     await expect(page.getByPlaceholder("Search models...")).not.toBeVisible();
 

@@ -549,6 +549,7 @@ function PureModelSelectorCompact({
             <ModelSelectorItem
               className="px-3"
               key={model.id}
+              keywords={[model.name, model.description]}
               onSelect={() => {
                 onModelChange?.(model.id);
                 setCookie("chat-model", model.id);

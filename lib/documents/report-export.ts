@@ -1,12 +1,13 @@
 /**
  * Client-side report export — captures the rendered report DOM as HTML or PDF.
  *
- * Uses html2canvas-pro (modern CSS support) + jsPDF for pixel-perfect capture
- * of the interactive dashboard including Recharts visualisations.
+ * Both formats share the same pipeline: clone the DOM, resolve CSS variable
+ * colours on SVG charts, rasterise SVGs to PNG data URIs, and build a
+ * self-contained HTML document with the Knowsee branded header.
+ *
+ * PDF uses the browser's native print-to-PDF via a hidden iframe, keeping
+ * text selectable and file sizes small. No external dependencies required.
  */
-
-import html2canvas from "html2canvas-pro";
-import { jsPDF } from "jspdf";
 
 // Brand constants (client-safe subset of lib/documents/brand.ts)
 const BRAND_PURPLE = "#6214d9";
@@ -50,7 +51,6 @@ function resolveComputedSvgColours(
     }
   }
 
-  // Also resolve colour and opacity on text elements
   if (source instanceof SVGTextElement || source instanceof SVGTSpanElement) {
     const color = computed.getPropertyValue("color");
     if (color) {
@@ -87,56 +87,20 @@ async function toBase64DataUri(url: string): Promise<string> {
 }
 
 /**
- * Build a branded header element: Knowsee logo (left) + title (right) + purple rule.
- * Returns a detached DOM node ready to be prepended to the capture container.
+ * Clone the report element and prepare it for standalone export:
+ * - Inline computed styles on all HTML elements
+ * - Resolve CSS variable colours on SVG elements
+ * - Rasterise SVGs to PNG data URIs
  */
-function createBrandedHeader(title: string): HTMLDivElement {
-  const header = document.createElement("div");
-  header.style.cssText = `
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px 24px;
-    border-bottom: 3px solid ${BRAND_PURPLE};
-    margin-bottom: 16px;
-    background: white;
-  `;
-
-  const logo = document.createElement("img");
-  logo.src = LOGO_PATH;
-  logo.alt = "Knowsee";
-  logo.style.cssText = "height: 28px; width: auto;";
-
-  const titleEl = document.createElement("span");
-  titleEl.textContent = title;
-  titleEl.style.cssText = `
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    font-weight: 600;
-    color: ${BRAND_PURPLE};
-  `;
-
-  header.appendChild(logo);
-  header.appendChild(titleEl);
-  return header;
-}
-
-// ─── HTML Export ─────────────────────────────────────────────────────────────
-
-export async function exportReportAsHtml(
-  element: HTMLElement,
-  title: string,
-): Promise<void> {
-  // Clone the report DOM so we can mutate freely
+async function prepareClone(element: HTMLElement): Promise<HTMLElement> {
   const clone = element.cloneNode(true) as HTMLElement;
 
-  // Collect computed styles from all elements to inline them
+  // Inline computed styles on HTML elements
   const inlineComputedStyles = (
     source: HTMLElement,
     target: HTMLElement,
   ): void => {
     const computed = window.getComputedStyle(source);
-    // Copy a focused set of properties that matter for visual fidelity
     const props = [
       "color",
       "background-color",
@@ -188,22 +152,15 @@ export async function exportReportAsHtml(
 
   inlineComputedStyles(element, clone);
 
-  // Convert SVGs (Recharts) to rasterised PNG data URIs.
-  // Recharts SVGs use CSS custom properties for fill/stroke which won't
-  // resolve outside the page, so we resolve computed colours first, then
-  // render via canvas for a pixel-perfect capture.
+  // Rasterise SVGs (Recharts charts) to PNG data URIs
   const svgs = element.querySelectorAll("svg");
   const cloneSvgs = clone.querySelectorAll("svg");
   for (let i = 0; i < svgs.length; i++) {
     try {
       const svg = svgs[i];
-      // Deep-clone the live SVG so we can mutate it
       const svgClone = svg.cloneNode(true) as SVGElement;
-
-      // Resolve CSS variable colours on every SVG descendant
       resolveComputedSvgColours(svg, svgClone);
 
-      // Copy the root SVG's dimensions explicitly
       if (!svgClone.getAttribute("width")) {
         svgClone.setAttribute("width", String(svg.clientWidth));
       }
@@ -221,7 +178,6 @@ export async function exportReportAsHtml(
       const img = document.createElement("img");
       img.style.cssText = `width: ${svg.clientWidth}px; height: ${svg.clientHeight}px;`;
 
-      // Render SVG blob to canvas, then convert to PNG data URI
       await new Promise<void>((resolve) => {
         const canvas = document.createElement("canvas");
         canvas.width = svg.clientWidth * 2;
@@ -247,7 +203,11 @@ export async function exportReportAsHtml(
     }
   }
 
-  // Build the logo as base64
+  return clone;
+}
+
+/** Build the branded header as an HTML string with base64-embedded logo. */
+async function buildHeaderHtml(title: string): Promise<string> {
   let logoDataUri: string;
   try {
     logoDataUri = await toBase64DataUri(LOGO_PATH);
@@ -255,14 +215,24 @@ export async function exportReportAsHtml(
     logoDataUri = "";
   }
 
-  const headerHtml = `
+  return `
     <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:3px solid ${BRAND_PURPLE};margin-bottom:16px;background:white;">
       ${logoDataUri ? `<img src="${logoDataUri}" alt="Knowsee" style="height:28px;width:auto;" />` : `<span style="font-family:Arial,sans-serif;font-size:18px;font-weight:700;color:${BRAND_PURPLE};">Knowsee</span>`}
       <span style="font-family:Arial,sans-serif;font-size:14px;font-weight:600;color:${BRAND_PURPLE};">${title}</span>
     </div>
   `;
+}
 
-  const html = `<!DOCTYPE html>
+/** Build a complete self-contained HTML document from the prepared clone. */
+async function buildHtmlDocument(
+  element: HTMLElement,
+  title: string,
+  extraStyles?: string,
+): Promise<string> {
+  const clone = await prepareClone(element);
+  const headerHtml = await buildHeaderHtml(title);
+
+  return `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -278,6 +248,7 @@ export async function exportReportAsHtml(
       padding: 0;
     }
     img { max-width: 100%; }
+    ${extraStyles ?? ""}
   </style>
 </head>
 <body>
@@ -287,7 +258,15 @@ export async function exportReportAsHtml(
   </div>
 </body>
 </html>`;
+}
 
+// ─── HTML Export ─────────────────────────────────────────────────────────────
+
+export async function exportReportAsHtml(
+  element: HTMLElement,
+  title: string,
+): Promise<void> {
+  const html = await buildHtmlDocument(element, title);
   const blob = new Blob([html], { type: "text/html" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -299,83 +278,66 @@ export async function exportReportAsHtml(
 
 // ─── PDF Export ──────────────────────────────────────────────────────────────
 
+/**
+ * Uses the browser's native print pipeline via a hidden iframe.
+ * Text remains selectable, files are small, and pagination is handled
+ * by the browser's print engine.
+ */
 export async function exportReportAsPdf(
   element: HTMLElement,
   title: string,
 ): Promise<void> {
-  // Create an off-screen wrapper with white background and branded header
-  const wrapper = document.createElement("div");
-  wrapper.style.cssText = `
-    position: fixed;
-    top: -99999px;
-    left: 0;
-    width: ${element.scrollWidth}px;
-    background: white;
-    color: hsl(240 10% 3.9%);
-    z-index: -1;
+  const printStyles = `
+    @media print {
+      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      img { break-inside: avoid; }
+    }
+    @page {
+      size: A4;
+      margin: 15mm;
+    }
   `;
+  const html = await buildHtmlDocument(element, title, printStyles);
 
-  const header = createBrandedHeader(title);
-  wrapper.appendChild(header);
-
-  const clone = element.cloneNode(true) as HTMLElement;
-  wrapper.appendChild(clone);
-  document.body.appendChild(wrapper);
-
-  // Wait a tick for images/layout
-  await new Promise((resolve) => setTimeout(resolve, 100));
+  const iframe = document.createElement("iframe");
+  iframe.style.cssText = "position:fixed;top:-99999px;left:-99999px;width:0;height:0;border:none;";
+  document.body.appendChild(iframe);
 
   try {
-    const canvas = await html2canvas(wrapper, {
-      scale: 2,
-      useCORS: true,
-      backgroundColor: "#ffffff",
-      logging: false,
-    });
-
-    const imgData = canvas.toDataURL("image/png");
-    const imgWidth = canvas.width;
-    const imgHeight = canvas.height;
-
-    // A4 dimensions in mm
-    const pageWidth = 210;
-    const pageHeight = 297;
-    const margin = 10;
-    const contentWidth = pageWidth - margin * 2;
-    const contentHeight = (imgHeight / imgWidth) * contentWidth;
-
-    const pdf = new jsPDF({
-      orientation: contentHeight > pageHeight ? "portrait" : "portrait",
-      unit: "mm",
-      format: "a4",
-    });
-
-    // If the content is taller than one page, split across pages
-    const usableHeight = pageHeight - margin * 2;
-    if (contentHeight <= usableHeight) {
-      pdf.addImage(imgData, "PNG", margin, margin, contentWidth, contentHeight);
-    } else {
-      // Calculate how many pages we need
-      const totalPages = Math.ceil(contentHeight / usableHeight);
-      for (let page = 0; page < totalPages; page++) {
-        if (page > 0) {
-          pdf.addPage();
-        }
-        // Draw the full image offset by the page position
-        const yOffset = margin - page * usableHeight;
-        pdf.addImage(
-          imgData,
-          "PNG",
-          margin,
-          yOffset,
-          contentWidth,
-          contentHeight,
-        );
-      }
+    const iframeDoc = iframe.contentDocument ?? iframe.contentWindow?.document;
+    if (!iframeDoc) {
+      throw new Error("Could not access iframe document");
     }
 
-    pdf.save(`${sanitiseFilename(title)}.pdf`);
+    iframeDoc.open();
+    iframeDoc.write(html);
+    iframeDoc.close();
+
+    // Wait for images to load inside the iframe
+    await new Promise<void>((resolve) => {
+      const images = iframeDoc.querySelectorAll("img");
+      if (images.length === 0) {
+        resolve();
+        return;
+      }
+      let loaded = 0;
+      const onLoad = () => {
+        loaded++;
+        if (loaded >= images.length) resolve();
+      };
+      for (const img of images) {
+        if (img.complete) {
+          onLoad();
+        } else {
+          img.addEventListener("load", onLoad);
+          img.addEventListener("error", onLoad);
+        }
+      }
+    });
+
+    iframe.contentWindow?.print();
   } finally {
-    document.body.removeChild(wrapper);
+    // Clean up after a short delay to let the print dialog open
+    setTimeout(() => document.body.removeChild(iframe), 1000);
   }
 }

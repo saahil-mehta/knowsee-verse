@@ -37,6 +37,7 @@ function getLogoForDocx(): Buffer | null {
     return null;
   }
 }
+
 import { parseMarkdown } from "./parse-markdown";
 
 // ---------------------------------------------------------------------------
@@ -432,7 +433,10 @@ export async function markdownToDocx(
           new TableRow({
             children: [
               new TableCell({
-                width: { size: Math.floor(contentWidthTwips / 2), type: WidthType.DXA },
+                width: {
+                  size: Math.floor(contentWidthTwips / 2),
+                  type: WidthType.DXA,
+                },
                 borders: noBorders,
                 children: [
                   new Paragraph({
@@ -441,7 +445,10 @@ export async function markdownToDocx(
                 ],
               }),
               new TableCell({
-                width: { size: Math.floor(contentWidthTwips / 2), type: WidthType.DXA },
+                width: {
+                  size: Math.floor(contentWidthTwips / 2),
+                  type: WidthType.DXA,
+                },
                 borders: noBorders,
                 children: [
                   new Paragraph({

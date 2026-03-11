@@ -51,4 +51,3 @@ export function getTitleModel() {
   }
   return gateway("anthropic/claude-haiku-4-5");
 }
-

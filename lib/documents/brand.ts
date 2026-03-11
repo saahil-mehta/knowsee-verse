@@ -42,4 +42,3 @@ export function getLogoBuffer(): Buffer | null {
     return null;
   }
 }
-

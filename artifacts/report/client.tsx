@@ -4,11 +4,16 @@ import { DocumentSkeleton } from "@/components/document-skeleton";
 import {
   ClockRewind,
   CopyIcon,
+  DownloadIcon,
   LineChartIcon,
   PlusIcon,
   RedoIcon,
   UndoIcon,
 } from "@/components/icons";
+import {
+  exportReportAsHtml,
+  exportReportAsPdf,
+} from "@/lib/documents/report-export";
 import { ReportRenderer } from "./renderer";
 
 export const reportArtifact = new Artifact<"report">({
@@ -57,6 +62,50 @@ export const reportArtifact = new Artifact<"report">({
         navigator.clipboard.writeText(content);
         toast.success("Copied to clipboard!");
       },
+    },
+    {
+      icon: <DownloadIcon size={18} />,
+      label: "HTML",
+      description: "Download as HTML",
+      onClick: async ({ content }) => {
+        const el = document.querySelector("[data-report-content]");
+        if (!el) {
+          toast.error("Report not found");
+          return;
+        }
+        const toastId = toast.loading("Generating HTML...");
+        try {
+          const title =
+            JSON.parse(content).title ?? "Report";
+          await exportReportAsHtml(el as HTMLElement, title);
+          toast.success("HTML downloaded", { id: toastId });
+        } catch {
+          toast.error("Failed to export HTML", { id: toastId });
+        }
+      },
+      isDisabled: ({ content }) => !content || content.trim().length === 0,
+    },
+    {
+      icon: <DownloadIcon size={18} />,
+      label: "PDF",
+      description: "Download as PDF",
+      onClick: async ({ content }) => {
+        const el = document.querySelector("[data-report-content]");
+        if (!el) {
+          toast.error("Report not found");
+          return;
+        }
+        const toastId = toast.loading("Generating PDF...");
+        try {
+          const title =
+            JSON.parse(content).title ?? "Report";
+          await exportReportAsPdf(el as HTMLElement, title);
+          toast.success("PDF downloaded", { id: toastId });
+        } catch {
+          toast.error("Failed to export PDF", { id: toastId });
+        }
+      },
+      isDisabled: ({ content }) => !content || content.trim().length === 0,
     },
   ],
   toolbar: [

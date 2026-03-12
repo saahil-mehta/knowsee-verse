@@ -11,18 +11,45 @@ import { generateUUID } from "@/lib/utils";
 type CreateDocumentProps = {
   session: Session;
   dataStream: UIMessageStreamWriter<ChatMessage>;
+  modelId: string;
 };
 
-export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
-  tool({
+export const createDocument = ({
+  session,
+  dataStream,
+  modelId,
+}: CreateDocumentProps) => {
+  let createdDocumentId: string | null = null;
+
+  return tool({
     description:
-      "Create a document for a writing or content creation activities. This tool will call other functions that will generate the contents of the document based on the title and kind.",
+      "Create a new document artifact. CRITICAL CONSTRAINT: You may only call this tool ONCE per response — a second call will fail. If a document already exists in this conversation, you MUST use updateDocument instead. Never call createDocument twice.",
     inputSchema: z.object({
       title: z.string(),
       kind: z.enum(artifactKinds),
+      content: z
+        .string()
+        .optional()
+        .describe(
+          "The full document content. For text: markdown. For code: complete runnable code. For sheet: CSV with headers. For report: valid JSON with { title, subtitle?, date?, sections[] } — use exact field names from the report schema in the system prompt."
+        ),
     }),
-    execute: async ({ title, kind }) => {
+    execute: async ({ title, kind, content }) => {
+      if (createdDocumentId) {
+        console.warn(
+          `[createDocument] DUPLICATE BLOCKED: already created ${createdDocumentId}, rejecting "${title}"`
+        );
+        return {
+          error: `A document was already created in this response (id: ${createdDocumentId}). Use updateDocument with this ID to modify it.`,
+        };
+      }
+
       const id = generateUUID();
+      createdDocumentId = id;
+
+      console.log(
+        `[createDocument] Creating "${title}" (id: ${id}, kind: ${kind}, model: ${modelId}, content: ${content ? `provided (${content.length} chars)` : "none — will use inner generation"})`
+      );
 
       dataStream.write({
         type: "data-kind",
@@ -42,11 +69,16 @@ export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
         transient: true,
       });
 
-      dataStream.write({
-        type: "data-clear",
-        data: null,
-        transient: true,
-      });
+      // Only emit data-clear for the fallback (inner generation) path.
+      // When content is provided directly, ToolStreamHandler already
+      // streamed the content to the artifact panel during input-streaming.
+      if (!content) {
+        dataStream.write({
+          type: "data-clear",
+          data: null,
+          transient: true,
+        });
+      }
 
       const documentHandler = documentHandlersByArtifactKind.find(
         (documentHandlerByArtifactKind) =>
@@ -60,8 +92,10 @@ export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
       await documentHandler.onCreateDocument({
         id,
         title,
+        content,
         dataStream,
         session,
+        modelId,
       });
 
       dataStream.write({ type: "data-finish", data: null, transient: true });
@@ -70,7 +104,8 @@ export const createDocument = ({ session, dataStream }: CreateDocumentProps) =>
         id,
         title,
         kind,
-        content: "A document was created and is now visible to the user.",
+        content: `Document created successfully (id: ${id}). The document is now visible to the user. On future turns, use updateDocument with this ID to modify it — do NOT create a new document.`,
       };
     },
   });
+};

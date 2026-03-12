@@ -8,18 +8,30 @@ import type { ChatMessage } from "@/lib/types";
 type UpdateDocumentProps = {
   session: Session;
   dataStream: UIMessageStreamWriter<ChatMessage>;
+  modelId: string;
 };
 
-export const updateDocument = ({ session, dataStream }: UpdateDocumentProps) =>
+export const updateDocument = ({
+  session,
+  dataStream,
+  modelId,
+}: UpdateDocumentProps) =>
   tool({
-    description: "Update a document with the given description.",
+    description:
+      "Update an existing document. Use this instead of createDocument when a document already exists in the conversation. Find the document ID from a previous createDocument or updateDocument result in the message history.",
     inputSchema: z.object({
       id: z.string().describe("The ID of the document to update"),
       description: z
         .string()
         .describe("The description of changes that need to be made"),
+      content: z
+        .string()
+        .optional()
+        .describe(
+          "The full updated document content. For text: markdown. For code: complete runnable code. For sheet: CSV with headers."
+        ),
     }),
-    execute: async ({ id, description }) => {
+    execute: async ({ id, description, content }) => {
       const document = await getDocumentById({ id });
 
       if (!document) {
@@ -28,11 +40,16 @@ export const updateDocument = ({ session, dataStream }: UpdateDocumentProps) =>
         };
       }
 
-      dataStream.write({
-        type: "data-clear",
-        data: null,
-        transient: true,
-      });
+      // Only emit data-clear for the fallback (inner generation) path.
+      // When content is provided directly, ToolStreamHandler already
+      // streamed the new content to the artifact panel during input-streaming.
+      if (!content) {
+        dataStream.write({
+          type: "data-clear",
+          data: null,
+          transient: true,
+        });
+      }
 
       const documentHandler = documentHandlersByArtifactKind.find(
         (documentHandlerByArtifactKind) =>
@@ -46,8 +63,10 @@ export const updateDocument = ({ session, dataStream }: UpdateDocumentProps) =>
       await documentHandler.onUpdateDocument({
         document,
         description,
+        content,
         dataStream,
         session,
+        modelId,
       });
 
       dataStream.write({ type: "data-finish", data: null, transient: true });

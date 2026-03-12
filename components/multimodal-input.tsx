@@ -19,21 +19,18 @@ import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import {
   ModelSelector,
   ModelSelectorContent,
-  ModelSelectorGroup,
   ModelSelectorInput,
   ModelSelectorItem,
   ModelSelectorList,
-  ModelSelectorLogo,
   ModelSelectorName,
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
-import {
-  chatModels,
-  DEFAULT_CHAT_MODEL,
-  modelsByProvider,
-} from "@/lib/ai/models";
-import type { Attachment, ChatMessage } from "@/lib/types";
+import { chatModels, DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
+import type { Attachment, ChatMessage, UsageData } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { BranchChatCard } from "./branch-chat-card";
+import { ContextWarningBanner } from "./context-warning-banner";
+import { ContextIndicator } from "./elements/context-indicator";
 import {
   PromptInput,
   PromptInputSubmit,
@@ -68,6 +65,9 @@ function PureMultimodalInput({
   selectedVisibilityType,
   selectedModelId,
   onModelChange,
+  usage,
+  chatTitle,
+  projectId,
 }: {
   chatId: string;
   input: string;
@@ -83,6 +83,9 @@ function PureMultimodalInput({
   selectedVisibilityType: VisibilityType;
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
+  usage: UsageData | null;
+  chatTitle: string;
+  projectId?: string;
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
@@ -295,6 +298,15 @@ function PureMultimodalInput({
     return () => textarea.removeEventListener("paste", handlePaste);
   }, [handlePaste]);
 
+  const [showBannerBranch, setShowBannerBranch] = useState(false);
+
+  const model =
+    chatModels.find((m) => m.id === selectedModelId) ?? chatModels[0];
+  const usedTokens = usage ? usage.inputTokens + usage.outputTokens : 0;
+  const contextPercent = usage
+    ? Math.min(usedTokens / model.maxContextTokens, 1)
+    : 0;
+
   return (
     <div className={cn("relative flex w-full flex-col gap-4", className)}>
       {messages.length === 0 &&
@@ -302,10 +314,21 @@ function PureMultimodalInput({
         uploadQueue.length === 0 && (
           <SuggestedActions
             chatId={chatId}
+            projectId={projectId}
             selectedVisibilityType={selectedVisibilityType}
             sendMessage={sendMessage}
           />
         )}
+
+      {showBannerBranch && (
+        <BranchChatCard
+          chatId={chatId}
+          chatTitle={chatTitle}
+          onClose={() => setShowBannerBranch(false)}
+          selectedChatModel={selectedModelId}
+          visibility={selectedVisibilityType}
+        />
+      )}
 
       <input
         className="pointer-events-none fixed -top-4 -left-4 size-0.5 opacity-0"
@@ -316,93 +339,119 @@ function PureMultimodalInput({
         type="file"
       />
 
-      <PromptInput
-        className="rounded-2xl border border-border bg-background p-3 shadow-xs backdrop-blur-sm transition-all duration-300 ease-out focus-within:border-muted-foreground/40 focus-within:shadow-[0_0_16px_rgba(98,20,217,0.15),0_0_40px_rgba(98,20,217,0.08)]"
-        onSubmit={(event) => {
-          event.preventDefault();
-          if (!input.trim() && attachments.length === 0) {
-            return;
-          }
-          if (status !== "ready") {
-            toast.error("Please wait for the model to finish its response!");
-          } else {
-            submitForm();
-          }
-        }}
-      >
-        {(attachments.length > 0 || uploadQueue.length > 0) && (
-          <div
-            className="flex flex-row items-end gap-2 overflow-x-scroll"
-            data-testid="attachments-preview"
-          >
-            {attachments.map((attachment) => (
-              <PreviewAttachment
-                attachment={attachment}
-                key={attachment.url}
-                onRemove={() => {
-                  setAttachments((currentAttachments) =>
-                    currentAttachments.filter((a) => a.url !== attachment.url)
-                  );
-                  if (fileInputRef.current) {
-                    fileInputRef.current.value = "";
-                  }
-                }}
-              />
-            ))}
-
-            {uploadQueue.map((filename) => (
-              <PreviewAttachment
-                attachment={{
-                  url: "",
-                  name: filename,
-                  contentType: "",
-                }}
-                isUploading={true}
-                key={filename}
-              />
-            ))}
-          </div>
-        )}
-        <div className="flex flex-row items-start gap-1 sm:gap-2">
-          <PromptInputTextarea
-            className="grow resize-none border-0! border-none! bg-transparent p-2 text-base outline-none ring-0 [-ms-overflow-style:none] [scrollbar-width:none] placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-scrollbar]:hidden"
-            data-testid="multimodal-input"
-            disableAutoResize={true}
-            maxHeight={200}
-            minHeight={44}
-            onChange={handleInput}
-            placeholder="Send a message..."
-            ref={textareaRef}
-            rows={1}
-            value={input}
+      <div className="relative">
+        {!showBannerBranch && (
+          <ContextWarningBanner
+            onBranch={() => setShowBannerBranch(true)}
+            percent={contextPercent}
           />
-        </div>
-        <PromptInputToolbar className="border-top-0! border-t-0! p-0 shadow-none dark:border-0 dark:border-transparent!">
-          <PromptInputTools className="gap-0 sm:gap-0.5">
-            <AttachmentsButton fileInputRef={fileInputRef} status={status} />
-            <ModelSelectorCompact
-              onModelChange={onModelChange}
-              selectedModelId={selectedModelId}
-            />
-          </PromptInputTools>
+        )}
 
-          {status === "submitted" ? (
-            <StopButton setMessages={setMessages} stop={stop} />
-          ) : (
-            <PromptInputSubmit
-              className="group size-8 rounded-full bg-primary text-primary-foreground transition-all duration-200 ease-out hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:scale-[0.95] disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
-              data-testid="send-button"
-              disabled={!input.trim() || uploadQueue.length > 0}
-              status={status}
+        <PromptInput
+          className="relative z-10 rounded-2xl border border-border bg-background p-3 shadow-xs backdrop-blur-sm transition-all duration-300 ease-out focus-within:border-muted-foreground/40 focus-within:shadow-[0_0_16px_rgba(98,20,217,0.15),0_0_40px_rgba(98,20,217,0.08)]"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!input.trim() && attachments.length === 0) {
+              return;
+            }
+            if (status !== "ready") {
+              toast.error("Please wait for the model to finish its response!");
+            } else {
+              submitForm();
+            }
+          }}
+        >
+          {(attachments.length > 0 || uploadQueue.length > 0) && (
+            <div
+              className="flex flex-row items-end gap-2 overflow-x-scroll"
+              data-testid="attachments-preview"
             >
-              <ArrowUpIcon
-                className="transition-transform duration-200 group-hover:-translate-y-0.5"
-                size={14}
-              />
-            </PromptInputSubmit>
+              {attachments.map((attachment) => (
+                <PreviewAttachment
+                  attachment={attachment}
+                  key={attachment.url}
+                  onRemove={() => {
+                    setAttachments((currentAttachments) =>
+                      currentAttachments.filter((a) => a.url !== attachment.url)
+                    );
+                    if (fileInputRef.current) {
+                      fileInputRef.current.value = "";
+                    }
+                  }}
+                />
+              ))}
+
+              {uploadQueue.map((filename) => (
+                <PreviewAttachment
+                  attachment={{
+                    url: "",
+                    name: filename,
+                    contentType: "",
+                  }}
+                  isUploading={true}
+                  key={filename}
+                />
+              ))}
+            </div>
           )}
-        </PromptInputToolbar>
-      </PromptInput>
+          <div className="flex flex-row items-start gap-1 sm:gap-2">
+            <PromptInputTextarea
+              className="grow resize-none border-0! border-none! bg-transparent p-2 text-base outline-none ring-0 [-ms-overflow-style:none] [scrollbar-width:none] placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-0 focus-visible:ring-offset-0 [&::-webkit-scrollbar]:hidden"
+              data-testid="multimodal-input"
+              disableAutoResize={true}
+              maxHeight={200}
+              minHeight={44}
+              onChange={handleInput}
+              placeholder="Send a message..."
+              ref={textareaRef}
+              rows={1}
+              value={input}
+            />
+          </div>
+          <PromptInputToolbar className="border-top-0! border-t-0! p-0 shadow-none dark:border-0 dark:border-transparent!">
+            <PromptInputTools className="gap-0 sm:gap-0.5">
+              <AttachmentsButton fileInputRef={fileInputRef} status={status} />
+              <ModelSelectorCompact
+                disabled={messages.length > 0}
+                onModelChange={onModelChange}
+                selectedModelId={selectedModelId}
+              />
+            </PromptInputTools>
+
+            <div className="flex items-center gap-1.5">
+              {(() => {
+                const model =
+                  chatModels.find((m) => m.id === selectedModelId) ??
+                  chatModels[0];
+                return (
+                  <ContextIndicator
+                    maxContextTokens={model.maxContextTokens}
+                    messageCount={messages.length}
+                    modelName={model.name}
+                    pricing={model.pricing}
+                    usage={usage}
+                  />
+                );
+              })()}
+              {status === "submitted" ? (
+                <StopButton setMessages={setMessages} stop={stop} />
+              ) : (
+                <PromptInputSubmit
+                  className="group size-8 rounded-full bg-primary text-primary-foreground transition-all duration-200 ease-out hover:bg-primary/90 hover:shadow-md hover:shadow-primary/25 active:scale-[0.95] disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none"
+                  data-testid="send-button"
+                  disabled={!input.trim() || uploadQueue.length > 0}
+                  status={status}
+                >
+                  <ArrowUpIcon
+                    className="transition-transform duration-200 group-hover:-translate-y-0.5"
+                    size={14}
+                  />
+                </PromptInputSubmit>
+              )}
+            </div>
+          </PromptInputToolbar>
+        </PromptInput>
+      </div>
     </div>
   );
 }
@@ -423,6 +472,12 @@ export const MultimodalInput = memo(
       return false;
     }
     if (prevProps.selectedModelId !== nextProps.selectedModelId) {
+      return false;
+    }
+    if (prevProps.usage !== nextProps.usage) {
+      return false;
+    }
+    if (prevProps.projectId !== nextProps.projectId) {
       return false;
     }
 
@@ -458,9 +513,11 @@ const AttachmentsButton = memo(PureAttachmentsButton);
 function PureModelSelectorCompact({
   selectedModelId,
   onModelChange,
+  disabled,
 }: {
   selectedModelId: string;
   onModelChange?: (modelId: string) => void;
+  disabled?: boolean;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -468,53 +525,49 @@ function PureModelSelectorCompact({
     chatModels.find((m) => m.id === selectedModelId) ??
     chatModels.find((m) => m.id === DEFAULT_CHAT_MODEL) ??
     chatModels[0];
-  const [provider] = selectedModel.id.split("/");
-
-  // Provider display names
-  const providerNames: Record<string, string> = {
-    anthropic: "Anthropic",
-  };
-
   return (
-    <ModelSelector onOpenChange={setOpen} open={open}>
+    <ModelSelector
+      onOpenChange={disabled ? undefined : setOpen}
+      open={disabled ? false : open}
+    >
       <ModelSelectorTrigger asChild>
-        <Button className="h-8 gap-1.5 px-2" variant="ghost">
-          {provider && <ModelSelectorLogo provider={provider} />}
+        <Button
+          className={cn(
+            "h-8 gap-1.5 px-2",
+            disabled && "cursor-default opacity-60"
+          )}
+          disabled={disabled}
+          variant="ghost"
+        >
           <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent>
         <ModelSelectorInput placeholder="Search models..." />
         <ModelSelectorList>
-          {Object.entries(modelsByProvider).map(
-            ([providerKey, providerModels]) => (
-              <ModelSelectorGroup
-                heading={providerNames[providerKey] ?? providerKey}
-                key={providerKey}
-              >
-                {providerModels.map((model) => {
-                  const logoProvider = model.id.split("/")[0];
-                  return (
-                    <ModelSelectorItem
-                      key={model.id}
-                      onSelect={() => {
-                        onModelChange?.(model.id);
-                        setCookie("chat-model", model.id);
-                        setOpen(false);
-                      }}
-                      value={model.id}
-                    >
-                      <ModelSelectorLogo provider={logoProvider} />
-                      <ModelSelectorName>{model.name}</ModelSelectorName>
-                      {model.id === selectedModel.id && (
-                        <CheckIcon className="ml-auto size-4" />
-                      )}
-                    </ModelSelectorItem>
-                  );
-                })}
-              </ModelSelectorGroup>
-            )
-          )}
+          {chatModels.map((model) => (
+            <ModelSelectorItem
+              className="px-3"
+              key={model.id}
+              keywords={[model.name, model.description]}
+              onSelect={() => {
+                onModelChange?.(model.id);
+                setCookie("chat-model", model.id);
+                setOpen(false);
+              }}
+              value={model.id}
+            >
+              <div className="flex flex-col gap-0.5">
+                <ModelSelectorName>{model.name}</ModelSelectorName>
+                <span className="text-xs text-muted-foreground">
+                  {model.description}
+                </span>
+              </div>
+              {model.id === selectedModel.id && (
+                <CheckIcon className="ml-auto size-4" />
+              )}
+            </ModelSelectorItem>
+          ))}
         </ModelSelectorList>
       </ModelSelectorContent>
     </ModelSelector>

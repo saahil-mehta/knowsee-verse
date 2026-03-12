@@ -1,0 +1,108 @@
+import { toast } from "sonner";
+import { Artifact } from "@/components/create-artifact";
+import { DocumentSkeleton } from "@/components/document-skeleton";
+import {
+  ClockRewind,
+  CopyIcon,
+  DownloadIcon,
+  RedoIcon,
+  UndoIcon,
+} from "@/components/icons";
+import {
+  exportReportAsHtml,
+  exportReportAsPdf,
+} from "@/lib/documents/report-export";
+import { ReportRenderer } from "./renderer";
+
+export const reportArtifact = new Artifact<"report">({
+  kind: "report",
+  description:
+    "Useful for creating interactive reports with charts, KPIs, and data visualisations.",
+  onStreamPart: () => {
+    // No-op: report content is delivered via the direct path
+  },
+  content: ({ status, content, isLoading }) => {
+    if (isLoading) {
+      return <DocumentSkeleton artifactKind="report" />;
+    }
+
+    return <ReportRenderer content={content} status={status} />;
+  },
+  actions: [
+    {
+      icon: <ClockRewind size={18} />,
+      description: "View changes",
+      onClick: ({ handleVersionChange }) => {
+        handleVersionChange("toggle");
+      },
+      isDisabled: ({ currentVersionIndex }) => currentVersionIndex === 0,
+    },
+    {
+      icon: <UndoIcon size={18} />,
+      description: "View Previous version",
+      onClick: ({ handleVersionChange }) => {
+        handleVersionChange("prev");
+      },
+      isDisabled: ({ currentVersionIndex }) => currentVersionIndex === 0,
+    },
+    {
+      icon: <RedoIcon size={18} />,
+      description: "View Next version",
+      onClick: ({ handleVersionChange }) => {
+        handleVersionChange("next");
+      },
+      isDisabled: ({ isCurrentVersion }) => isCurrentVersion,
+    },
+    {
+      icon: <CopyIcon size={18} />,
+      description: "Copy raw JSON",
+      onClick: ({ content }) => {
+        navigator.clipboard.writeText(content);
+        toast.success("Copied to clipboard!");
+      },
+    },
+    {
+      icon: <DownloadIcon size={18} />,
+      label: "HTML",
+      description: "Download as HTML",
+      onClick: async ({ content }) => {
+        const el = document.querySelector("[data-report-content]");
+        if (!el) {
+          toast.error("Report not found");
+          return;
+        }
+        const toastId = toast.loading("Generating HTML...");
+        try {
+          const title = JSON.parse(content).title ?? "Report";
+          await exportReportAsHtml(el as HTMLElement, title);
+          toast.success("HTML downloaded", { id: toastId });
+        } catch {
+          toast.error("Failed to export HTML", { id: toastId });
+        }
+      },
+      isDisabled: ({ content }) => !content || content.trim().length === 0,
+    },
+    {
+      icon: <DownloadIcon size={18} />,
+      label: "PDF",
+      description: "Download as PDF",
+      onClick: async ({ content }) => {
+        const el = document.querySelector("[data-report-content]");
+        if (!el) {
+          toast.error("Report not found");
+          return;
+        }
+        const toastId = toast.loading("Generating PDF...");
+        try {
+          const title = JSON.parse(content).title ?? "Report";
+          await exportReportAsPdf(el as HTMLElement, title);
+          toast.success("PDF downloaded", { id: toastId });
+        } catch {
+          toast.error("Failed to export PDF", { id: toastId });
+        }
+      },
+      isDisabled: ({ content }) => !content || content.trim().length === 0,
+    },
+  ],
+  toolbar: [],
+});

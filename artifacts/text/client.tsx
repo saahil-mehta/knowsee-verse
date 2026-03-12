@@ -2,11 +2,11 @@ import { toast } from "sonner";
 import { Artifact } from "@/components/create-artifact";
 import { DiffView } from "@/components/diffview";
 import { DocumentSkeleton } from "@/components/document-skeleton";
+import { Response } from "@/components/elements/response";
 import {
   ClockRewind,
   CopyIcon,
-  MessageIcon,
-  PenIcon,
+  DownloadIcon,
   RedoIcon,
   UndoIcon,
 } from "@/components/icons";
@@ -75,8 +75,18 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
       return <DiffView newContent={newContent} oldContent={oldContent} />;
     }
 
+    if (status === "streaming") {
+      return (
+        <div className="flex flex-row px-4 py-8 md:px-10 md:py-12">
+          <div className="prose dark:prose-invert relative max-w-none">
+            <Response>{content}</Response>
+          </div>
+        </div>
+      );
+    }
+
     return (
-      <div className="flex flex-row px-4 py-8 md:p-20">
+      <div className="flex flex-row px-4 py-8 md:px-10 md:py-12">
         <Editor
           content={content}
           currentVersionIndex={currentVersionIndex}
@@ -143,37 +153,66 @@ export const textArtifact = new Artifact<"text", TextArtifactMetadata>({
         toast.success("Copied to clipboard!");
       },
     },
-  ],
-  toolbar: [
     {
-      icon: <PenIcon />,
-      description: "Add final polish",
-      onClick: ({ sendMessage }) => {
-        sendMessage({
-          role: "user",
-          parts: [
-            {
-              type: "text",
-              text: "Please add final polish and check for grammar, add section titles for better structure, and ensure everything reads smoothly.",
-            },
-          ],
-        });
+      icon: <DownloadIcon size={18} />,
+      label: "DOCX",
+      description: "Export as Word document",
+      onClick: async ({ documentId }) => {
+        const toastId = toast.loading("Generating DOCX...");
+        try {
+          const res = await fetch(
+            `/api/document/export?id=${documentId}&format=docx`
+          );
+          if (!res.ok) {
+            throw new Error("Export failed");
+          }
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download =
+            res.headers
+              .get("Content-Disposition")
+              ?.match(/filename="(.+)"/)?.[1] ?? "document.docx";
+          a.click();
+          URL.revokeObjectURL(url);
+          toast.success("DOCX downloaded", { id: toastId });
+        } catch {
+          toast.error("Failed to export DOCX", { id: toastId });
+        }
       },
+      isDisabled: ({ content }) => !content || content.trim().length === 0,
     },
     {
-      icon: <MessageIcon />,
-      description: "Request suggestions",
-      onClick: ({ sendMessage }) => {
-        sendMessage({
-          role: "user",
-          parts: [
-            {
-              type: "text",
-              text: "Please add suggestions you have that could improve the writing.",
-            },
-          ],
-        });
+      icon: <DownloadIcon size={18} />,
+      label: "PDF",
+      description: "Export as PDF",
+      onClick: async ({ documentId }) => {
+        const toastId = toast.loading("Generating PDF...");
+        try {
+          const res = await fetch(
+            `/api/document/export?id=${documentId}&format=pdf`
+          );
+          if (!res.ok) {
+            throw new Error("Export failed");
+          }
+          const blob = await res.blob();
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download =
+            res.headers
+              .get("Content-Disposition")
+              ?.match(/filename="(.+)"/)?.[1] ?? "document.pdf";
+          a.click();
+          URL.revokeObjectURL(url);
+          toast.success("PDF downloaded", { id: toastId });
+        } catch {
+          toast.error("Failed to export PDF", { id: toastId });
+        }
       },
+      isDisabled: ({ content }) => !content || content.trim().length === 0,
     },
   ],
+  toolbar: [],
 });

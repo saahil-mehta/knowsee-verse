@@ -1,5 +1,6 @@
 import type { UIMessageStreamWriter } from "ai";
 import { codeDocumentHandler } from "@/artifacts/code/server";
+import { reportDocumentHandler } from "@/artifacts/report/server";
 import { sheetDocumentHandler } from "@/artifacts/sheet/server";
 import { textDocumentHandler } from "@/artifacts/text/server";
 import type { ArtifactKind } from "@/components/artifact";
@@ -19,15 +20,19 @@ export type SaveDocumentProps = {
 export type CreateDocumentCallbackProps = {
   id: string;
   title: string;
+  content?: string;
   dataStream: UIMessageStreamWriter<ChatMessage>;
   session: Session;
+  modelId: string;
 };
 
 export type UpdateDocumentCallbackProps = {
   document: Document;
   description: string;
+  content?: string;
   dataStream: UIMessageStreamWriter<ChatMessage>;
   session: Session;
+  modelId: string;
 };
 
 export type DocumentHandler<T = ArtifactKind> = {
@@ -47,8 +52,10 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
       const draftContent = await config.onCreateDocument({
         id: args.id,
         title: args.title,
+        content: args.content,
         dataStream: args.dataStream,
         session: args.session,
+        modelId: args.modelId,
       });
 
       if (args.session?.user?.id) {
@@ -67,8 +74,10 @@ export function createDocumentHandler<T extends ArtifactKind>(config: {
       const draftContent = await config.onUpdateDocument({
         document: args.document,
         description: args.description,
+        content: args.content,
         dataStream: args.dataStream,
         session: args.session,
+        modelId: args.modelId,
       });
 
       if (args.session?.user?.id) {
@@ -93,6 +102,7 @@ export const documentHandlersByArtifactKind: DocumentHandler[] = [
   textDocumentHandler,
   codeDocumentHandler,
   sheetDocumentHandler,
+  reportDocumentHandler,
 ];
 
-export const artifactKinds = ["text", "code", "sheet"] as const;
+export const artifactKinds = ["text", "code", "sheet", "report"] as const;

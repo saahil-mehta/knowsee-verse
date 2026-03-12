@@ -80,17 +80,69 @@ export const verification = pgTable(
 
 // ─── Application Tables ─────────────────────────────────────────────────────
 
-export const chat = pgTable("Chat", {
+export const project = pgTable(
+  "Project",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    name: varchar("name", { length: 256 }).notNull(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [index("project_userId_idx").on(table.userId)]
+);
+
+export type Project = InferSelectModel<typeof project>;
+
+export const brandProfile = pgTable("BrandProfile", {
   id: uuid("id").primaryKey().notNull().defaultRandom(),
-  createdAt: timestamp("createdAt").notNull(),
-  title: text("title").notNull(),
-  userId: uuid("userId")
+  projectId: uuid("projectId")
     .notNull()
-    .references(() => user.id),
-  visibility: varchar("visibility", { enum: ["public", "private"] })
-    .notNull()
-    .default("private"),
+    .references(() => project.id)
+    .unique(),
+  brandName: varchar("brandName", { length: 256 }).notNull(),
+  websiteUrl: varchar("websiteUrl", { length: 512 }).notNull(),
+  logoUrl: varchar("logoUrl", { length: 512 }),
+  country: varchar("country", { length: 64 }).notNull(),
+  market: varchar("market", { length: 64 }),
+  categories: json("categories").notNull(),
+  competitors: json("competitors").notNull(),
+  retailers: json("retailers").notNull(),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
 });
+
+export type BrandProfile = InferSelectModel<typeof brandProfile>;
+
+export const chat = pgTable(
+  "Chat",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    createdAt: timestamp("createdAt").notNull(),
+    title: text("title").notNull(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id),
+    visibility: varchar("visibility", { enum: ["public", "private"] })
+      .notNull()
+      .default("private"),
+    parentChatId: uuid("parentChatId"),
+    projectId: uuid("projectId"),
+    modelId: varchar("modelId", { length: 128 }),
+  },
+  (table) => [
+    foreignKey({
+      columns: [table.parentChatId],
+      foreignColumns: [table.id],
+    }).onDelete("set null"),
+    foreignKey({
+      columns: [table.projectId],
+      foreignColumns: [project.id],
+    }).onDelete("set null"),
+  ]
+);
 
 export type Chat = InferSelectModel<typeof chat>;
 
@@ -170,7 +222,9 @@ export const document = pgTable(
     createdAt: timestamp("createdAt").notNull(),
     title: text("title").notNull(),
     content: text("content"),
-    kind: varchar("text", { enum: ["text", "code", "image", "sheet"] })
+    kind: varchar("text", {
+      enum: ["text", "code", "image", "sheet", "report"],
+    })
       .notNull()
       .default("text"),
     userId: uuid("userId")

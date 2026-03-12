@@ -1,7 +1,9 @@
 import type { InferUITool, UIMessage } from "ai";
 import { z } from "zod";
 import type { ArtifactKind } from "@/components/artifact";
+import type { createBrandAudit } from "./ai/tools/brand-audit";
 import type { createDocument } from "./ai/tools/create-document";
+
 import type { requestSuggestions } from "./ai/tools/request-suggestions";
 import type { createServerTools } from "./ai/tools/server-tools";
 import type { updateDocument } from "./ai/tools/update-document";
@@ -24,13 +26,26 @@ type requestSuggestionsTool = InferUITool<
 type ServerTools = ReturnType<typeof createServerTools>;
 type webSearchTool = InferUITool<ServerTools["web_search"]>;
 type webFetchTool = InferUITool<ServerTools["web_fetch"]>;
-
+type brandAuditTool = InferUITool<ReturnType<typeof createBrandAudit>>;
 export type ChatTools = {
   createDocument: createDocumentTool;
   updateDocument: updateDocumentTool;
   requestSuggestions: requestSuggestionsTool;
   web_search: webSearchTool;
   web_fetch: webFetchTool;
+  brand_audit: brandAuditTool;
+};
+
+export type UsageData = {
+  /** Last-step tokens — actual context window occupancy. */
+  inputTokens: number;
+  outputTokens: number;
+  reasoningTokens?: number;
+  cachedInputTokens?: number;
+  /** Cumulative tokens across all agentic steps — for cost calculation. */
+  totalInputTokens: number;
+  totalOutputTokens: number;
+  totalCachedInputTokens?: number;
 };
 
 export type CustomUIDataTypes = {
@@ -46,6 +61,7 @@ export type CustomUIDataTypes = {
   clear: null;
   finish: null;
   "chat-title": string;
+  usage: UsageData;
 };
 
 export type ChatMessage = UIMessage<

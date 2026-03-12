@@ -4,6 +4,12 @@ import { useMemo, useState } from "react";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { cn, sanitizeText } from "@/lib/utils";
+import {
+  ChainOfThought,
+  ChainOfThoughtContent,
+  ChainOfThoughtHeader,
+  ChainOfThoughtStep,
+} from "./ai-elements/chain-of-thought";
 import { useDataStream } from "./data-stream-provider";
 import { DocumentToolResult } from "./document";
 import { DocumentPreview } from "./document-preview";
@@ -28,6 +34,7 @@ import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
+import type { VisibilityType } from "./visibility-selector";
 
 const PurePreviewMessage = ({
   addToolApprovalResponse: _addToolApprovalResponse,
@@ -39,6 +46,10 @@ const PurePreviewMessage = ({
   regenerate,
   isReadonly,
   requiresScrollPadding: _requiresScrollPadding,
+  chatTitle,
+  canBranch,
+  selectedChatModel,
+  visibility,
 }: {
   addToolApprovalResponse: UseChatHelpers<ChatMessage>["addToolApprovalResponse"];
   chatId: string;
@@ -49,6 +60,10 @@ const PurePreviewMessage = ({
   regenerate: UseChatHelpers<ChatMessage>["regenerate"];
   isReadonly: boolean;
   requiresScrollPadding: boolean;
+  chatTitle: string;
+  canBranch: boolean;
+  selectedChatModel: string;
+  visibility: VisibilityType;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
 
@@ -78,6 +93,7 @@ const PurePreviewMessage = ({
     }
 
     const renderedToolTypes = new Set([
+      "tool-brand_audit",
       "tool-createDocument",
       "tool-updateDocument",
       "tool-requestSuggestions",
@@ -112,7 +128,7 @@ const PurePreviewMessage = ({
         })}
       >
         <div
-          className={cn("flex flex-col", {
+          className={cn("flex min-w-0 flex-col", {
             "gap-2 md:gap-4": processedParts?.some(
               (p) => p.type === "text" && p.text?.trim()
             ),
@@ -123,7 +139,7 @@ const PurePreviewMessage = ({
                 ) ||
                   processedParts?.some((p) => p.type.startsWith("tool-")))) ||
               mode === "edit",
-            "max-w-[calc(100%-2.5rem)] sm:max-w-[min(fit-content,80%)]":
+            "max-w-full sm:max-w-[min(fit-content,80%)]":
               message.role === "user" && mode !== "edit",
           })}
         >
@@ -169,7 +185,7 @@ const PurePreviewMessage = ({
                   <div key={key}>
                     <MessageContent
                       className={cn({
-                        "wrap-break-word w-fit rounded-2xl px-3 py-2 text-right text-white":
+                        "wrap-break-word w-fit rounded-2xl px-3 py-2 text-white":
                           message.role === "user",
                         "bg-transparent px-0 py-0 text-left":
                           message.role === "assistant",
@@ -211,6 +227,23 @@ const PurePreviewMessage = ({
             if (type === "tool-createDocument") {
               const { toolCallId } = part;
 
+              // During input-streaming, output is not yet available
+              if ("state" in part && part.state === "input-streaming") {
+                const partialInput = part.input as
+                  | { title?: string; kind?: string }
+                  | undefined;
+                return (
+                  <DocumentPreview
+                    args={{
+                      title: partialInput?.title ?? "Generating...",
+                      kind: partialInput?.kind ?? "text",
+                    }}
+                    isReadonly={isReadonly}
+                    key={toolCallId}
+                  />
+                );
+              }
+
               if (part.output && "error" in part.output) {
                 return (
                   <div
@@ -233,6 +266,11 @@ const PurePreviewMessage = ({
 
             if (type === "tool-updateDocument") {
               const { toolCallId } = part;
+
+              // During input-streaming, output is not yet available
+              if ("state" in part && part.state === "input-streaming") {
+                return null;
+              }
 
               if (part.output && "error" in part.output) {
                 return (
@@ -340,6 +378,60 @@ const PurePreviewMessage = ({
               return <WebFetchCard key={key} state={part.state} url={url} />;
             }
 
+            if (type === "tool-brand_audit") {
+              if (
+                part.state === "input-available" ||
+                part.state === "input-streaming"
+              ) {
+                return (
+                  <div
+                    className="flex items-center gap-1 text-muted-foreground text-sm"
+                    key={key}
+                  >
+                    <span className="animate-pulse">
+                      Generating research plan...
+                    </span>
+                  </div>
+                );
+              }
+
+              if (part.state === "output-available") {
+                const output = part.output as {
+                  brandName: string;
+                  phases: {
+                    name: string;
+                    description: string;
+                  }[];
+                } | null;
+
+                if (!output?.phases) {
+                  return null;
+                }
+
+                return (
+                  <ChainOfThought
+                    className="w-full max-w-full"
+                    defaultOpen={true}
+                    key={key}
+                  >
+                    <ChainOfThoughtHeader>
+                      Research: {output.brandName} Agentic Commerce Audit
+                    </ChainOfThoughtHeader>
+                    <ChainOfThoughtContent>
+                      {output.phases.map((phase) => (
+                        <ChainOfThoughtStep
+                          description={phase.description}
+                          key={phase.name}
+                          label={phase.name}
+                          status="pending"
+                        />
+                      ))}
+                    </ChainOfThoughtContent>
+                  </ChainOfThought>
+                );
+              }
+            }
+
             return null;
           })}
 
@@ -360,11 +452,15 @@ const PurePreviewMessage = ({
 
           {!isReadonly && (
             <MessageActions
+              canBranch={canBranch}
               chatId={chatId}
+              chatTitle={chatTitle}
               isLoading={isLoading}
               key={`action-${message.id}`}
               message={message}
+              selectedChatModel={selectedChatModel}
               setMode={setMode}
+              visibility={visibility}
               vote={vote}
             />
           )}

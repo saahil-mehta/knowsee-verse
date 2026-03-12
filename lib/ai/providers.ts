@@ -51,10 +51,3 @@ export function getTitleModel() {
   }
   return gateway("anthropic/claude-haiku-4-5");
 }
-
-export function getArtifactModel() {
-  if (isTestEnvironment && myProvider) {
-    return myProvider.languageModel("artifact-model");
-  }
-  return gateway("anthropic/claude-haiku-4-5");
-}

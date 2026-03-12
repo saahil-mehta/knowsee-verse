@@ -9,9 +9,12 @@ import {
 } from "ai";
 import { after } from "next/server";
 import { createResumableStreamContext } from "resumable-stream";
+import { compactMessages } from "@/lib/ai/context";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
+import { createBrandAudit } from "@/lib/ai/tools/brand-audit";
 import { createDocument } from "@/lib/ai/tools/create-document";
+
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { createServerTools } from "@/lib/ai/tools/server-tools";
 import { updateDocument } from "@/lib/ai/tools/update-document";
@@ -20,6 +23,7 @@ import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
   deleteChatById,
+  getBrandProfileByProjectId,
   getChatById,
   getMessagesByChatId,
   saveChat,
@@ -27,7 +31,7 @@ import {
   updateChatTitleById,
   updateMessage,
 } from "@/lib/db/queries";
-import type { DBMessage } from "@/lib/db/schema";
+import type { BrandProfile, DBMessage } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
@@ -85,8 +89,17 @@ export async function POST(request: Request) {
         userId: session.user.id,
         title: "New chat",
         visibility: selectedVisibilityType,
+        projectId: requestBody.projectId,
+        modelId: selectedChatModel,
       });
       titlePromise = generateTitleFromUserMessage({ message });
+    }
+
+    // Resolve brand profile for project-scoped chats
+    const projectId = chat?.projectId ?? requestBody.projectId;
+    let brandProfile: BrandProfile | null = null;
+    if (projectId) {
+      brandProfile = await getBrandProfileByProjectId({ projectId });
     }
 
     const uiMessages = isToolApprovalFlow
@@ -102,7 +115,9 @@ export async function POST(request: Request) {
       country,
     };
 
-    const serverTools = createServerTools(requestHints);
+    const serverTools = createServerTools(requestHints, {
+      projectMode: !!brandProfile,
+    });
 
     if (message?.role === "user") {
       await saveMessages({
@@ -120,27 +135,56 @@ export async function POST(request: Request) {
     }
 
     const modelMessages = await convertToModelMessages(uiMessages);
+    const prunedMessages = compactMessages(modelMessages);
 
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
-          system: systemPrompt({ selectedChatModel, requestHints }),
-          messages: modelMessages,
-          stopWhen: stepCountIs(8),
+          system: systemPrompt({
+            selectedChatModel,
+            requestHints,
+            brandProfile: brandProfile ?? undefined,
+          }),
+          messages: prunedMessages,
+          stopWhen: stepCountIs(brandProfile ? 12 : 8),
           experimental_activeTools: [
             "createDocument",
             "updateDocument",
             "requestSuggestions",
+
             "web_search",
             "web_fetch",
+            ...(brandProfile ? (["brand_audit"] as const) : []),
           ],
           tools: {
             ...serverTools,
-            createDocument: createDocument({ session, dataStream }),
-            updateDocument: updateDocument({ session, dataStream }),
-            requestSuggestions: requestSuggestions({ session, dataStream }),
+            createDocument: createDocument({
+              session,
+              dataStream,
+              modelId: selectedChatModel,
+            }),
+            updateDocument: updateDocument({
+              session,
+              dataStream,
+              modelId: selectedChatModel,
+            }),
+            requestSuggestions: requestSuggestions({
+              session,
+              dataStream,
+              modelId: selectedChatModel,
+            }),
+
+            ...(brandProfile
+              ? {
+                  brand_audit: createBrandAudit({
+                    session,
+                    dataStream,
+                    brandProfile,
+                  }),
+                }
+              : {}),
           },
           experimental_telemetry: {
             isEnabled: isProductionEnvironment,
@@ -152,48 +196,73 @@ export async function POST(request: Request) {
           result.toUIMessageStream({ sendReasoning: true, sendSources: true })
         );
 
+        const [lastStepUsage, totalUsage] = await Promise.all([
+          result.usage,
+          result.totalUsage,
+        ]);
+        dataStream.write({
+          type: "data-usage",
+          data: {
+            inputTokens: lastStepUsage.inputTokens ?? 0,
+            outputTokens: lastStepUsage.outputTokens ?? 0,
+            reasoningTokens: lastStepUsage.outputTokenDetails?.reasoningTokens,
+            cachedInputTokens: lastStepUsage.inputTokenDetails?.cacheReadTokens,
+            totalInputTokens: totalUsage.inputTokens ?? 0,
+            totalOutputTokens: totalUsage.outputTokens ?? 0,
+            totalCachedInputTokens:
+              totalUsage.inputTokenDetails?.cacheReadTokens,
+          },
+        });
+
         if (titlePromise) {
           const title = await titlePromise;
           dataStream.write({ type: "data-chat-title", data: title });
-          updateChatTitleById({ chatId: id, title });
+          // Already logs internally; catch to prevent unhandled rejection
+          updateChatTitleById({ chatId: id, title }).catch(() => undefined);
         }
       },
       generateId: generateUUID,
       onFinish: async ({ messages: finishedMessages }) => {
-        if (isToolApprovalFlow) {
-          for (const finishedMsg of finishedMessages) {
-            const existingMsg = uiMessages.find((m) => m.id === finishedMsg.id);
-            if (existingMsg) {
-              await updateMessage({
-                id: finishedMsg.id,
-                parts: finishedMsg.parts,
-              });
-            } else {
-              await saveMessages({
-                messages: [
-                  {
-                    id: finishedMsg.id,
-                    role: finishedMsg.role,
-                    parts: finishedMsg.parts,
-                    createdAt: new Date(),
-                    attachments: [],
-                    chatId: id,
-                  },
-                ],
-              });
+        try {
+          if (isToolApprovalFlow) {
+            for (const finishedMsg of finishedMessages) {
+              const existingMsg = uiMessages.find(
+                (m) => m.id === finishedMsg.id
+              );
+              if (existingMsg) {
+                await updateMessage({
+                  id: finishedMsg.id,
+                  parts: finishedMsg.parts,
+                });
+              } else {
+                await saveMessages({
+                  messages: [
+                    {
+                      id: finishedMsg.id,
+                      role: finishedMsg.role,
+                      parts: finishedMsg.parts,
+                      createdAt: new Date(),
+                      attachments: [],
+                      chatId: id,
+                    },
+                  ],
+                });
+              }
             }
+          } else if (finishedMessages.length > 0) {
+            await saveMessages({
+              messages: finishedMessages.map((currentMessage) => ({
+                id: currentMessage.id,
+                role: currentMessage.role,
+                parts: currentMessage.parts,
+                createdAt: new Date(),
+                attachments: [],
+                chatId: id,
+              })),
+            });
           }
-        } else if (finishedMessages.length > 0) {
-          await saveMessages({
-            messages: finishedMessages.map((currentMessage) => ({
-              id: currentMessage.id,
-              role: currentMessage.role,
-              parts: currentMessage.parts,
-              createdAt: new Date(),
-              attachments: [],
-              chatId: id,
-            })),
-          });
+        } catch (error) {
+          console.error("Failed to persist messages for chat", id, error);
         }
       },
       onError: () => "Oops, an error occurred!",

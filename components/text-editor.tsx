@@ -36,11 +36,12 @@ function PureEditor({
   content,
   onSaveContent,
   suggestions,
-  status,
+  status: _status,
 }: EditorProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const editorRef = useRef<EditorView | null>(null);
 
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentional mount-only effect
   useEffect(() => {
     if (containerRef.current && !editorRef.current) {
       const state = EditorState.create({
@@ -72,9 +73,7 @@ function PureEditor({
         editorRef.current = null;
       }
     };
-    // NOTE: we only want to run this effect once
-    // eslint-disable-next-line
-  }, [content]);
+  }, []);
 
   useEffect(() => {
     if (editorRef.current) {
@@ -96,20 +95,6 @@ function PureEditor({
         editorRef.current.state.doc
       );
 
-      if (status === "streaming") {
-        const newDocument = buildDocumentFromContent(content);
-
-        const transaction = editorRef.current.state.tr.replaceWith(
-          0,
-          editorRef.current.state.doc.content.size,
-          newDocument.content
-        );
-
-        transaction.setMeta("no-save", true);
-        editorRef.current.dispatch(transaction);
-        return;
-      }
-
       if (currentContent !== content) {
         const newDocument = buildDocumentFromContent(content);
 
@@ -123,7 +108,7 @@ function PureEditor({
         editorRef.current.dispatch(transaction);
       }
     }
-  }, [content, status]);
+  }, [content]);
 
   useEffect(() => {
     if (editorRef.current?.state.doc && content) {
@@ -146,7 +131,10 @@ function PureEditor({
   }, [suggestions, content]);
 
   return (
-    <div className="prose dark:prose-invert relative" ref={containerRef} />
+    <div
+      className="prose dark:prose-invert relative max-w-none"
+      ref={containerRef}
+    />
   );
 }
 
@@ -155,7 +143,6 @@ function areEqual(prevProps: EditorProps, nextProps: EditorProps) {
     prevProps.suggestions === nextProps.suggestions &&
     prevProps.currentVersionIndex === nextProps.currentVersionIndex &&
     prevProps.isCurrentVersion === nextProps.isCurrentVersion &&
-    !(prevProps.status === "streaming" && nextProps.status === "streaming") &&
     prevProps.content === nextProps.content &&
     prevProps.onSaveContent === nextProps.onSaveContent
   );

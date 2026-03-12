@@ -22,7 +22,7 @@ import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Vote } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
-import type { Attachment, ChatMessage } from "@/lib/types";
+import type { Attachment, ChatMessage, UsageData } from "@/lib/types";
 import { fetcher, fetchWithErrorHandlers, generateUUID } from "@/lib/utils";
 import { Artifact } from "./artifact";
 import { useDataStream } from "./data-stream-provider";
@@ -30,6 +30,7 @@ import { Messages } from "./messages";
 import { MultimodalInput } from "./multimodal-input";
 import { getChatHistoryPaginationKey } from "./sidebar-history";
 import { toast } from "./toast";
+import { ToolStreamHandler } from "./tool-stream-handler";
 import type { VisibilityType } from "./visibility-selector";
 
 export function Chat({
@@ -39,6 +40,10 @@ export function Chat({
   initialVisibilityType,
   isReadonly,
   autoResume,
+  chatTitle,
+  parentChat,
+  projectId,
+  projectContext,
 }: {
   id: string;
   initialMessages: ChatMessage[];
@@ -46,6 +51,10 @@ export function Chat({
   initialVisibilityType: VisibilityType;
   isReadonly: boolean;
   autoResume: boolean;
+  chatTitle: string;
+  parentChat: { id: string; title: string } | null;
+  projectId?: string;
+  projectContext?: { projectId: string; projectName: string } | null;
 }) {
   const router = useRouter();
 
@@ -72,6 +81,7 @@ export function Chat({
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
   const [currentModelId, setCurrentModelId] = useState(initialChatModel);
   const currentModelIdRef = useRef(currentModelId);
+  const [usage, setUsage] = useState<UsageData | null>(null);
 
   useEffect(() => {
     currentModelIdRef.current = currentModelId;
@@ -126,12 +136,17 @@ export function Chat({
               : { message: lastMessage }),
             selectedChatModel: currentModelIdRef.current,
             selectedVisibilityType: visibilityType,
+            ...(projectId ? { projectId } : {}),
             ...request.body,
           },
         };
       },
     }),
     onData: (dataPart) => {
+      if (dataPart.type === "data-usage") {
+        setUsage(dataPart.data as UsageData);
+        return;
+      }
       setDataStream((ds) => (ds ? [...ds, dataPart] : []));
     },
     onFinish: () => {
@@ -190,20 +205,25 @@ export function Chat({
       <div className="overscroll-behavior-contain flex h-dvh min-w-0 touch-pan-y flex-col bg-background">
         <ChatHeader
           chatId={id}
+          chatTitle={chatTitle}
           isReadonly={isReadonly}
+          projectContext={projectContext}
           selectedVisibilityType={initialVisibilityType}
         />
 
         <Messages
           addToolApprovalResponse={addToolApprovalResponse}
           chatId={id}
+          chatTitle={chatTitle}
           isArtifactVisible={isArtifactVisible}
           isReadonly={isReadonly}
           messages={messages}
+          parentChat={parentChat}
           regenerate={regenerate}
-          selectedModelId={initialChatModel}
+          selectedModelId={currentModelId}
           setMessages={setMessages}
           status={status}
+          visibility={visibilityType}
           votes={votes}
         />
 
@@ -212,9 +232,11 @@ export function Chat({
             <MultimodalInput
               attachments={attachments}
               chatId={id}
+              chatTitle={chatTitle}
               input={input}
               messages={messages}
               onModelChange={setCurrentModelId}
+              projectId={projectId}
               selectedModelId={currentModelId}
               selectedVisibilityType={visibilityType}
               sendMessage={sendMessage}
@@ -223,10 +245,13 @@ export function Chat({
               setMessages={setMessages}
               status={status}
               stop={stop}
+              usage={usage}
             />
           )}
         </div>
       </div>
+
+      <ToolStreamHandler messages={messages} />
 
       <Artifact
         addToolApprovalResponse={addToolApprovalResponse}
@@ -244,6 +269,7 @@ export function Chat({
         setMessages={setMessages}
         status={status}
         stop={stop}
+        usage={usage}
         votes={votes}
       />
 

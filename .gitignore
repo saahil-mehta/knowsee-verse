@@ -42,7 +42,9 @@ yarn-error.log*
 /playwright-report/
 /blob-report/
 /playwright/*
+/.playwright-mcp/
 tests/.auth/
 
 *.scratchpad*.txt
 .mcp.json
+*.tsbuildinfo

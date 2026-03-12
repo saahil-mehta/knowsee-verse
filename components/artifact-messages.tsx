@@ -42,13 +42,15 @@ function PureArtifactMessages({
 
   return (
     <div
-      className="flex h-full flex-col items-center gap-4 overflow-y-scroll px-4 pt-20"
+      className="flex h-full w-full min-w-0 flex-col gap-4 overflow-x-hidden overflow-y-scroll px-4 pt-20"
       ref={messagesContainerRef}
     >
       {messages.map((message, index) => (
         <PreviewMessage
           addToolApprovalResponse={addToolApprovalResponse}
+          canBranch={false}
           chatId={chatId}
+          chatTitle=""
           isLoading={status === "streaming" && index === messages.length - 1}
           isReadonly={isReadonly}
           key={message.id}
@@ -57,7 +59,9 @@ function PureArtifactMessages({
           requiresScrollPadding={
             hasSentMessage && index === messages.length - 1
           }
+          selectedChatModel=""
           setMessages={setMessages}
+          visibility="private"
           vote={
             votes
               ? votes.find((vote) => vote.messageId === message.id)

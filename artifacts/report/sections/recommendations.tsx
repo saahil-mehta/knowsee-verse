@@ -27,10 +27,10 @@ export function RecommendationList({ title, groups }: RecommendationSection) {
     <div className="rounded-lg border border-border bg-card p-6">
       <h3 className="mb-4 text-lg font-semibold text-foreground">{title}</h3>
       <div className="space-y-6">
-        {groups.map((group) => {
+        {groups.map((group, groupIndex) => {
           const styles = TIER_STYLES[group.tier];
           return (
-            <div key={group.tier}>
+            <div key={`${group.tier}-${groupIndex}`}>
               <span
                 className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${styles.badge}`}
               >

@@ -41,14 +41,52 @@ After receiving the audit summary, create a report artifact. Call `createDocumen
 5. radar-chart: title="Category Ownership", angleKey=category name. One radar per entity (brand + top 3 competitors). Data comes from categoryResults in the summary
 6. table: title="Model Breakdown", columns=[Model, Mention Rate, Avg Sentiment, Avg Recommendation, Avg Position]. One row per model from modelResults
 7. text: title="Key Findings", content=2-3 paragraph narrative synthesising the most important patterns. What is {{brand_name}} strong at? Where are the gaps? Which competitors dominate?
-8. recommendations: title="GEO Playbook", groups by tier. Each item: action (what to do), reason (why it matters for AI visibility), impact (expected effect on mention rate/positioning)
+8. recommendations: title="GEO Playbook", groups by tier (high/medium/low). Structure recommendations using the GEO framework below.
 </report-sections>
+
+<geo-framework>
+Generative Engine Optimisation (GEO) is the practice of increasing a brand's visibility, accuracy, and favourability in AI model outputs. Unlike SEO (optimising for search engine indexing), GEO targets the signals that LLMs use when generating recommendations: training data representation, structured data, entity authority, and retrieval-augmented generation sources.
+
+Use these levers to structure recommendations. Each recommendation MUST tie back to a specific gap found in the audit data:
+
+**Lever 1: Entity Authority** — Strengthen the brand's presence in authoritative sources that LLMs reference.
+- Signal: Low mention rate across all models suggests weak entity representation in training data.
+- Actions: Wikipedia presence and accuracy, industry publication features, awards and certifications that get cited, expert roundups and listicles on high-authority domains.
+- Tie to data: "{{brand_name}} was mentioned in only X% of responses, while [competitor] appeared in Y%. This suggests weaker representation in LLM training corpora."
+
+**Lever 2: Structured Data & Machine Readability** — Make product and brand information parseable by AI systems.
+- Signal: Low positioning (high rank numbers or null positions) suggests AI models know the brand but can't surface specific product details.
+- Actions: Schema.org Product markup, JSON-LD on all product pages, FAQ schema for common purchase-intent queries, consistent NAP (name, address, phone) across the web.
+- Tie to data: "When {{brand_name}} was mentioned, average position was X, indicating the brand is known but not top-of-mind for specific queries."
+
+**Lever 3: Category Content Ownership** — Create definitive content for the categories where the brand is weakest.
+- Signal: Low scores in specific categories from categoryResults.
+- Actions: Long-form guides ("The Complete Guide to [Category] in [Market]"), comparison content that positions the brand favourably, product education content that answers the exact questions consumers ask AI models.
+- Tie to data: "In [weak category], {{brand_name}} scored X% while [competitor] scored Y%. The brand needs to become the authoritative voice for this category."
+
+**Lever 4: Review & UGC Signal** — Increase the volume and quality of authentic mentions that AI models train on.
+- Signal: Low sentiment or recommendation strength despite being mentioned.
+- Actions: Review generation programmes on high-visibility platforms (Reddit, specialist forums, review aggregators), user-generated content campaigns, influencer content that explicitly names and recommends the brand in natural language.
+- Tie to data: "Despite a X% mention rate, sentiment averaged only Y/5 and recommendation strength Z/5, suggesting the brand is known but not actively recommended."
+
+**Lever 5: Competitive Displacement** — Target the specific competitors that AI models currently prefer.
+- Signal: competitorMentions data showing which rivals dominate.
+- Actions: Head-to-head comparison content, "vs" pages, competitive differentiation messaging in PR and owned media, specific claims that counter competitor advantages.
+- Tie to data: "[Competitor] was mentioned X times across all probes. Create targeted comparison content addressing why {{brand_name}} outperforms [competitor] on [specific dimension]."
+
+**Lever 6: Model-Specific Gaps** — Address AI models that under-represent the brand.
+- Signal: Large variance in mention rates across models (e.g. high on ChatGPT, low on Gemini).
+- Actions: The training data sources differ by model. Google's Gemini weights web content and Google's index heavily. OpenAI's models weight Reddit, forums, and partnerships. Mistral emphasises European sources. Tailor content distribution to the platforms each model draws from.
+- Tie to data: "{{brand_name}} has a X% mention rate on [strong model] but only Y% on [weak model]. Content strategy should target the sources [weak model] prioritises."
+</geo-framework>
 
 <rules>
 - Use only data from the audit summary. Do not fabricate or estimate numbers.
 - Every score, percentage, and ranking must come directly from the tool result.
 - If a field is missing from the summary, omit that section rather than guessing.
-- The recommendations should be specific to {{brand_name}}'s category and competitive landscape, not generic SEO advice.
+- Every recommendation MUST reference specific numbers from the audit (mention rate, sentiment, position, category score, competitor mention count). No recommendation without a data anchor.
+- Do not include generic advice like "improve your SEO" or "create quality content." Every action must be specific to {{brand_name}}'s gaps against named competitors in the audited market.
+- Group recommendations by impact tier: HIGH = addresses gaps in mention rate or model coverage, MEDIUM = addresses sentiment or positioning gaps, LOW = refinements for already-visible categories.
 </rules>
 
 ### Report Structure

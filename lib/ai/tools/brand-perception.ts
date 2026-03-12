@@ -139,7 +139,26 @@ export const createBrandPerception = ({
         modelsQueried: summary.modelsQueried,
       });
 
-      // Step 6: Return formatted summary for Claude
-      return formatSummaryForClaude(summary, brandProfile.brandName);
+      // Step 6: Build probe grid snapshot for UI persistence
+      const promptMap = new Map(prompts.map((p) => [p.id, p]));
+      const probeGrid = PROBE_MODELS.map((model) => {
+        const modelProbes = probeResults.filter((r) => r.modelId === model.id);
+        return {
+          modelId: model.id,
+          modelLabel: model.label,
+          completed: modelProbes.length,
+          total: prompts.length,
+          responses: modelProbes.map((r) => ({
+            promptText: promptMap.get(r.promptId)?.text ?? "",
+            response: r.response.substring(0, 200),
+          })),
+        };
+      });
+
+      // Step 7: Return summary for Claude + probe grid for UI
+      return {
+        summary: formatSummaryForClaude(summary, brandProfile.brandName),
+        probeGrid,
+      };
     },
   });

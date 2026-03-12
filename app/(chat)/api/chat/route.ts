@@ -39,7 +39,7 @@ import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
-export const maxDuration = 120;
+export const maxDuration = 300;
 
 function getStreamContext() {
   try {

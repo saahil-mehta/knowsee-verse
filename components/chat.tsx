@@ -17,7 +17,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { useArtifactSelector } from "@/hooks/use-artifact";
+import { useArtifact, useArtifactSelector } from "@/hooks/use-artifact";
 import { useAutoResume } from "@/hooks/use-auto-resume";
 import { useChatVisibility } from "@/hooks/use-chat-visibility";
 import type { Vote } from "@/lib/db/schema";
@@ -75,7 +75,8 @@ export function Chat({
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [router]);
-  const { setDataStream } = useDataStream();
+  const { setDataStream, setProbeActive, setProbeStatusMessage } =
+    useDataStream();
 
   const [input, setInput] = useState<string>("");
   const [showCreditCardAlert, setShowCreditCardAlert] = useState(false);
@@ -164,6 +165,12 @@ export function Chat({
             description: error.message,
           });
         }
+      } else {
+        toast({
+          type: "error",
+          description:
+            "The response was interrupted. Please try sending your message again.",
+        });
       }
     },
   });
@@ -192,6 +199,32 @@ export function Chat({
 
   const [attachments, setAttachments] = useState<Attachment[]>([]);
   const isArtifactVisible = useArtifactSelector((state) => state.isVisible);
+  const { artifact, setArtifact } = useArtifact();
+
+  // Reset stuck artifact when the stream ends without a data-finish event
+  const prevStatusRef = useRef(status);
+  useEffect(() => {
+    const wasStreaming =
+      prevStatusRef.current === "streaming" ||
+      prevStatusRef.current === "submitted";
+    const isNowDone = status === "ready" || status === "error";
+
+    if (wasStreaming && isNowDone) {
+      if (artifact.status === "streaming") {
+        setArtifact((current) => ({ ...current, status: "idle" }));
+      }
+      setProbeActive(false);
+      setProbeStatusMessage("");
+    }
+
+    prevStatusRef.current = status;
+  }, [
+    status,
+    artifact.status,
+    setArtifact,
+    setProbeActive,
+    setProbeStatusMessage,
+  ]);
 
   useAutoResume({
     autoResume,

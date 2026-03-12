@@ -34,6 +34,7 @@ import { MessageActions } from "./message-actions";
 import { MessageEditor } from "./message-editor";
 import { MessageReasoning } from "./message-reasoning";
 import { PreviewAttachment } from "./preview-attachment";
+import { type ModelProbeState, ProbeGrid } from "./probe-grid";
 import type { VisibilityType } from "./visibility-selector";
 
 const PurePreviewMessage = ({
@@ -71,7 +72,7 @@ const PurePreviewMessage = ({
     (part) => part.type === "file"
   );
 
-  useDataStream();
+  const { probeState, probeActive, probeStatusMessage } = useDataStream();
 
   const { processedParts, hasVisibleContent } = useMemo(() => {
     const processed: typeof message.parts = [];
@@ -94,6 +95,7 @@ const PurePreviewMessage = ({
 
     const renderedToolTypes = new Set([
       "tool-brand_audit",
+      "tool-brand_perception",
       "tool-createDocument",
       "tool-updateDocument",
       "tool-requestSuggestions",
@@ -376,6 +378,55 @@ const PurePreviewMessage = ({
                   : undefined;
 
               return <WebFetchCard key={key} state={part.state} url={url} />;
+            }
+
+            if (type === "tool-brand_perception") {
+              // During streaming: show live probe grid from context
+              if (
+                part.state === "input-streaming" ||
+                part.state === "input-available"
+              ) {
+                const liveModels = Array.from(probeState.values());
+                if (liveModels.length === 0) {
+                  return (
+                    <div
+                      className="flex items-center gap-1 text-sm text-muted-foreground"
+                      key={key}
+                    >
+                      <span className="animate-pulse">
+                        Starting visibility audit...
+                      </span>
+                    </div>
+                  );
+                }
+                return (
+                  <ProbeGrid
+                    isActive={probeActive}
+                    key={key}
+                    models={liveModels}
+                    statusMessage={probeStatusMessage}
+                  />
+                );
+              }
+
+              // After completion: render from persisted tool output
+              if (part.state === "output-available") {
+                const output = part.output as {
+                  probeGrid?: ModelProbeState[];
+                } | null;
+                if (output?.probeGrid) {
+                  return (
+                    <ProbeGrid
+                      isActive={false}
+                      key={key}
+                      models={output.probeGrid}
+                      statusMessage=""
+                    />
+                  );
+                }
+              }
+
+              return null;
             }
 
             if (type === "tool-brand_audit") {

@@ -4,7 +4,6 @@ import { useMessages } from "@/hooks/use-messages";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { BranchOriginBar } from "./branch-origin-bar";
-import { useDataStream } from "./data-stream-provider";
 import { Greeting } from "./greeting";
 import { PreviewMessage, ThinkingMessage } from "./message";
 import type { VisibilityType } from "./visibility-selector";
@@ -48,8 +47,6 @@ function PureMessages({
   } = useMessages({
     status,
   });
-
-  useDataStream();
 
   const canBranch = messages.length >= 4;
 

@@ -13,6 +13,7 @@ import { compactMessages } from "@/lib/ai/context";
 import { type RequestHints, systemPrompt } from "@/lib/ai/prompts";
 import { getLanguageModel } from "@/lib/ai/providers";
 import { createBrandAudit } from "@/lib/ai/tools/brand-audit";
+import { createBrandPerception } from "@/lib/ai/tools/brand-perception";
 import { createDocument } from "@/lib/ai/tools/create-document";
 
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
@@ -38,7 +39,7 @@ import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
 import { type PostRequestBody, postRequestBodySchema } from "./schema";
 
-export const maxDuration = 60;
+export const maxDuration = 120;
 
 function getStreamContext() {
   try {
@@ -156,7 +157,9 @@ export async function POST(request: Request) {
 
             "web_search",
             "web_fetch",
-            ...(brandProfile ? (["brand_audit"] as const) : []),
+            ...(brandProfile
+              ? (["brand_audit", "brand_perception"] as const)
+              : []),
           ],
           tools: {
             ...serverTools,
@@ -182,6 +185,12 @@ export async function POST(request: Request) {
                     session,
                     dataStream,
                     brandProfile,
+                  }),
+                  brand_perception: createBrandPerception({
+                    session,
+                    dataStream,
+                    brandProfile,
+                    chatId: id,
                   }),
                 }
               : {}),

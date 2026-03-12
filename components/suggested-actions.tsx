@@ -36,6 +36,7 @@ function generateBrandSuggestions(profile: BrandProfile): string[] {
   const retailers = profile.retailers as string[];
 
   const suggestions: string[] = [
+    `Run an AI visibility audit for ${brandName}`,
     `Run an agentic commerce audit for ${brandName}`,
     `Analyse ${brandName}'s structured data and schema.org readiness`,
     `Evaluate ${brandName}'s checkout flow for AI agent compatibility`,

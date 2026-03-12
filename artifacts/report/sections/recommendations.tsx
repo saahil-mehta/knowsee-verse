@@ -23,11 +23,28 @@ export function RecommendationList({ title, groups }: RecommendationSection) {
   if (!Array.isArray(groups)) {
     return null;
   }
+
+  // Merge groups with the same tier so the LLM can split them however it likes
+  const tierOrder: Array<"high" | "medium" | "low"> = ["high", "medium", "low"];
+  const merged = new Map<string, (typeof groups)[number]>();
+  for (const group of groups) {
+    const existing = merged.get(group.tier);
+    if (existing) {
+      existing.items.push(...group.items);
+    } else {
+      merged.set(group.tier, { ...group, items: [...group.items] });
+    }
+  }
+  const mergedGroups = tierOrder
+    .filter((tier) => merged.has(tier))
+    // biome-ignore lint: filter guarantees the key exists
+    .map((tier) => merged.get(tier)!);
+
   return (
     <div className="rounded-lg border border-border bg-card p-6">
       <h3 className="mb-4 text-lg font-semibold text-foreground">{title}</h3>
       <div className="space-y-6">
-        {groups.map((group) => {
+        {mergedGroups.map((group) => {
           const styles = TIER_STYLES[group.tier];
           return (
             <div key={group.tier}>

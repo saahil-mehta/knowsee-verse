@@ -2,6 +2,7 @@ import type { InferUITool, UIMessage } from "ai";
 import { z } from "zod";
 import type { ArtifactKind } from "@/components/artifact";
 import type { createBrandAudit } from "./ai/tools/brand-audit";
+import type { createBrandPerception } from "./ai/tools/brand-perception";
 import type { createDocument } from "./ai/tools/create-document";
 
 import type { requestSuggestions } from "./ai/tools/request-suggestions";
@@ -27,6 +28,9 @@ type ServerTools = ReturnType<typeof createServerTools>;
 type webSearchTool = InferUITool<ServerTools["web_search"]>;
 type webFetchTool = InferUITool<ServerTools["web_fetch"]>;
 type brandAuditTool = InferUITool<ReturnType<typeof createBrandAudit>>;
+type brandPerceptionTool = InferUITool<
+  ReturnType<typeof createBrandPerception>
+>;
 export type ChatTools = {
   createDocument: createDocumentTool;
   updateDocument: updateDocumentTool;
@@ -34,6 +38,7 @@ export type ChatTools = {
   web_search: webSearchTool;
   web_fetch: webFetchTool;
   brand_audit: brandAuditTool;
+  brand_perception: brandPerceptionTool;
 };
 
 export type UsageData = {
@@ -62,6 +67,15 @@ export type CustomUIDataTypes = {
   finish: null;
   "chat-title": string;
   usage: UsageData;
+  "research-step": string;
+  "probe-result": {
+    modelId: string;
+    modelLabel: string;
+    promptText: string;
+    response: string;
+    index: number;
+    total: number;
+  };
 };
 
 export type ChatMessage = UIMessage<

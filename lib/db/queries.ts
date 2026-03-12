@@ -13,11 +13,10 @@ import {
   lt,
   type SQL,
 } from "drizzle-orm";
-import { drizzle } from "drizzle-orm/postgres-js";
-import postgres from "postgres";
 import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
 import { ChatSDKError } from "../errors";
+import { db } from "./client";
 import {
   type BrandProfile,
   brandProfile,
@@ -33,10 +32,6 @@ import {
   visibilityAudit,
   vote,
 } from "./schema";
-
-// biome-ignore lint: Forbidden non-null assertion.
-const client = postgres(process.env.POSTGRES_URL!);
-const db = drizzle(client);
 
 export async function saveChat({
   id,

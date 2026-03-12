@@ -2,15 +2,10 @@ import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { nextCookies } from "better-auth/next-js";
 import { emailOTP } from "better-auth/plugins";
-import { drizzle } from "drizzle-orm/postgres-js";
 import { headers } from "next/headers";
-import postgres from "postgres";
+import { db } from "./db/client";
 import { account, session, user, verification } from "./db/schema";
 import { sendOTPEmail } from "./email";
-
-// biome-ignore lint: Forbidden non-null assertion.
-const client = postgres(process.env.POSTGRES_URL!);
-const db = drizzle(client);
 
 export const auth = betterAuth({
   appName: "Knowsee",

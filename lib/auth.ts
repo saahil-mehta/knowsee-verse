@@ -40,10 +40,8 @@ export const auth = betterAuth({
       expiresIn: 300, // 5 minutes
       allowedAttempts: 3,
       sendVerificationOnSignUp: true,
-      async sendVerificationOTP({ email, otp, type }) {
-        if (type === "email-verification") {
-          await sendOTPEmail(email, otp);
-        }
+      async sendVerificationOTP({ email, otp }) {
+        await sendOTPEmail(email, otp);
       },
     }),
     // Next.js cookie handling (must be last)

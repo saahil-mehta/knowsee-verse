@@ -3,6 +3,7 @@ import {
   boolean,
   foreignKey,
   index,
+  integer,
   json,
   pgTable,
   primaryKey,
@@ -145,6 +146,28 @@ export const chat = pgTable(
 );
 
 export type Chat = InferSelectModel<typeof chat>;
+
+export const visibilityAudit = pgTable(
+  "VisibilityAudit",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    projectId: uuid("projectId")
+      .notNull()
+      .references(() => project.id),
+    chatId: uuid("chatId").references(() => chat.id),
+    overallScore: integer("overallScore").notNull(),
+    modelResults: json("modelResults").notNull(),
+    categoryResults: json("categoryResults").notNull(),
+    competitorResults: json("competitorResults").notNull(),
+    recommendations: json("recommendations"),
+    probeCount: integer("probeCount").notNull(),
+    modelsQueried: json("modelsQueried").notNull(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [index("visibility_audit_projectId_idx").on(table.projectId)]
+);
+
+export type VisibilityAudit = InferSelectModel<typeof visibilityAudit>;
 
 // DEPRECATED: The following schema is deprecated and will be removed in the future.
 // Read the migration guide at https://chat-sdk.dev/docs/migration-guides/message-parts

@@ -30,6 +30,7 @@ import {
   type Suggestion,
   stream,
   suggestion,
+  visibilityAudit,
   vote,
 } from "./schema";
 
@@ -811,6 +812,72 @@ export async function getChatsByProjectId({
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get chats by project id"
+    );
+  }
+}
+
+// ─── Visibility Audit Queries ─────────────────────────────────────────────────
+
+export async function saveVisibilityAudit({
+  projectId,
+  chatId,
+  overallScore,
+  modelResults,
+  categoryResults,
+  competitorResults,
+  recommendations,
+  probeCount,
+  modelsQueried,
+}: {
+  projectId: string;
+  chatId?: string;
+  overallScore: number;
+  modelResults: unknown;
+  categoryResults: unknown;
+  competitorResults: unknown;
+  recommendations?: unknown;
+  probeCount: number;
+  modelsQueried: unknown;
+}) {
+  try {
+    const [created] = await db
+      .insert(visibilityAudit)
+      .values({
+        projectId,
+        chatId,
+        overallScore,
+        modelResults,
+        categoryResults,
+        competitorResults,
+        recommendations,
+        probeCount,
+        modelsQueried,
+      })
+      .returning();
+    return created;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to save visibility audit"
+    );
+  }
+}
+
+export async function getVisibilityAuditsByProjectId({
+  projectId,
+}: {
+  projectId: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(visibilityAudit)
+      .where(eq(visibilityAudit.projectId, projectId))
+      .orderBy(desc(visibilityAudit.createdAt));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get visibility audits by project id"
     );
   }
 }

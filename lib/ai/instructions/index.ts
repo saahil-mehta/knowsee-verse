@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Geo } from "@vercel/functions";
 import type { ArtifactKind } from "@/components/artifact";
+import { PROBE_MODELS } from "@/lib/ai/perception/models";
 import type { BrandProfile } from "@/lib/db/schema";
 
 // ---------------------------------------------------------------------------
@@ -120,6 +121,7 @@ function brandContextPrompt(bp: BrandProfile): string {
     categories: (bp.categories as string[]).join(", "),
     competitors: (bp.competitors as string[]).join(", "),
     retailers: (bp.retailers as string[]).join(", "),
+    probe_models: PROBE_MODELS.map((m) => m.label).join(", "),
   });
 }
 

@@ -21,6 +21,13 @@ export function DataStreamHandler() {
 
   const { artifact, setArtifact, setMetadata } = useArtifact();
 
+  // Clear probe state on mount (new chat) so it doesn't leak across chats
+  useEffect(() => {
+    setProbeState(new Map());
+    setProbeActive(false);
+    setProbeStatusMessage("");
+  }, [setProbeActive, setProbeState, setProbeStatusMessage]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const handleProbeResult = useCallback(
     (data: {
       modelId: string;

@@ -4,10 +4,8 @@ import { useMessages } from "@/hooks/use-messages";
 import type { Vote } from "@/lib/db/schema";
 import type { ChatMessage } from "@/lib/types";
 import { BranchOriginBar } from "./branch-origin-bar";
-import { useDataStream } from "./data-stream-provider";
 import { Greeting } from "./greeting";
 import { PreviewMessage, ThinkingMessage } from "./message";
-import { ProbeGrid } from "./probe-grid";
 import type { VisibilityType } from "./visibility-selector";
 
 type MessagesProps = {
@@ -49,8 +47,6 @@ function PureMessages({
   } = useMessages({
     status,
   });
-
-  const { probeState, probeActive, probeStatusMessage } = useDataStream();
 
   const canBranch = messages.length >= 4;
 
@@ -98,12 +94,6 @@ function PureMessages({
                 (part) => "state" in part && part.state === "approval-responded"
               )
             ) && <ThinkingMessage />}
-
-          <ProbeGrid
-            isActive={probeActive}
-            models={Array.from(probeState.values())}
-            statusMessage={probeStatusMessage}
-          />
 
           <div
             className="min-h-[24px] min-w-[24px] shrink-0"

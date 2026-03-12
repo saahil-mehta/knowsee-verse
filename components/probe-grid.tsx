@@ -97,12 +97,12 @@ function ModelCard({ model }: { model: ModelProbeState }) {
 
       <div className="h-32 space-y-1.5 overflow-y-auto text-xs">
         <AnimatePresence>
-          {model.responses.map((r, i) => (
+          {model.responses.map((r) => (
             <motion.div
               animate={{ opacity: 1, x: 0 }}
               className="rounded bg-muted/50 p-2"
               initial={{ opacity: 0, x: -4 }}
-              key={`${model.modelId}-${i}`}
+              key={`${model.modelId}-${r.promptText}`}
             >
               <div className="truncate font-medium text-muted-foreground">
                 {r.promptText}

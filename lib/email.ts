@@ -9,9 +9,9 @@ export async function sendEmail({
   subject,
   text,
 }: SendEmailOptions): Promise<void> {
-  const apiKey = process.env.MAILGUN_API_KEY;
-  const domain = process.env.MAILGUN_DOMAIN;
-  const from = process.env.MAILGUN_FROM || `Knowsee <noreply@${domain}>`;
+  const apiKey = process.env.MAILGUN_API_KEY?.trim();
+  const domain = process.env.MAILGUN_DOMAIN?.trim();
+  const from = process.env.MAILGUN_FROM?.trim() || `Knowsee <noreply@${domain}>`;
 
   if (!apiKey || !domain) {
     throw new Error("Mailgun credentials not configured");
@@ -31,7 +31,9 @@ export async function sendEmail({
 
   if (!response.ok) {
     const error = await response.text();
-    throw new Error(`Failed to send email: ${error}`);
+    throw new Error(
+      `Failed to send email: ${response.status} ${error} (domain: ${domain})`,
+    );
   }
 }
 

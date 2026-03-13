@@ -225,10 +225,10 @@ export function BrandProfileSetup({ projectId }: { projectId: string }) {
                   >
                     {`Verifying ${brandName}...`}
                   </Shimmer>
-                  <p className="mt-1 flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                  <span className="mt-1 flex items-center justify-center gap-2 text-sm text-muted-foreground">
                     <Loader size={14} />
                     Knowsee is gathering real-time brand intelligence.
-                  </p>
+                  </span>
                 </div>
                 <div className="rounded-lg border p-6">
                   <div className="flex items-center gap-3">

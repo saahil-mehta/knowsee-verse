@@ -647,6 +647,7 @@ export async function updateProject({
 export async function deleteProjectById({ id }: { id: string }) {
   try {
     await db.transaction(async (tx) => {
+      await tx.delete(visibilityAudit).where(eq(visibilityAudit.projectId, id));
       await tx.delete(brandProfile).where(eq(brandProfile.projectId, id));
       await tx
         .update(chat)

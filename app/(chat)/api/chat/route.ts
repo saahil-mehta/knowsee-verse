@@ -232,6 +232,13 @@ export async function POST(request: Request) {
       },
       generateId: generateUUID,
       onFinish: async ({ messages: finishedMessages }) => {
+        // Strip transient UI stream events before persisting — these are
+        // real-time display events (probe progress, usage, title) that
+        // bloat the context window when reloaded into model history.
+        const stripTransientParts = (
+          parts: (typeof finishedMessages)[number]["parts"]
+        ) => parts.filter((p) => !p.type.startsWith("data-"));
+
         try {
           if (isToolApprovalFlow) {
             for (const finishedMsg of finishedMessages) {
@@ -241,7 +248,7 @@ export async function POST(request: Request) {
               if (existingMsg) {
                 await updateMessage({
                   id: finishedMsg.id,
-                  parts: finishedMsg.parts,
+                  parts: stripTransientParts(finishedMsg.parts),
                 });
               } else {
                 await saveMessages({
@@ -249,7 +256,7 @@ export async function POST(request: Request) {
                     {
                       id: finishedMsg.id,
                       role: finishedMsg.role,
-                      parts: finishedMsg.parts,
+                      parts: stripTransientParts(finishedMsg.parts),
                       createdAt: new Date(),
                       attachments: [],
                       chatId: id,
@@ -263,7 +270,7 @@ export async function POST(request: Request) {
               messages: finishedMessages.map((currentMessage) => ({
                 id: currentMessage.id,
                 role: currentMessage.role,
-                parts: currentMessage.parts,
+                parts: stripTransientParts(currentMessage.parts),
                 createdAt: new Date(),
                 attachments: [],
                 chatId: id,

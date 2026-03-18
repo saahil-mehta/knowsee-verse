@@ -41,7 +41,14 @@ export const auth = betterAuth({
       allowedAttempts: 3,
       sendVerificationOnSignUp: true,
       async sendVerificationOTP({ email, otp }) {
-        await sendOTPEmail(email, otp);
+        try {
+          console.log("[auth] Sending OTP to %s", email);
+          await sendOTPEmail(email, otp);
+          console.log("[auth] OTP sent successfully to %s", email);
+        } catch (error) {
+          console.error("[auth] Failed to send OTP to %s:", email, error);
+          throw error;
+        }
       },
     }),
     // Next.js cookie handling (must be last)

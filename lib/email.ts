@@ -15,8 +15,14 @@ export async function sendEmail({
     process.env.MAILGUN_FROM?.trim() || `Knowsee <noreply@${domain}>`;
 
   if (!apiKey || !domain) {
+    console.error("[email] Mailgun credentials missing", {
+      hasApiKey: !!apiKey,
+      hasDomain: !!domain,
+    });
     throw new Error("Mailgun credentials not configured");
   }
+
+  console.log("[email] Sending to %s via %s", to, domain);
 
   const response = await fetch(
     `https://api.eu.mailgun.net/v3/${domain}/messages`,
@@ -32,10 +38,13 @@ export async function sendEmail({
 
   if (!response.ok) {
     const error = await response.text();
+    console.error("[email] Mailgun error %d: %s (domain: %s)", response.status, error, domain);
     throw new Error(
       `Failed to send email: ${response.status} ${error} (domain: ${domain})`
     );
   }
+
+  console.log("[email] Sent successfully to %s", to);
 }
 
 export async function sendOTPEmail(email: string, otp: string): Promise<void> {

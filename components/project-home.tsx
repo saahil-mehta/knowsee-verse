@@ -38,6 +38,13 @@ function resolveCountry(iso: string): string {
   }
 }
 
+function countryFlag(iso: string): string {
+  const code = iso.toUpperCase();
+  return String.fromCodePoint(
+    ...[...code].map((c) => 0x1_f1_e6 + c.charCodeAt(0) - 65)
+  );
+}
+
 export function ProjectHome({
   project,
   brandProfile,
@@ -111,9 +118,15 @@ export function ProjectHome({
           </div>
 
           <div className="flex gap-4 text-sm text-muted-foreground">
-            <span>Origin: {resolveCountry(brandProfile.country)}</span>
+            <span>
+              {countryFlag(brandProfile.country)} Origin:{" "}
+              {resolveCountry(brandProfile.country)}
+            </span>
             {brandProfile.market && (
-              <span>Market: {resolveCountry(brandProfile.market)}</span>
+              <span>
+                {countryFlag(brandProfile.market)} Market:{" "}
+                {resolveCountry(brandProfile.market)}
+              </span>
             )}
           </div>
 

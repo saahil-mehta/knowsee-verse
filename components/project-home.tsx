@@ -29,6 +29,15 @@ import {
 import type { BrandProfile, Chat, Project } from "@/lib/db/schema";
 import { toast } from "./toast";
 
+const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
+function resolveCountry(iso: string): string {
+  try {
+    return countryNames.of(iso.toUpperCase()) ?? iso;
+  } catch {
+    return iso;
+  }
+}
+
 export function ProjectHome({
   project,
   brandProfile,
@@ -101,8 +110,11 @@ export function ProjectHome({
             </Button>
           </div>
 
-          <div className="text-sm text-muted-foreground">
-            Country: {brandProfile.country}
+          <div className="flex gap-4 text-sm text-muted-foreground">
+            <span>Origin: {resolveCountry(brandProfile.country)}</span>
+            {brandProfile.market && (
+              <span>Market: {resolveCountry(brandProfile.market)}</span>
+            )}
           </div>
 
           <div className="space-y-2">

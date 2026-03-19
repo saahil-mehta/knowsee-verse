@@ -6,6 +6,7 @@ import { getSession } from "@/lib/auth";
 import {
   getBrandProfileByProjectId,
   getChatsByProjectId,
+  getDocumentsByProjectId,
   getProjectById,
 } from "@/lib/db/queries";
 
@@ -45,11 +46,19 @@ async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
     );
   }
 
-  const chats = await getChatsByProjectId({ projectId: id });
+  const [chats, documents] = await Promise.all([
+    getChatsByProjectId({ projectId: id }),
+    getDocumentsByProjectId({ projectId: id }),
+  ]);
 
   return (
     <div className="flex h-dvh min-w-0 flex-col overflow-y-auto bg-background">
-      <ProjectHome brandProfile={profile} chats={chats} project={proj} />
+      <ProjectHome
+        brandProfile={profile}
+        chats={chats}
+        documents={documents}
+        project={proj}
+      />
     </div>
   );
 }

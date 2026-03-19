@@ -12,12 +12,14 @@ type CreateDocumentProps = {
   session: Session;
   dataStream: UIMessageStreamWriter<ChatMessage>;
   modelId: string;
+  chatId: string;
 };
 
 export const createDocument = ({
   session,
   dataStream,
   modelId,
+  chatId,
 }: CreateDocumentProps) => {
   let createdDocumentId: string | null = null;
 
@@ -96,6 +98,7 @@ export const createDocument = ({
         dataStream,
         session,
         modelId,
+        chatId,
       });
 
       dataStream.write({ type: "data-finish", data: null, transient: true });

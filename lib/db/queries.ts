@@ -298,12 +298,14 @@ export async function saveDocument({
   kind,
   content,
   userId,
+  chatId,
 }: {
   id: string;
   title: string;
   kind: ArtifactKind;
   content: string;
   userId: string;
+  chatId?: string;
 }) {
   try {
     return await db
@@ -314,6 +316,7 @@ export async function saveDocument({
         kind,
         content,
         userId,
+        chatId,
         createdAt: new Date(),
       })
       .returning();
@@ -352,6 +355,44 @@ export async function getDocumentById({ id }: { id: string }) {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get document by id"
+    );
+  }
+}
+
+export async function getDocumentsByProjectId({
+  projectId,
+}: {
+  projectId: string;
+}) {
+  try {
+    // Document → Chat (chatId) → Chat.projectId
+    const results = await db
+      .select({
+        id: document.id,
+        title: document.title,
+        kind: document.kind,
+        createdAt: document.createdAt,
+        chatId: document.chatId,
+      })
+      .from(document)
+      .innerJoin(chat, eq(document.chatId, chat.id))
+      .where(eq(chat.projectId, projectId))
+      .orderBy(desc(document.createdAt));
+
+    // Deduplicate — Document uses composite PK (id, createdAt),
+    // so multiple versions exist per document. Take the latest.
+    const seen = new Set<string>();
+    return results.filter((d) => {
+      if (seen.has(d.id)) {
+        return false;
+      }
+      seen.add(d.id);
+      return true;
+    });
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get documents by project"
     );
   }
 }

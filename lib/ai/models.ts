@@ -28,7 +28,7 @@ export const chatModels: ChatModel[] = [
       "Complex research",
       "Brand audits",
     ],
-    maxContextTokens: 200_000,
+    maxContextTokens: 1_000_000,
     pricing: { inputPerMTok: 5, outputPerMTok: 25, cacheReadPerMTok: 0.5 },
   },
   {
@@ -42,7 +42,7 @@ export const chatModels: ChatModel[] = [
       "Document creation",
       "Web research",
     ],
-    maxContextTokens: 200_000,
+    maxContextTokens: 1_000_000,
     pricing: { inputPerMTok: 3, outputPerMTok: 15, cacheReadPerMTok: 0.3 },
   },
   {

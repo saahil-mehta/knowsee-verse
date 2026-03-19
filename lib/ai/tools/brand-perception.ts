@@ -79,7 +79,7 @@ export const createBrandPerception = ({
               modelId: model.id,
               modelLabel: model.label,
               promptText: prompt.text,
-              response: result.response.substring(0, 200),
+              response: result.response.slice(0, 200),
               index,
               total: prompts.length,
             },
@@ -150,7 +150,7 @@ export const createBrandPerception = ({
           total: prompts.length,
           responses: modelProbes.map((r) => ({
             promptText: promptMap.get(r.promptId)?.text ?? "",
-            response: r.response.substring(0, 200),
+            response: r.response.slice(0, 200),
           })),
         };
       });

@@ -71,7 +71,7 @@ export const WebSearchHeader = ({
     <span className="truncate text-sm">{query ?? "Searching the web..."}</span>
     {state === "output-available" && resultCount != null && (
       <span className="ml-auto shrink-0 text-muted-foreground/60 text-xs">
-        {resultCount} result{resultCount !== 1 ? "s" : ""}
+        {resultCount} result{resultCount === 1 ? "" : "s"}
       </span>
     )}
     <ChevronDownIcon className="size-3 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />

@@ -38,7 +38,12 @@ export async function sendEmail({
 
   if (!response.ok) {
     const error = await response.text();
-    console.error("[email] Mailgun error %d: %s (domain: %s)", response.status, error, domain);
+    console.error(
+      "[email] Mailgun error %d: %s (domain: %s)",
+      response.status,
+      error,
+      domain
+    );
     throw new Error(
       `Failed to send email: ${response.status} ${error} (domain: ${domain})`
     );

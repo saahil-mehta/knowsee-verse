@@ -89,7 +89,7 @@
 
 /* define theme */
 @theme {
-  --font-sans: var(--font-geist);
+  --font-sans: "Google Sans", "Google Sans Text", var(--font-geist), sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-serif: var(--font-instrument-serif);
 

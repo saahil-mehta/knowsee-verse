@@ -7,7 +7,6 @@ import {
   HoverCardTrigger,
 } from "@/components/ui/hover-card";
 import { Progress } from "@/components/ui/progress";
-import type { ModelPricing } from "@/lib/ai/models";
 import type { UsageData } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -26,24 +25,6 @@ function formatTokens(n: number): string {
   return String(n);
 }
 
-function formatCost(usd: number): string {
-  if (usd < 0.01) {
-    return `$${usd.toFixed(4)}`;
-  }
-  return `$${usd.toFixed(2)}`;
-}
-
-function calculateCost(usage: UsageData, pricing: ModelPricing): number {
-  const cached = usage.totalCachedInputTokens ?? 0;
-  const inputCost =
-    ((usage.totalInputTokens - cached) / 1_000_000) * pricing.inputPerMTok;
-  const outputCost =
-    (usage.totalOutputTokens / 1_000_000) * pricing.outputPerMTok;
-  const cacheCost =
-    (cached / 1_000_000) * (pricing.cacheReadPerMTok ?? pricing.inputPerMTok);
-  return inputCost + outputCost + cacheCost;
-}
-
 function getUsageColour(percent: number): string {
   if (percent >= 0.85) {
     return "text-red-500";
@@ -58,13 +39,11 @@ function PureContextIndicator({
   maxContextTokens,
   messageCount,
   modelName: _modelName,
-  pricing,
   usage,
 }: {
   maxContextTokens: number;
   messageCount: number;
   modelName: string;
-  pricing: ModelPricing;
   usage: UsageData | null;
 }) {
   if (!usage) {
@@ -76,8 +55,6 @@ function PureContextIndicator({
   const circumference = 2 * Math.PI * ICON_RADIUS;
   const dashOffset = circumference * (1 - percent);
   const colour = getUsageColour(percent);
-  const cost = calculateCost(usage, pricing);
-
   const displayPct = new Intl.NumberFormat("en-GB", {
     maximumFractionDigits: 1,
     style: "percent",
@@ -155,21 +132,31 @@ function PureContextIndicator({
           ) : null}
         </div>
 
-        <div className="flex items-center justify-between p-3 text-xs">
-          <span className="text-muted-foreground">Estimated cost</span>
-          <span className="font-mono font-medium">{formatCost(cost)}</span>
+        <div className="space-y-2 p-3 text-xs text-muted-foreground/70">
+          <p className="leading-snug">
+            Context is Knowsee&apos;s short-term memory for this chat. Once
+            full, earlier messages may be forgotten.
+          </p>
+          <div className="space-y-0.5">
+            <p>Varies by mode:</p>
+            <ul className="list-disc pl-3.5">
+              <li>Fast: ~500 pages</li>
+              <li>Balanced &amp; Advanced: ~2,500 pages</li>
+            </ul>
+            <p className="text-[10px]">(300 words/page)</p>
+          </div>
         </div>
 
         {percent >= 0.6 ? (
           <div className="p-3 text-xs">
             {percent >= 0.85 ? (
               <p className="text-red-400">
-                Context nearly full — consider starting a new chat
+                Context nearly full. Consider starting a new chat.
               </p>
             ) : (
               <p className="text-amber-400">
-                Context filling up — longer conversations may lose earlier
-                detail
+                Context filling up. Longer conversations may lose earlier
+                detail.
               </p>
             )}
           </div>

@@ -160,9 +160,9 @@ export function formatSummaryForClaude(
   lines.push("### Model Breakdown");
   for (const m of summary.modelResults) {
     const posStr =
-      m.avgPosition !== null
-        ? `, avg position: ${m.avgPosition.toFixed(1)}`
-        : "";
+      m.avgPosition === null
+        ? ""
+        : `, avg position: ${m.avgPosition.toFixed(1)}`;
     lines.push(
       `- **${m.modelLabel}**: mention rate ${m.mentionRate.toFixed(0)}%, sentiment ${m.avgSentiment.toFixed(1)}/5, recommendation ${m.avgRecommendation.toFixed(1)}/5${posStr}`
     );

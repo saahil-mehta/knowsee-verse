@@ -55,6 +55,21 @@ const modelGuidanceFiles: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
+// ISO-3166-1 alpha-2 → full country name for prompt readability.
+// Uses the Intl API so every valid ISO code resolves without maintenance.
+// ---------------------------------------------------------------------------
+
+const countryDisplayNames = new Intl.DisplayNames(["en"], { type: "region" });
+
+function resolveCountryName(isoCode: string): string {
+  try {
+    return countryDisplayNames.of(isoCode.toUpperCase()) ?? isoCode;
+  } catch {
+    return isoCode;
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Exported prompt constants — drop-in replacements for the old prompts.ts
 // ---------------------------------------------------------------------------
 
@@ -116,8 +131,8 @@ function brandContextPrompt(bp: BrandProfile): string {
   return injectContext(brandModeTemplate, {
     brand_name: bp.brandName,
     website_url: bp.websiteUrl,
-    country: bp.country,
-    market: bp.market ?? bp.country,
+    country: resolveCountryName(bp.country),
+    market: resolveCountryName(bp.market ?? bp.country),
     categories: (bp.categories as string[]).join(", "),
     competitors: (bp.competitors as string[]).join(", "),
     retailers: (bp.retailers as string[]).join(", "),

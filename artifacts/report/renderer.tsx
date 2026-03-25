@@ -69,7 +69,7 @@ function normaliseKPIRow(raw: RawSection): KPIRowSection {
   return { type: "kpi-row", items };
 }
 
-function normaliseBarChart(raw: RawSection): BarChartSection {
+function normaliseBarChart(raw: RawSection): BarChartSection | null {
   const data = raw.data as Record<string, unknown>[];
   // Model may provide "bars" (our format) or "dataKeys" (string[])
   let categoryKey = String(
@@ -114,18 +114,36 @@ function normaliseBarChart(raw: RawSection): BarChartSection {
       bars = [];
     }
   }
+  const validData = Array.isArray(data) ? data : [];
+
+  // Defence-in-depth: filter bars to only those whose dataKey resolves to at
+  // least one numeric value in the data. Charts with string-only data render
+  // as empty/broken — better to drop them entirely.
+  const numericBars = bars.filter((bar) =>
+    validData.some(
+      (row) =>
+        typeof row[bar.dataKey] === "number" ||
+        (typeof row[bar.dataKey] === "string" &&
+          !Number.isNaN(Number(row[bar.dataKey])))
+    )
+  );
+
+  if (numericBars.length === 0) {
+    return null;
+  }
+
   return {
     type: "bar-chart",
     title: String(raw.title ?? ""),
     description: raw.description ? String(raw.description) : undefined,
-    data: Array.isArray(data) ? data : [],
-    bars,
+    data: validData,
+    bars: numericBars,
     categoryKey,
     layout: (raw.layout as "horizontal" | "vertical") ?? undefined,
   };
 }
 
-function normaliseRadarChart(raw: RawSection): RadarChartSection {
+function normaliseRadarChart(raw: RawSection): RadarChartSection | null {
   const data = raw.data as Record<string, unknown>[];
   // Infer angleKey from data: the first string-valued key in the first row
   let angleKey = String(
@@ -168,23 +186,52 @@ function normaliseRadarChart(raw: RawSection): RadarChartSection {
       radars = [];
     }
   }
+  const validData = Array.isArray(data) ? data : [];
+
+  // Defence-in-depth: filter radars to only those with numeric values
+  const numericRadars = radars.filter((r) =>
+    validData.some(
+      (row) =>
+        typeof row[r.dataKey] === "number" ||
+        (typeof row[r.dataKey] === "string" &&
+          !Number.isNaN(Number(row[r.dataKey])))
+    )
+  );
+
+  if (numericRadars.length === 0) {
+    return null;
+  }
+
   return {
     type: "radar-chart",
     title: String(raw.title ?? ""),
     description: raw.description ? String(raw.description) : undefined,
-    data: Array.isArray(data) ? data : [],
-    radars,
+    data: validData,
+    radars: numericRadars,
     angleKey,
   };
 }
 
-function normaliseDonutChart(raw: RawSection): DonutChartSection {
+function normaliseDonutChart(raw: RawSection): DonutChartSection | null {
   const data = raw.data as { name: string; value: number; color?: string }[];
+  const validData = Array.isArray(data) ? data : [];
+
+  // Defence-in-depth: donut segments must have numeric values
+  const numericData = validData.filter(
+    (d) =>
+      typeof d.value === "number" ||
+      (typeof d.value === "string" && !Number.isNaN(Number(d.value)))
+  );
+
+  if (numericData.length === 0) {
+    return null;
+  }
+
   return {
     type: "donut-chart",
     title: String(raw.title ?? ""),
     description: raw.description ? String(raw.description) : undefined,
-    data: Array.isArray(data) ? data : [],
+    data: numericData,
     centerLabel: raw.centerLabel ? String(raw.centerLabel) : undefined,
     centerValue: (raw.centerValue as string | number) ?? undefined,
   };

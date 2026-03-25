@@ -73,12 +73,16 @@ export async function POST(request: Request) {
     }
   }
 
+  // Carry forward chatId from existing document versions
+  const existingChatId = documents.length > 0 ? documents[0].chatId : undefined;
+
   const document = await saveDocument({
     id,
     content,
     title,
     kind,
     userId: session.user.id,
+    chatId: existingChatId ?? undefined,
   });
 
   return Response.json(document, { status: 200 });

@@ -91,28 +91,34 @@ export async function POST(
     const marketHint = extractMarketFromUrl(websiteUrl);
 
     const { text } = await generateText({
-      model: gateway("anthropic/claude-haiku-4-5"),
+      model: gateway("anthropic/claude-sonnet-4-6"),
       tools: {
         web_fetch: anthropic.tools.webFetch_20250910({
           maxUses: 1,
           maxContentTokens: 15_000,
         }),
-        web_search: anthropic.tools.webSearch_20250305({ maxUses: 1 }),
+        web_search: anthropic.tools.webSearch_20250305({ maxUses: 3 }),
       },
-      stopWhen: stepCountIs(4),
+      stopWhen: stepCountIs(5),
       prompt: `You are researching the brand "${brandName}" (website: ${websiteUrl}).
 
-1. First, fetch the website at ${websiteUrl} to understand what the brand does, their product categories, and their market.
-2. Then search the web for "${brandName} competitors" and "${brandName} retailers stockists" to find their competitive landscape and retail partners.
-3. Finally, return a JSON object with:
-   - "country": the brand's country of origin as a 2-letter ISO code (e.g. "KR" for Samsung, "US" for Apple)
-   - "market": the regional market this website serves as a 2-letter ISO code (e.g. "GB" for samsung.com/uk, "IN" for samsung.com/in)${marketHint ? ` — the URL suggests market "${marketHint}"` : ""}
-   - "categories": array of product/service categories (e.g. ["Athletic Footwear", "Sportswear"])
-   - "competitors": array of direct competitor brand names in this market (e.g. ["Adidas", "Puma"])
-   - "retailers": array of major retailers/stockists that carry this brand in this market (e.g. ["Amazon", "Foot Locker"])
+<steps>
+1. Fetch the website at ${websiteUrl} to understand what the brand does, their product categories, and their market.
+2. Search the web for "${brandName} competitors" to find their competitive landscape.
+3. Search the web for "where to buy ${brandName} online ${marketHint || ""}" to find their retail and marketplace partners. Include both online marketplaces (e.g. Amazon, Flipkart, Nykaa) and physical retail chains. You MUST perform this search separately from the competitors search.
+4. Return a JSON object with the fields below.
+</steps>
+
+<output_format>
+- "country": brand's country of origin as a 2-letter ISO code (e.g. "KR" for Samsung, "US" for Apple)
+- "market": regional market this website serves as a 2-letter ISO code (e.g. "GB" for samsung.com/uk, "IN" for samsung.com/in)${marketHint ? ` — the URL suggests market "${marketHint}"` : ""}
+- "categories": array of product/service categories (e.g. ["Athletic Footwear", "Sportswear"])
+- "competitors": array of direct competitor brand names in this market (e.g. ["Adidas", "Puma"])
+- "retailers": array of major retailers, online marketplaces, and stockists that officially carry this brand in this market (e.g. ["Amazon", "John Lewis", "Boots", "Very", "Nykaa", "Flipkart"]). Include both e-commerce platforms and physical retail chains.
+</output_format>
 
 Return ONLY the JSON object, no other text. Example:
-{"country": "KR", "market": "GB", "categories": ["Smartphones"], "competitors": ["Apple"], "retailers": ["Amazon UK"]}
+{"country": "KR", "market": "GB", "categories": ["Smartphones"], "competitors": ["Apple"], "retailers": ["Amazon UK", "Currys"]}
 
 If you cannot determine a field, use an empty array or empty string.`,
     });

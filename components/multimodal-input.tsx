@@ -38,7 +38,14 @@ import {
   PromptInputToolbar,
   PromptInputTools,
 } from "./elements/prompt-input";
-import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
+import {
+  ArrowUpIcon,
+  ModeAdvancedIcon,
+  ModeBalancedIcon,
+  ModeFastIcon,
+  PaperclipIcon,
+  StopIcon,
+} from "./icons";
 import { PreviewAttachment } from "./preview-attachment";
 import { SuggestedActions } from "./suggested-actions";
 import { Button } from "./ui/button";
@@ -354,10 +361,10 @@ function PureMultimodalInput({
             if (!input.trim() && attachments.length === 0) {
               return;
             }
-            if (status !== "ready") {
-              toast.error("Please wait for the model to finish its response!");
-            } else {
+            if (status === "ready") {
               submitForm();
+            } else {
+              toast.error("Please wait for the model to finish its response!");
             }
           }}
         >
@@ -428,7 +435,6 @@ function PureMultimodalInput({
                     maxContextTokens={model.maxContextTokens}
                     messageCount={messages.length}
                     modelName={model.name}
-                    pricing={model.pricing}
                     usage={usage}
                   />
                 );
@@ -525,6 +531,12 @@ function PureModelSelectorCompact({
     chatModels.find((m) => m.id === selectedModelId) ??
     chatModels.find((m) => m.id === DEFAULT_CHAT_MODEL) ??
     chatModels[0];
+  const SelectedIcon =
+    selectedModel.name === "Advanced"
+      ? ModeAdvancedIcon
+      : selectedModel.name === "Fast"
+        ? ModeFastIcon
+        : ModeBalancedIcon;
   return (
     <ModelSelector
       onOpenChange={disabled ? undefined : setOpen}
@@ -539,35 +551,46 @@ function PureModelSelectorCompact({
           disabled={disabled}
           variant="ghost"
         >
+          <SelectedIcon className="size-3.5" />
           <ModelSelectorName>{selectedModel.name}</ModelSelectorName>
         </Button>
       </ModelSelectorTrigger>
       <ModelSelectorContent>
         <ModelSelectorInput placeholder="Search models..." />
         <ModelSelectorList>
-          {chatModels.map((model) => (
-            <ModelSelectorItem
-              className="px-3"
-              key={model.id}
-              keywords={[model.name, model.description]}
-              onSelect={() => {
-                onModelChange?.(model.id);
-                setCookie("chat-model", model.id);
-                setOpen(false);
-              }}
-              value={model.id}
-            >
-              <div className="flex flex-col gap-0.5">
-                <ModelSelectorName>{model.name}</ModelSelectorName>
-                <span className="text-xs text-muted-foreground">
-                  {model.description}
-                </span>
-              </div>
-              {model.id === selectedModel.id && (
-                <CheckIcon className="ml-auto size-4" />
-              )}
-            </ModelSelectorItem>
-          ))}
+          {chatModels.map((model) => {
+            const ModeIcon =
+              model.name === "Advanced"
+                ? ModeAdvancedIcon
+                : model.name === "Fast"
+                  ? ModeFastIcon
+                  : ModeBalancedIcon;
+
+            return (
+              <ModelSelectorItem
+                className="gap-3 px-3"
+                key={model.id}
+                keywords={[model.name, model.description]}
+                onSelect={() => {
+                  onModelChange?.(model.id);
+                  setCookie("chat-model", model.id);
+                  setOpen(false);
+                }}
+                value={model.id}
+              >
+                <ModeIcon className="size-4 shrink-0 text-muted-foreground" />
+                <div className="flex flex-col gap-0.5">
+                  <ModelSelectorName>{model.name}</ModelSelectorName>
+                  <span className="text-xs text-muted-foreground">
+                    {model.description}
+                  </span>
+                </div>
+                {model.id === selectedModel.id && (
+                  <CheckIcon className="ml-auto size-4" />
+                )}
+              </ModelSelectorItem>
+            );
+          })}
         </ModelSelectorList>
       </ModelSelectorContent>
     </ModelSelector>

@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { BrandProfileForm } from "@/components/brand-profile-form";
 import { TrashIcon } from "@/components/icons";
+import { SidebarToggle } from "@/components/sidebar-toggle";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,14 +29,40 @@ import {
 import type { BrandProfile, Chat, Project } from "@/lib/db/schema";
 import { toast } from "./toast";
 
+const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
+function resolveCountry(iso: string): string {
+  try {
+    return countryNames.of(iso.toUpperCase()) ?? iso;
+  } catch {
+    return iso;
+  }
+}
+
+function countryFlag(iso: string): string {
+  const code = iso.toUpperCase();
+  return String.fromCodePoint(
+    ...[...code].map((c) => 0x1_f1_e6 + c.charCodeAt(0) - 65)
+  );
+}
+
+type ProjectDocument = {
+  id: string;
+  title: string;
+  kind: string | null;
+  createdAt: Date;
+  chatId: string | null;
+};
+
 export function ProjectHome({
   project,
   brandProfile,
   chats,
+  documents,
 }: {
   project: Project;
   brandProfile: BrandProfile;
   chats: Chat[];
+  documents: ProjectDocument[];
 }) {
   const router = useRouter();
   const [editing, setEditing] = useState(false);
@@ -67,172 +94,223 @@ export function ProjectHome({
   }
 
   return (
-    <div className="mx-auto w-full max-w-2xl space-y-8 px-4 py-8">
-      {/* Brand profile card */}
-      <div className="space-y-4 rounded-lg border p-6">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <BrandLogo
-              brandName={brandProfile.brandName}
-              logoUrl={brandProfile.logoUrl}
-              websiteUrl={brandProfile.websiteUrl}
-            />
-            <div>
-              <h1 className="text-xl font-semibold">
-                {brandProfile.brandName}
-              </h1>
-              <a
-                className="text-sm text-muted-foreground underline"
-                href={brandProfile.websiteUrl}
-                rel="noopener noreferrer"
-                target="_blank"
-              >
-                {brandProfile.websiteUrl}
-              </a>
-            </div>
-          </div>
-          <Button onClick={() => setEditing(true)} size="sm" variant="ghost">
-            Edit
-          </Button>
-        </div>
-
-        <div className="text-sm text-muted-foreground">
-          Country: {brandProfile.country}
-        </div>
-
-        <div className="space-y-2">
-          <div>
-            <span className="text-xs font-medium text-muted-foreground">
-              Categories
-            </span>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {(brandProfile.categories as string[]).map((c) => (
-                <Badge key={c} variant="secondary">
-                  {c}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <span className="text-xs font-medium text-muted-foreground">
-              Competitors
-            </span>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {(brandProfile.competitors as string[]).map((c) => (
-                <Badge key={c} variant="outline">
-                  {c}
-                </Badge>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <span className="text-xs font-medium text-muted-foreground">
-              Retailers
-            </span>
-            <div className="mt-1 flex flex-wrap gap-1">
-              {(brandProfile.retailers as string[]).map((c) => (
-                <Badge key={c} variant="outline">
-                  {c}
-                </Badge>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Project chats */}
-      <div className="space-y-3">
-        <div className="flex items-center justify-between">
-          <h2 className="text-sm font-medium text-muted-foreground">Chats</h2>
-          <Button
-            onClick={() => router.push(`/?projectId=${project.id}`)}
-            size="sm"
-          >
-            New Chat
-          </Button>
-        </div>
-
-        {chats.length === 0 ? (
-          <p className="py-4 text-center text-sm text-zinc-500">
-            No chats yet. Start a new one above.
-          </p>
-        ) : (
-          <div className="space-y-1">
-            {chats.map((c) => (
-              <div
-                className="group relative flex items-center rounded-md hover:bg-muted"
-                key={c.id}
-              >
-                <Link
-                  className="flex min-w-0 flex-1 items-center justify-between px-3 py-2 text-sm"
-                  href={`/chat/${c.id}`}
-                >
-                  <span className="truncate">{c.title || "Untitled chat"}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {formatDistanceToNow(new Date(c.createdAt), {
-                      addSuffix: true,
-                    })}
-                  </span>
-                </Link>
-                <DropdownMenu modal>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      className="mr-2 shrink-0 rounded p-1 text-muted-foreground hover:text-foreground"
-                      type="button"
-                    >
-                      <MoreHorizontalIcon className="size-4" />
-                      <span className="sr-only">More</span>
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" side="bottom">
-                    <DropdownMenuItem
-                      className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
-                      onSelect={() => setDeleteId(c.id)}
-                    >
-                      <TrashIcon />
-                      <span>Delete</span>
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+    <>
+      <header className="sticky top-0 flex items-center gap-2 bg-background px-2 py-1.5 md:px-2">
+        <SidebarToggle />
+      </header>
+      <div className="mx-auto grid w-full max-w-5xl gap-8 px-4 py-8 md:grid-cols-[1fr,300px]">
+        <div className="space-y-8">
+          {/* Brand profile card */}
+          <div className="space-y-4 rounded-lg border p-6">
+            <div className="flex items-start justify-between">
+              <div className="flex items-center gap-3">
+                <BrandLogo
+                  brandName={brandProfile.brandName}
+                  logoUrl={brandProfile.logoUrl}
+                  websiteUrl={brandProfile.websiteUrl}
+                />
+                <div>
+                  <h1 className="text-xl font-semibold">
+                    {brandProfile.brandName}
+                  </h1>
+                  <a
+                    className="text-sm text-muted-foreground underline"
+                    href={brandProfile.websiteUrl}
+                    rel="noopener noreferrer"
+                    target="_blank"
+                  >
+                    {brandProfile.websiteUrl}
+                  </a>
+                </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              <Button
+                onClick={() => setEditing(true)}
+                size="sm"
+                variant="ghost"
+              >
+                Edit
+              </Button>
+            </div>
 
-      <AlertDialog
-        onOpenChange={(open) => {
-          if (!open) {
-            setDeleteId(null);
-          }
-        }}
-        open={!!deleteId}
-      >
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your
-              chat and remove it from our servers.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => {
-                if (deleteId) {
-                  handleDeleteChat(deleteId);
-                }
-              }}
-            >
-              Continue
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+            <div className="flex gap-4 text-sm text-muted-foreground">
+              <span>
+                {countryFlag(brandProfile.country)} Origin:{" "}
+                {resolveCountry(brandProfile.country)}
+              </span>
+              {brandProfile.market && (
+                <span>
+                  {countryFlag(brandProfile.market)} Market:{" "}
+                  {resolveCountry(brandProfile.market)}
+                </span>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Categories
+                </span>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {(brandProfile.categories as string[]).map((c) => (
+                    <Badge key={c} variant="secondary">
+                      {c}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Competitors
+                </span>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {(brandProfile.competitors as string[]).map((c) => (
+                    <Badge key={c} variant="outline">
+                      {c}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <span className="text-xs font-medium text-muted-foreground">
+                  Retailers
+                </span>
+                <div className="mt-1 flex flex-wrap gap-1">
+                  {(brandProfile.retailers as string[]).map((c) => (
+                    <Badge key={c} variant="outline">
+                      {c}
+                    </Badge>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Project chats */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h2 className="text-sm font-medium text-muted-foreground">
+                Chats
+              </h2>
+              <Button
+                onClick={() => router.push(`/?projectId=${project.id}`)}
+                size="sm"
+              >
+                New Chat
+              </Button>
+            </div>
+
+            {chats.length === 0 ? (
+              <p className="py-4 text-center text-sm text-zinc-500">
+                No chats yet. Start a new one above.
+              </p>
+            ) : (
+              <div className="space-y-1">
+                {chats.map((c) => (
+                  <div
+                    className="group relative flex items-center rounded-md hover:bg-muted"
+                    key={c.id}
+                  >
+                    <Link
+                      className="flex min-w-0 flex-1 items-center justify-between px-3 py-2 text-sm"
+                      href={`/chat/${c.id}`}
+                    >
+                      <span className="truncate">
+                        {c.title || "Untitled chat"}
+                      </span>
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {formatDistanceToNow(new Date(c.createdAt), {
+                          addSuffix: true,
+                        })}
+                      </span>
+                    </Link>
+                    <DropdownMenu modal>
+                      <DropdownMenuTrigger asChild>
+                        <button
+                          className="mr-2 shrink-0 rounded p-1 text-muted-foreground hover:text-foreground"
+                          type="button"
+                        >
+                          <MoreHorizontalIcon className="size-4" />
+                          <span className="sr-only">More</span>
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" side="bottom">
+                        <DropdownMenuItem
+                          className="cursor-pointer text-destructive focus:bg-destructive/15 focus:text-destructive dark:text-red-500"
+                          onSelect={() => setDeleteId(c.id)}
+                        >
+                          <TrashIcon />
+                          <span>Delete</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <AlertDialog
+            onOpenChange={(open) => {
+              if (!open) {
+                setDeleteId(null);
+              }
+            }}
+            open={!!deleteId}
+          >
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete
+                  your chat and remove it from our servers.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => {
+                    if (deleteId) {
+                      handleDeleteChat(deleteId);
+                    }
+                  }}
+                >
+                  Continue
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+
+        {/* Documents — right column */}
+        <div className="space-y-3">
+          <h2 className="text-sm font-medium text-muted-foreground">
+            Documents
+          </h2>
+          {documents.length === 0 ? (
+            <p className="py-4 text-center text-sm text-zinc-500">
+              No documents yet. Create one from a chat.
+            </p>
+          ) : (
+            <div className="space-y-1">
+              {documents.map((doc) => (
+                <Link
+                  className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-muted"
+                  href={`/chat/${doc.chatId}`}
+                  key={doc.id}
+                >
+                  <Badge className="shrink-0 text-[10px]" variant="outline">
+                    {doc.kind}
+                  </Badge>
+                  <span className="truncate">{doc.title}</span>
+                </Link>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
   );
 }
 

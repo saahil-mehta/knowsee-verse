@@ -13,6 +13,22 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "./toast";
 
+const countryNames = new Intl.DisplayNames(["en"], { type: "region" });
+function resolveCountry(iso: string): string {
+  try {
+    return countryNames.of(iso.toUpperCase()) ?? iso;
+  } catch {
+    return iso;
+  }
+}
+
+function countryFlag(iso: string): string {
+  const code = iso.toUpperCase();
+  return String.fromCodePoint(
+    ...[...code].map((c) => 0x1_f1_e6 + c.charCodeAt(0) - 65)
+  );
+}
+
 type Suggestion = {
   name: string;
   url: string;
@@ -300,11 +316,19 @@ export function BrandProfileSetup({ projectId }: { projectId: string }) {
                   <div className="border-t px-4 py-3 space-y-3">
                     <DetailRow
                       label="Country"
-                      value={country || "Not detected"}
+                      value={
+                        country
+                          ? `${countryFlag(country)} ${resolveCountry(country)}`
+                          : "Not detected"
+                      }
                     />
                     <DetailRow
                       label="Market"
-                      value={market || "Not detected"}
+                      value={
+                        market
+                          ? `${countryFlag(market)} ${resolveCountry(market)}`
+                          : "Not detected"
+                      }
                     />
                     <BadgeRow
                       label="Categories"

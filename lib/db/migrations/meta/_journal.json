@@ -43,6 +43,13 @@
       "when": 1773938518685,
       "tag": "0005_nostalgic_greymalkin",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1775721256152,
+      "tag": "0006_wonderful_mulholland_black",
+      "breakpoints": true
     }
   ]
 }

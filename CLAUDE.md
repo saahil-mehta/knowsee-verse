@@ -5,7 +5,7 @@ A conversational AI assistant built as a full-stack Next.js application with Ver
 A personal AI assistant (Knowsee) with artifact creation, web browsing, and multi-model support — deployed on Vercel with persistent chat history and resumable streams.
 
 ## Stack
-- **AI**: Vercel AI SDK v6 (`ai`, `@ai-sdk/react`, `@ai-sdk/groq`)
+- **AI**: Vercel AI SDK v6 (`ai`, `@ai-sdk/react`, `@ai-sdk/anthropic`, `@ai-sdk/gateway`)
 - **Framework**: Next.js 16 (App Router, Turbopack, `proxy.ts` middleware)
 - **UI**: Radix primitives + Tailwind v4 + shadcn pattern
 - **Database**: PostgreSQL (Drizzle ORM, migrations in `lib/db/migrations/`)

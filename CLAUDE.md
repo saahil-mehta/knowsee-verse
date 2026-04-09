@@ -44,9 +44,10 @@ A personal AI assistant (Knowsee) with artifact creation, web browsing, and mult
 
 ### Provider System
 - Providers are swappable packages implementing `LanguageModelV3`
-- Current provider: `@ai-sdk/groq` via `createGroq()`
+- Current provider: `@ai-sdk/anthropic` for tools (web search, web fetch, memory), `@ai-sdk/gateway` for model routing
 - Model resolution: `lib/ai/providers.ts` — validates model IDs against the registry, falls back to default
-- Reasoning models are wrapped with `extractReasoningMiddleware({ tagName: "thinking" })`
+- Reasoning: Anthropic adaptive thinking via `providerOptions.anthropic.thinking` (not middleware)
+- Memory: `anthropic.tools.memory_20250818({ execute })` — provider-defined tool with custom DB-backed execute handler
 - Test environment uses `customProvider` with mock models — never call real providers in tests
 
 ### Middleware
@@ -78,6 +79,11 @@ Client (useChat) → POST /api/chat/route.ts → streamText() → tools execute
 - Agent modes (`AgentMode` type) swap prompt sections at runtime
 - Tool results and messages persist via Drizzle queries in `onFinish` callbacks
 - Resumable streams via Redis for production reliability
+
+## Identity
+- The assistant is **Knowsee** — all user-facing text must use "Knowsee", never "Claude", "AI", or any other model name
+- Identity definition: `lib/ai/instructions/identity.md`
+- Created by Saahil Mehta (knowsee.co.uk)
 
 ## Frontend Development
 - Components in `components/` — shadcn pattern with Radix primitives

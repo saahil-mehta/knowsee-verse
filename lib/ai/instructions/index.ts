@@ -44,6 +44,7 @@ const sheetTemplate = loadInstruction("sheet.md");
 const titleTemplate = loadInstruction("title.md");
 const summaryTemplate = loadInstruction("summary.md");
 const brandModeTemplate = loadInstruction("brand-mode.md");
+const brandMemoryTemplate = loadInstruction("brand-memory.md");
 const updateDocumentTemplate = loadInstruction("update-document.md");
 
 // Model-specific guidance — keyed by model ID suffix for easy lookup.
@@ -128,7 +129,7 @@ About the origin of user's request:
 // ---------------------------------------------------------------------------
 
 function brandContextPrompt(bp: BrandProfile): string {
-  return injectContext(brandModeTemplate, {
+  const mode = injectContext(brandModeTemplate, {
     brand_name: bp.brandName,
     website_url: bp.websiteUrl,
     country: resolveCountryName(bp.country),
@@ -138,6 +139,7 @@ function brandContextPrompt(bp: BrandProfile): string {
     retailers: (bp.retailers as string[]).join(", "),
     probe_models: PROBE_MODELS.map((m) => m.label).join(", "),
   });
+  return `${mode}\n\n${brandMemoryTemplate}`;
 }
 
 export const systemPrompt = ({

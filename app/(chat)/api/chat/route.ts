@@ -152,7 +152,9 @@ export async function POST(request: Request) {
           ...(selectedChatModel !== "anthropic/claude-haiku-4-5" && {
             providerOptions: {
               anthropic: {
-                thinking: { type: "adaptive" },
+                thinking: brandProfile
+                  ? { type: "enabled", budgetTokens: 8192 }
+                  : { type: "adaptive" },
               },
             },
           }),

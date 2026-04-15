@@ -9,6 +9,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
+import { THINKING_VERBS } from "@/lib/thinking-verbs";
 import { cn } from "@/lib/utils";
 import { Response } from "./response";
 
@@ -115,26 +116,31 @@ export type ReasoningTriggerProps = ComponentProps<typeof CollapsibleTrigger>;
 export const ReasoningTrigger = memo(
   ({ className, children, ...props }: ReasoningTriggerProps) => {
     const { isStreaming, isOpen, duration } = useReasoning();
+    const [verb] = useState(
+      () => THINKING_VERBS[Math.floor(Math.random() * THINKING_VERBS.length)]
+    );
 
     return (
       <CollapsibleTrigger
         className={cn(
-          "flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[11px] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+          "flex items-center gap-1.5 rounded-md px-2 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
           className
         )}
         {...props}
       >
         {children ?? (
           <>
-            <BrainIcon className="size-3" />
-            {isStreaming || duration === 0 ? (
-              <span>Thinking</span>
+            <BrainIcon className="size-3.5" />
+            {isStreaming ? (
+              <span>{verb[0]}</span>
             ) : (
-              <span>{duration}s</span>
+              <span>
+                {verb[1]} for {duration}s
+              </span>
             )}
             <ChevronDownIcon
               className={cn(
-                "size-2.5 transition-transform",
+                "size-3 transition-transform",
                 isOpen ? "rotate-180" : "rotate-0"
               )}
             />
@@ -155,14 +161,14 @@ export const ReasoningContent = memo(
   ({ className, children, ...props }: ReasoningContentProps) => (
     <CollapsibleContent
       className={cn(
-        "mt-1.5 text-[11px] text-muted-foreground leading-relaxed",
+        "mt-2 text-xs text-muted-foreground leading-relaxed",
         "data-[state=closed]:fade-out-0 data-[state=closed]:slide-out-to-top-2 data-[state=open]:slide-in-from-top-2 outline-hidden data-[state=closed]:animate-out data-[state=open]:animate-in",
         className
       )}
       {...props}
     >
-      <div className="max-h-48 overflow-y-auto rounded-md border border-border/50 bg-muted/30 p-2.5">
-        <Response className="grid gap-1 text-[11px] **:text-[11px] [&_li]:my-0 [&_ol]:my-1 [&_p]:my-0 [&_ul]:my-1">
+      <div className="max-h-72 overflow-y-auto rounded-md border border-border/50 bg-muted/30 p-3">
+        <Response className="grid gap-1.5 text-xs **:text-xs [&_li]:my-0 [&_ol]:my-1 [&_p]:my-0 [&_ul]:my-1">
           {children}
         </Response>
       </div>

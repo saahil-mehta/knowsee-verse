@@ -9,6 +9,7 @@ import {
   primaryKey,
   text,
   timestamp,
+  uniqueIndex,
   uuid,
   varchar,
 } from "drizzle-orm/pg-core";
@@ -116,6 +117,25 @@ export const brandProfile = pgTable("BrandProfile", {
 });
 
 export type BrandProfile = InferSelectModel<typeof brandProfile>;
+
+export const memory = pgTable(
+  "Memory",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    projectId: uuid("projectId")
+      .notNull()
+      .references(() => project.id),
+    path: varchar("path", { length: 512 }).notNull(),
+    content: text("content").notNull().default(""),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+    updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+  },
+  (table) => [
+    uniqueIndex("memory_project_path_idx").on(table.projectId, table.path),
+  ]
+);
+
+export type Memory = InferSelectModel<typeof memory>;
 
 export const chat = pgTable(
   "Chat",

@@ -15,7 +15,7 @@ import { getLanguageModel } from "@/lib/ai/providers";
 import { createBrandAudit } from "@/lib/ai/tools/brand-audit";
 import { createBrandPerception } from "@/lib/ai/tools/brand-perception";
 import { createDocument } from "@/lib/ai/tools/create-document";
-
+import { createMemoryTool } from "@/lib/ai/tools/memory";
 import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { createServerTools } from "@/lib/ai/tools/server-tools";
 import { updateDocument } from "@/lib/ai/tools/update-document";
@@ -149,7 +149,16 @@ export async function POST(request: Request) {
             brandProfile: brandProfile ?? undefined,
           }),
           messages: prunedMessages,
-          stopWhen: stepCountIs(brandProfile ? 12 : 8),
+          ...(selectedChatModel !== "anthropic/claude-haiku-4-5" && {
+            providerOptions: {
+              anthropic: {
+                thinking: brandProfile
+                  ? { type: "enabled", budgetTokens: 8192 }
+                  : { type: "adaptive" },
+              },
+            },
+          }),
+          stopWhen: stepCountIs(brandProfile ? 20 : 8),
           experimental_activeTools: [
             "createDocument",
             "updateDocument",
@@ -158,7 +167,7 @@ export async function POST(request: Request) {
             "web_search",
             "web_fetch",
             ...(brandProfile
-              ? (["brand_audit", "brand_perception"] as const)
+              ? (["brand_audit", "brand_perception", "memory"] as const)
               : []),
           ],
           tools: {
@@ -192,6 +201,9 @@ export async function POST(request: Request) {
                     dataStream,
                     brandProfile,
                     chatId: id,
+                  }),
+                  memory: createMemoryTool({
+                    projectId: brandProfile.projectId,
                   }),
                 }
               : {}),

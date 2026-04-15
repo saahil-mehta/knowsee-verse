@@ -24,6 +24,7 @@ import {
   chat,
   type DBMessage,
   document,
+  memory,
   message,
   project,
   type Suggestion,
@@ -689,6 +690,7 @@ export async function deleteProjectById({ id }: { id: string }) {
   try {
     await db.transaction(async (tx) => {
       await tx.delete(visibilityAudit).where(eq(visibilityAudit.projectId, id));
+      await tx.delete(memory).where(eq(memory.projectId, id));
       await tx.delete(brandProfile).where(eq(brandProfile.projectId, id));
       await tx
         .update(chat)
@@ -916,5 +918,157 @@ export async function getVisibilityAuditsByProjectId({
       "bad_request:database",
       "Failed to get visibility audits by project id"
     );
+  }
+}
+
+// ─── Memory Queries ──────────────────────────────────────────────────────────
+
+export async function getMemoriesByProjectId({
+  projectId: pid,
+}: {
+  projectId: string;
+}) {
+  try {
+    return await db
+      .select()
+      .from(memory)
+      .where(eq(memory.projectId, pid))
+      .orderBy(asc(memory.path));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get memories by project id"
+    );
+  }
+}
+
+export async function getMemoryByPath({
+  projectId: pid,
+  path,
+}: {
+  projectId: string;
+  path: string;
+}) {
+  try {
+    const [selected] = await db
+      .select()
+      .from(memory)
+      .where(and(eq(memory.projectId, pid), eq(memory.path, path)));
+    return selected ?? null;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get memory by path"
+    );
+  }
+}
+
+export async function createMemory({
+  projectId: pid,
+  path,
+  content,
+}: {
+  projectId: string;
+  path: string;
+  content: string;
+}) {
+  try {
+    const [created] = await db
+      .insert(memory)
+      .values({ projectId: pid, path, content })
+      .returning();
+    return created;
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to create memory");
+  }
+}
+
+export async function updateMemoryContent({
+  projectId: pid,
+  path,
+  content,
+}: {
+  projectId: string;
+  path: string;
+  content: string;
+}) {
+  try {
+    const [updated] = await db
+      .update(memory)
+      .set({ content, updatedAt: new Date() })
+      .where(and(eq(memory.projectId, pid), eq(memory.path, path)))
+      .returning();
+    return updated;
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update memory content"
+    );
+  }
+}
+
+export async function deleteMemoryByPath({
+  projectId: pid,
+  path,
+}: {
+  projectId: string;
+  path: string;
+}) {
+  try {
+    await db
+      .delete(memory)
+      .where(and(eq(memory.projectId, pid), eq(memory.path, path)));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to delete memory by path"
+    );
+  }
+}
+
+export async function deleteMemoryById({ id }: { id: string }) {
+  try {
+    await db.delete(memory).where(eq(memory.id, id));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to delete memory by id"
+    );
+  }
+}
+
+export async function deleteAllMemoriesByProjectId({
+  projectId: pid,
+}: {
+  projectId: string;
+}) {
+  try {
+    await db.delete(memory).where(eq(memory.projectId, pid));
+  } catch (_error) {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to delete all memories by project id"
+    );
+  }
+}
+
+export async function renameMemory({
+  projectId: pid,
+  oldPath,
+  newPath,
+}: {
+  projectId: string;
+  oldPath: string;
+  newPath: string;
+}) {
+  try {
+    const [updated] = await db
+      .update(memory)
+      .set({ path: newPath, updatedAt: new Date() })
+      .where(and(eq(memory.projectId, pid), eq(memory.path, oldPath)))
+      .returning();
+    return updated;
+  } catch (_error) {
+    throw new ChatSDKError("bad_request:database", "Failed to rename memory");
   }
 }

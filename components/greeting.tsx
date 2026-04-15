@@ -14,6 +14,15 @@ const GREETINGS = [
   (name: string) =>
     `The creative director has arrived. What are we shipping, ${name}?`,
   (name: string) => `${name}'s here. Time to turn caffeine into campaigns.`,
+  (name: string) => `${name} has logged on. The deck won't know what hit it.`,
+  (name: string) => `Well well well, ${name}'s back with ideas.`,
+  (name: string) => `${name} just walked in. Someone's about to get briefed.`,
+  (name: string) => `${name}! The whiteboard awaits your genius.`,
+  (name: string) => `Look alive — ${name}'s got that "let's ship it" energy.`,
+  (name: string) => `${name} returns. The strategy just sharpened itself.`,
+  (name: string) =>
+    `${name}! Right on cue. There's work to ruin competitors' days.`,
+  (name: string) => `${name}'s in the building. Concepts, brace yourselves.`,
 ];
 
 function pickGreeting(name: string): string {
@@ -46,19 +55,13 @@ export const Greeting = () => {
   const { data: session } = useSession();
   const firstName = session?.user?.name?.split(" ")[0] ?? "there";
 
-  const fullText = useMemo(() => {
-    const line1 = pickGreeting(firstName);
-    const line2 = "How can Knowsee help today?";
-    return `${line1}\n${line2}`;
-  }, [firstName]);
+  const greeting = useMemo(() => pickGreeting(firstName), [firstName]);
 
   const { displayedText, cursor } = useTypewriter({
-    text: fullText,
+    text: greeting,
     speed: 35,
     startDelay: 200,
   });
-
-  const lines = displayedText.split("\n");
 
   return (
     <div
@@ -66,12 +69,7 @@ export const Greeting = () => {
       key="overview"
     >
       <h1 className="font-serif text-3xl text-foreground md:text-4xl">
-        {lines.map((line) => (
-          <span key={line || "empty"}>
-            {line !== lines[0] && <br />}
-            <KnowseeBranded text={line} />
-          </span>
-        ))}
+        <KnowseeBranded text={displayedText} />
         {cursor && (
           <span className="animate-blink ml-0.5 inline-block">{cursor}</span>
         )}

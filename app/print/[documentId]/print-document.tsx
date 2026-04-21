@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { ReportRenderer } from "@/artifacts/report/renderer";
+import { PrintModeProvider } from "@/lib/print-mode";
 
 type Props = {
   content: string;
@@ -9,18 +10,19 @@ type Props = {
 };
 
 /**
- * Client wrapper for the print route. Renders the report artifact, then
- * emits a `data-report-ready` sentinel once the DOM has had a couple of
- * animation frames to settle (charts compute their initial layout on the
- * first frame after mount). Puppeteer waits for this sentinel before
- * calling page.pdf(), so exports capture fully-rendered content.
+ * Client wrapper for the print route. Wraps the report renderer in
+ * PrintModeProvider so chart components know to use fixed pixel
+ * dimensions instead of ResponsiveContainer. Emits a `data-report-ready`
+ * sentinel once hydration is complete so Puppeteer knows when to capture.
  */
 export function PrintDocument({ content, kind }: Props) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    // Two RAFs: first lets React commit + charts mount, second lets any
-    // secondary relayout settle. Empirically enough for Recharts.
+    // Two RAFs: first lets React commit, second lets charts mount and
+    // render. With fixed pixel dimensions (via PrintModeProvider) charts
+    // don't depend on ResizeObserver timing, so this simple delay is
+    // sufficient.
     let frame2: number;
     const frame1 = requestAnimationFrame(() => {
       frame2 = requestAnimationFrame(() => setReady(true));
@@ -35,13 +37,15 @@ export function PrintDocument({ content, kind }: Props) {
 
   return (
     <div className="knowsee-print-root">
-      {kind === "report" ? (
-        <ReportRenderer content={content} status="idle" />
-      ) : (
-        <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
-          {content}
-        </pre>
-      )}
+      <PrintModeProvider>
+        {kind === "report" ? (
+          <ReportRenderer content={content} status="idle" />
+        ) : (
+          <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit" }}>
+            {content}
+          </pre>
+        )}
+      </PrintModeProvider>
       {ready && <div aria-hidden="true" data-report-ready />}
     </div>
   );

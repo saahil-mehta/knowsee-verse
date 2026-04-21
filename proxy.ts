@@ -23,6 +23,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Print route is authorised via HMAC-signed token in the query string
+  // (see lib/documents/print-token.ts), not via session cookies, so the
+  // server-side Puppeteer export pipeline can navigate to it without a
+  // cookie-forwarding dance. The /print page itself calls verifyPrintToken
+  // and returns 404 on mismatch; no other access path reaches this route.
+  if (pathname.startsWith("/print/")) {
+    return NextResponse.next();
+  }
+
   // Dynamic import to avoid module-level database connection
   const { auth } = await import("./lib/auth");
 

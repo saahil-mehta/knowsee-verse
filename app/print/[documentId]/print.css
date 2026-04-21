@@ -1,5 +1,20 @@
 /* Print-route layout: always light, constrained to A4 content width. */
 
+/* Hide Next.js dev UI (build-status indicator, refresh/toast portals,
+   dev-tools button). Under `next dev` these inject floating elements
+   into the DOM that would otherwise land in the exported PDF. In
+   production these selectors match nothing so the rule is a no-op. */
+nextjs-portal,
+[data-nextjs-dev-indicator],
+[data-nextjs-dev-tools-button],
+[data-nextjs-toast],
+[data-nextjs-refresh-indicator],
+#__next-build-watcher,
+#__next-dev-overlay {
+  display: none !important;
+  visibility: hidden !important;
+}
+
 .knowsee-print-layout {
   background: #ffffff !important;
   color: hsl(240 10% 3.9%) !important;
@@ -74,4 +89,26 @@ html.dark .knowsee-print-layout,
 .knowsee-print-layout td {
   overflow-wrap: anywhere;
   word-break: break-word;
+}
+
+/* Force chart wrappers and Recharts's ResponsiveContainer to have concrete
+   pixel dimensions during print rendering. Under Next.js 16 streaming
+   with cacheComponents, ResponsiveContainer occasionally measures its
+   parent at 0 width during the first ResizeObserver pass and bails out
+   to -1 dimensions. Giving the wrapper explicit width/height and a
+   sensible minimum sidesteps that measurement race. */
+.knowsee-print-layout .h-80 {
+  width: 100% !important;
+  height: 320px !important;
+  min-width: 400px;
+}
+.knowsee-print-layout .recharts-responsive-container {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 400px !important;
+  min-height: 280px !important;
+}
+.knowsee-print-layout .recharts-wrapper {
+  width: 100% !important;
+  height: 100% !important;
 }

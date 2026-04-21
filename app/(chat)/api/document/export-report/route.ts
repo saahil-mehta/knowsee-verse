@@ -5,8 +5,6 @@ import { launchBrowser } from "@/lib/documents/puppeteer";
 import { ChatSDKError } from "@/lib/errors";
 
 export const maxDuration = 60;
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
 
 const VALID_FORMATS = ["pdf", "html"] as const;
 type ExportFormat = (typeof VALID_FORMATS)[number];
@@ -72,8 +70,11 @@ export async function GET(request: Request) {
       timeout: 30_000,
     });
 
-    // The print-document client emits this sentinel once charts have
-    // settled. Without it, page.pdf() can capture mid-render.
+    // The print-document client emits this sentinel once the report has
+    // mounted and had two animation frames to settle. Charts use fixed
+    // pixel dimensions in print mode (via PrintModeProvider), so the
+    // two-RAF wait is sufficient and we don't need the ResizeObserver
+    // polling dance.
     await page.waitForSelector("[data-report-ready]", { timeout: 15_000 });
 
     const filename = sanitiseFilename(doc.title);
@@ -121,7 +122,25 @@ export async function GET(request: Request) {
     }
 
     // HTML export: serialise the fully-rendered, hydrated DOM as a
-    // self-contained document.
+    // self-contained document. Strip Next.js dev-only elements first —
+    // CSS display:none hides them visually but page.content() still
+    // serialises them, leaving <nextjs-portal> tags in the file.
+    await page.evaluate(() => {
+      const selectors = [
+        "nextjs-portal",
+        "[data-nextjs-dev-indicator]",
+        "[data-nextjs-dev-tools-button]",
+        "[data-nextjs-toast]",
+        "[data-nextjs-refresh-indicator]",
+        "#__next-build-watcher",
+        "#__next-dev-overlay",
+      ];
+      for (const selector of selectors) {
+        for (const el of document.querySelectorAll(selector)) {
+          el.remove();
+        }
+      }
+    });
     const html = await page.content();
     return new Response(html, {
       status: 200,

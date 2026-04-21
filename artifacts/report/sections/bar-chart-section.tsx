@@ -10,6 +10,11 @@ import {
   XAxis,
   YAxis,
 } from "recharts";
+import {
+  PRINT_CHART_HEIGHT,
+  PRINT_CHART_WIDTH,
+  usePrintMode,
+} from "@/lib/print-mode";
 import type { BarChartSection } from "../types";
 
 const CHART_COLORS = [
@@ -28,6 +33,7 @@ export function BarChartBlock({
   categoryKey,
   layout = "vertical",
 }: BarChartSection) {
+  const isPrint = usePrintMode();
   if (!Array.isArray(data) || !Array.isArray(bars)) {
     return null;
   }
@@ -37,8 +43,18 @@ export function BarChartBlock({
       {description && (
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       )}
-      <div className="mt-4 h-80">
-        <ResponsiveContainer height="100%" width="100%">
+      <div
+        className="mt-4 h-80"
+        style={
+          isPrint
+            ? { width: PRINT_CHART_WIDTH, height: PRINT_CHART_HEIGHT }
+            : undefined
+        }
+      >
+        <ResponsiveContainer
+          height={isPrint ? PRINT_CHART_HEIGHT : "100%"}
+          width={isPrint ? PRINT_CHART_WIDTH : "100%"}
+        >
           <BarChart
             data={data}
             layout={layout === "horizontal" ? "vertical" : "horizontal"}

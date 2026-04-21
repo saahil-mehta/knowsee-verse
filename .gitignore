@@ -48,3 +48,6 @@ tests/.auth/
 *.scratchpad*.txt
 .mcp.json
 *.tsbuildinfo
+
+# Vendored libraries copied from node_modules at install/build time
+public/vendor/

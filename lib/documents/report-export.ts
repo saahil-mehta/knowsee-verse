@@ -7,8 +7,10 @@
  * `getComputedStyle()` reads light-theme values into the clone's inline styles.
  * The class is restored before any async work — the toggle is never painted.
  *
- * PDF uses the browser's native print-to-PDF via a hidden iframe, keeping
- * text selectable and file sizes small. No external dependencies required.
+ * PDF uses the browser's native print-to-PDF via a hidden iframe, with
+ * Paged.js polyfilling CSS Paged Media for proper page-break handling,
+ * running headers, and page numbers. Text remains selectable and file
+ * sizes stay small.
  */
 
 // Brand constants (client-safe subset of lib/documents/brand.ts)
@@ -100,7 +102,10 @@ async function toBase64DataUri(url: string): Promise<string> {
   });
 }
 
-// Base properties that are always safe to inline
+// Visual style props safe to inline. Height, max-height, min-height, and
+// overflow are deliberately NOT in this list — inlining them onto section
+// cards freezes their dimensions and prevents Paged.js from paginating
+// tall cards correctly.
 const BASE_INLINE_PROPS = [
   "color",
   "background-color",
@@ -122,10 +127,6 @@ const BASE_INLINE_PROPS = [
   "justify-content",
   "gap",
   "grid-template-columns",
-  "height",
-  "max-height",
-  "min-height",
-  "overflow",
   "box-shadow",
   "opacity",
 ];
@@ -292,19 +293,16 @@ async function prepareClone(element: HTMLElement): Promise<HTMLElement> {
 }
 
 /** Build the branded header as an HTML string with base64-embedded logo. */
-async function buildHeaderHtml(title: string): Promise<string> {
+async function buildHeaderHtml(
+  title: string,
+  dateStr: string
+): Promise<string> {
   let logoDataUri: string;
   try {
     logoDataUri = await toBase64DataUri(LOGO_PATH);
   } catch {
     logoDataUri = "";
   }
-
-  const today = new Date().toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
 
   return `
     <header class="knowsee-report-header">
@@ -315,14 +313,13 @@ async function buildHeaderHtml(title: string): Promise<string> {
       }
       <div class="knowsee-header-meta">
         <span class="knowsee-header-title">${title}</span>
-        <span class="knowsee-header-date">${today}</span>
+        <span class="knowsee-header-date">${dateStr}</span>
       </div>
     </header>
   `;
 }
 
-// Baseline + print CSS shared by HTML and PDF exports. Keeps pagination
-// clean, forbids dark colours, and keeps cards from being sliced in half.
+// Baseline CSS shared by HTML and PDF exports.
 const BASE_STYLES = `
   :root { ${LIGHT_THEME_VARS} }
 
@@ -347,7 +344,8 @@ const BASE_STYLES = `
 
   a { color: inherit; text-decoration: none; }
 
-  /* Branded header */
+  /* Branded body header (appears once at top of document). Paged.js
+     renders running headers in the page margin boxes (see paged styles). */
   .knowsee-report-header {
     display: flex;
     align-items: center;
@@ -402,6 +400,9 @@ const BASE_STYLES = `
   }
 `;
 
+// Fallback print styles. Used when Paged.js doesn't run (HTML export, or
+// if the polyfill fails to load). When Paged.js runs, these are largely
+// superseded by proper CSS Paged Media handling.
 const PRINT_STYLES = `
   @page {
     size: A4;
@@ -419,8 +420,6 @@ const PRINT_STYLES = `
       print-color-adjust: exact !important;
     }
 
-    /* Force top-level report elements to fit the page width regardless of
-       whatever pixel widths were frozen in from the on-screen rendering. */
     .knowsee-report-body {
       padding: 0 !important;
       max-width: 100% !important;
@@ -445,41 +444,32 @@ const PRINT_STYLES = `
       margin-bottom: 0;
     }
 
-    /* Don't orphan headings at page bottoms */
     h1, h2, h3, h4, h5, h6 {
       break-after: avoid;
       page-break-after: avoid;
     }
 
-    /* Large section containers (recommendations, dimension findings,
-       competitive position table) are allowed to flow across pages.
-       The previous blanket break-inside: avoid on all section-level
-       .rounded-lg cards forced the browser into unpredictable fallback
-       behaviour when a card was taller than one page, producing
-       section overlaps and text cutoff at page boundaries. */
+    /* Section-level cards flow across pages (Paged.js handles the finer
+       break decisions; native print falls back to this). */
     [data-report-content] > div,
     [data-report-content] .rounded-lg {
       break-inside: auto;
       page-break-inside: auto;
     }
 
-    /* Individual recommendation items stay atomic. Each item is small
-       enough to fit on a page and must not split. */
+    /* Individual recommendation items stay atomic. */
     .border-l-4 {
       break-inside: avoid;
       page-break-inside: avoid;
     }
 
-    /* Tables: repeat headers, avoid splitting a single row */
     table { break-inside: auto; page-break-inside: auto; }
     thead { display: table-header-group; }
     tfoot { display: table-footer-group; }
     tr    { break-inside: avoid; page-break-inside: avoid; }
 
-    /* Paragraphs and list items */
     p, li { widows: 3; orphans: 3; }
 
-    /* Images / rasterised charts */
     img, svg {
       break-inside: avoid;
       page-break-inside: avoid;
@@ -488,13 +478,83 @@ const PRINT_STYLES = `
   }
 `;
 
+/**
+ * Paged.js CSS — proper CSS Paged Media rules for page margins, running
+ * headers, page numbers. Used by exportReportAsPdf when the polyfill is
+ * loaded in the iframe; exportReportAsHtml skips these to keep the HTML
+ * output as a scrollable document.
+ */
+function buildPagedMediaStyles(title: string, dateStr: string): string {
+  const escTitle = title.replace(/"/g, '\\"').replace(/\\/g, "\\\\");
+  const escDate = dateStr.replace(/"/g, '\\"');
+
+  return `
+    @page {
+      size: A4;
+      margin: 22mm 16mm 18mm 16mm;
+
+      @top-left {
+        content: "Knowsee · ${escTitle}";
+        font-family: Inter, sans-serif;
+        font-size: 9px;
+        color: ${BRAND_PURPLE};
+        font-weight: 600;
+      }
+
+      @top-right {
+        content: "${escDate}";
+        font-family: Inter, sans-serif;
+        font-size: 9px;
+        color: hsl(240 3.8% 46.1%);
+      }
+
+      @bottom-right {
+        content: counter(page) " / " counter(pages);
+        font-family: Inter, sans-serif;
+        font-size: 9px;
+        color: hsl(240 3.8% 46.1%);
+      }
+    }
+
+    /* First page carries the big body header; suppress the running header
+       there so the chrome isn't duplicated with the body branding. */
+    @page :first {
+      @top-left { content: none; }
+      @top-right { content: none; }
+    }
+
+    /* The body header only needs to appear on page 1. */
+    .knowsee-report-header { break-after: avoid; }
+  `;
+}
+
+type BuildHtmlOptions = {
+  /** When true, include the Paged.js polyfill and CSS Paged Media rules. */
+  paged?: boolean;
+};
+
 /** Build a complete self-contained HTML document from the prepared clone. */
 async function buildHtmlDocument(
   element: HTMLElement,
-  title: string
+  title: string,
+  options: BuildHtmlOptions = {}
 ): Promise<string> {
   const clone = await prepareClone(element);
-  const headerHtml = await buildHeaderHtml(title);
+
+  const dateStr = new Date().toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
+  const headerHtml = await buildHeaderHtml(title, dateStr);
+
+  const pagedStyles = options.paged
+    ? buildPagedMediaStyles(title, dateStr)
+    : "";
+  const pagedScript = options.paged
+    ? `<script src="/vendor/paged.polyfill.js"></script>`
+    : "";
 
   return `<!DOCTYPE html>
 <html lang="en" class="light">
@@ -503,7 +563,8 @@ async function buildHtmlDocument(
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="color-scheme" content="light" />
   <title>${title}</title>
-  <style>${BASE_STYLES}${PRINT_STYLES}</style>
+  <style>${BASE_STYLES}${PRINT_STYLES}${pagedStyles}</style>
+  ${pagedScript}
 </head>
 <body>
   ${headerHtml}
@@ -532,16 +593,76 @@ export async function exportReportAsHtml(
 
 // ─── PDF Export ──────────────────────────────────────────────────────────────
 
+/** Wait for all <img> elements in the document to load (or error). */
+function waitForImages(doc: Document): Promise<void> {
+  return new Promise((resolve) => {
+    const images = Array.from(doc.querySelectorAll("img"));
+    if (images.length === 0) {
+      resolve();
+      return;
+    }
+    let remaining = images.length;
+    const onLoad = () => {
+      remaining -= 1;
+      if (remaining <= 0) {
+        resolve();
+      }
+    };
+    for (const img of images) {
+      if (img.complete) {
+        onLoad();
+      } else {
+        img.addEventListener("load", onLoad);
+        img.addEventListener("error", onLoad);
+      }
+    }
+  });
+}
+
 /**
- * Uses the browser's native print pipeline via a hidden iframe.
- * Text remains selectable, files are small, and pagination is handled
- * by the browser's print engine.
+ * Wait for Paged.js to finish paginating the document. Resolves when the
+ * `.pagedjs_pages` container has been inserted; falls back after a timeout
+ * so a polyfill that failed to load does not block printing indefinitely.
+ */
+function waitForPagedjs(doc: Document): Promise<void> {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const TIMEOUT_MS = 20_000;
+    let pagesSeen = false;
+
+    const check = () => {
+      if (doc.querySelector(".pagedjs_pages")) {
+        if (pagesSeen) {
+          resolve();
+          return;
+        }
+        // Saw the pagination container; give one more tick for any
+        // final-state bookkeeping (class toggles, post-render hooks).
+        pagesSeen = true;
+        setTimeout(check, 250);
+        return;
+      }
+      if (Date.now() - start > TIMEOUT_MS) {
+        // Polyfill didn't run or timed out; print whatever we have.
+        resolve();
+        return;
+      }
+      setTimeout(check, 120);
+    };
+    check();
+  });
+}
+
+/**
+ * Uses the browser's native print pipeline via a hidden iframe, with
+ * Paged.js polyfilling CSS Paged Media for clean pagination, running
+ * headers, and page numbers.
  */
 export async function exportReportAsPdf(
   element: HTMLElement,
   title: string
 ): Promise<void> {
-  const html = await buildHtmlDocument(element, title);
+  const html = await buildHtmlDocument(element, title, { paged: true });
 
   const iframe = document.createElement("iframe");
   iframe.setAttribute("aria-hidden", "true");
@@ -559,29 +680,13 @@ export async function exportReportAsPdf(
     iframeDoc.write(html);
     iframeDoc.close();
 
-    // Wait for images (including rasterised charts) to finish loading
-    await new Promise<void>((resolve) => {
-      const images = Array.from(iframeDoc.querySelectorAll("img"));
-      if (images.length === 0) {
-        resolve();
-        return;
-      }
-      let remaining = images.length;
-      const onLoad = () => {
-        remaining -= 1;
-        if (remaining <= 0) {
-          resolve();
-        }
-      };
-      for (const img of images) {
-        if (img.complete) {
-          onLoad();
-        } else {
-          img.addEventListener("load", onLoad);
-          img.addEventListener("error", onLoad);
-        }
-      }
-    });
+    // Base64 images are synchronous, but external images (e.g. the logo
+    // data URI) may still need a tick. Wait regardless.
+    await waitForImages(iframeDoc);
+
+    // Paged.js paginates the DOM into .pagedjs_pages. Wait for it to
+    // finish so print() captures the paginated output, not the raw flow.
+    await waitForPagedjs(iframeDoc);
 
     // One extra frame so layout settles before print
     await new Promise((r) => requestAnimationFrame(() => r(null)));

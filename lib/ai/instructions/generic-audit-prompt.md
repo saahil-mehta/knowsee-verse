@@ -26,9 +26,18 @@ Wait for the answer. If the user declines or picks a role outside these five, de
 </step-2-research>
 
 <step-3-report>
-Call `createDocument(kind: "report")` using the default analytical shape defined in `artifacts.md`. Always include:
+Call `createDocument(kind: "report")` using the default analytical shape defined in `artifacts.md`.
 
-1. `header` — title plus subtitle (date and chosen persona)
+Top-level document metadata (the `title`, `subtitle`, and `date` fields on the root object — not in a `header` section) carries the report identity. Set:
+- `title`: audit subject plus descriptor
+- `subtitle`: audit date plus "Prepared for {{persona}}"
+- `date`: the audit date
+
+Do NOT emit a `header` section in the `sections` array.
+
+Body sections, in order:
+
+1. `text` titled "About This Audit" — one-sentence definition of the audit scope and persona framing
 2. `kpi-row` — numeric summary where meaningful; omit if not
 3. `text` titled "Executive Summary" — 3 to 4 sentences, verdict-led
 4. `text` titled "Key Findings" — evidence-anchored prose, not bullets

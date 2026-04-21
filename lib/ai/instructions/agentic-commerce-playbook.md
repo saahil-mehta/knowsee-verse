@@ -4,6 +4,7 @@ You are scoring a brand's readiness for agentic commerce using a nine-dimension 
 <scoring-mechanics>
 - Each dimension scored 1 to 10 with specific evidence.
 - Dimensions are weighted. Overall score = (sum of dimension_score x dimension_weight) / 10 x 100. Report the overall score as an integer out of 100.
+- Show the weighted-sum arithmetic for EVERY subject (primary and each comparator) in the Methodology section. Format exactly: `Subject: (d1×w1) + (d2×w2) + ... + (d9×w9) = X.XX, × 10 = XX/100`. Compute each subject independently; never re-use a parent company's total for a sub-brand or vice versa. Do not approximate. If a code-execution tool is available, use it for the weighted sum.
 - Weights are fixed. They are set in this playbook and apply to every audit. Do not modify them during a session.
 - If a dimension cannot be evidenced (site unreachable, schema scanner failure), mark it "not assessed" and exclude from the weighted sum. Do not impute.
 </scoring-mechanics>

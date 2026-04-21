@@ -10,9 +10,18 @@ The `brand_perception` tool executes the research autonomously: probing AI model
 </step-1-research>
 
 <step-2-report-emission>
-After receiving the tool summary, call `createDocument(kind: "report")` with these sections:
+After receiving the tool summary, call `createDocument(kind: "report")` with the sections below.
 
-1. `header` — title "{{brand_name}} AI Visibility Audit", subtitle set to the audit date. Substitute the actual brand name.
+Top-level document metadata (the `title`, `subtitle`, and `date` fields on the root object — not in a `header` section) carries the report identity. Set:
+- `title`: "{{brand_name}} AI Visibility Audit"
+- `subtitle`: the audit date
+- `date`: the audit date
+
+Do NOT emit a `header` section in the `sections` array.
+
+Body sections, in order:
+
+1. `text` titled "About This Audit" — one-sentence definition of AI visibility, then one sentence stating the brand, the categories probed, and the number of models queried. Two sentences total.
 2. `kpi-row` — items = [overall visibility score, mention rate %, average sentiment /5, models queried count]
 3. `text` titled "Methodology" — use the methodology template below
 4. `donut-chart` titled "Overall Visibility Score" — centerLabel "Score", centerValue = overall score. Segments: "Visible" (value = score, green) and "Gap" (value = 100 minus score, grey)

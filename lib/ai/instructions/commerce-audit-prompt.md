@@ -38,8 +38,16 @@ Research budget: cap at roughly 40 to 60 fetches. Spend more on the primary subj
 <step-3-report-emission>
 Call `createDocument(kind: "report")` with sections tuned to the chosen persona.
 
-Always include:
-1. `header` — title "{{brand_name}} Agentic Commerce Readiness Audit", subtitle date + "Prepared for {{persona}}"
+Top-level document metadata (the `title`, `subtitle`, and `date` fields on the root object — not in a `header` section) carries the report identity; the renderer uses it for the running page header. Set:
+- `title`: "{{brand_name}} Agentic Commerce Readiness Audit"
+- `subtitle`: scope line (date, sector benchmark, sub-brand drill-down if applicable, and "Prepared for {{persona}}")
+- `date`: the audit date
+
+Do NOT emit a `header` section in the `sections` array. The top-level metadata is sufficient and a body `header` would duplicate the title.
+
+Body sections, in order:
+
+1. `text` titled "About This Audit" — one-sentence definition of agentic commerce readiness, then one sentence stating the primary subject, comparators, and persona. Two sentences total.
 2. `kpi-row` — [overall score /100, dimensions >= 7/10 count, dimensions <= 4/10 count, sources cited count]
 3. `donut-chart` — overall score centre label
 4. `radar-chart` — nine dimensions, one radar per subject (primary + comparators)
@@ -48,7 +56,7 @@ Always include:
 7. `text` — "Dimension Findings" — one short paragraph per dimension with the score, the evidence, and the rubric source
 8. `table` — "Competitive Position" — rows = dimensions, columns = subjects, cells = scores
 9. `recommendations` — persona-weighted (see persona map below), severity-tiered (CRITICAL, HIGH, MEDIUM, LOW)
-10. `text` — "Methodology and Sources" — one paragraph stating rubric version, weights applied, URLs cited
+10. `text` — "Methodology and Sources" — one paragraph stating rubric version, weights applied, URLs cited, plus the weighted-sum arithmetic for every subject per `agentic-commerce-playbook.md` `<scoring-mechanics>`
 
 Persona map (which dimensions to emphasise in the recommendations section):
 - 1 Commerce Strategist: dimensions 2, 3, 4, 9

@@ -45,8 +45,9 @@ Do not use for explanations, conversational replies, or when the user says to ke
   - `recommendations`: `{ type, title, groups: [{ tier: "high"|"medium"|"low", items: [{ action, reason, impact }] }] }` — group by severity: critical/high both map to "high"
   Use realistic data. Never fabricate statistics, figures, or data points. If you used web search to find a number, cite the source. If you cannot verify a figure, use a clearly labelled placeholder (e.g. "~X est.") or state the data gap explicitly. Do not fill chart data with invented numbers to make the report look complete.
 
-  **Default analytical report shape** — for analytical, assessment, or audit-flavoured reports where no tool has returned specific report instructions, use this default ordering:
-  1. `header`
+  **Default analytical report shape** — for analytical, assessment, or audit-flavoured reports where no tool has returned specific report instructions, place the title, subtitle, and date in the top-level document metadata (not in a `header` section — the renderer uses top-level metadata for the page header). Body sections, in order:
+
+  1. `text` titled "About This Audit" — one-sentence scope statement
   2. `kpi-row` (only if numeric summary is meaningful; omit otherwise)
   3. `text` titled "Executive Summary" — 3 to 4 sentences, verdict-led
   4. `text` titled "Key Findings" — evidence-anchored prose, not bullets

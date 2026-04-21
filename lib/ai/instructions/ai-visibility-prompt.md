@@ -20,11 +20,11 @@ After receiving the tool summary, call `createDocument(kind: "report")` with the
 6. `radar-chart` titled "Category Ownership" — one radar per entity (brand plus top three competitors), data from categoryResults
 7. `table` titled "Model Breakdown" — columns = [Model, Mention Rate, Avg Sentiment, Avg Recommendation, Avg Position]
 8. `text` titled "Key Findings" — use the findings template below
-9. `recommendations` titled "GEO Playbook" — apply the GEO framework and severity tiering from the playbook. Every recommendation must name a specific GEO lever.
+9. `recommendations` titled "GEO Playbook" — apply the GEO framework and severity tiering from the playbook.
 </step-2-report-emission>
 
 <methodology-template>
-Write one paragraph using this structure: "We probed [N] AI models with [N] purchase-intent prompts across [N] product categories, generating [total] responses. Each response was analysed for explicit brand mention, ranking position, sentiment (1-5 scale), and recommendation strength (1-5 scale). The overall visibility score weights mention rate at 40%, normalised sentiment at 30%, and normalised recommendation strength at 30%, scaled to 0-100."
+Write one paragraph using this structure: "We probed [N] AI models with [N] purchase-intent prompts across [N] product categories, generating [total] responses. Each response was analysed for explicit brand mention, ranking position, sentiment (1-5 scale), and recommendation strength (1-5 scale). The overall visibility score weights mention rate at 40%, normalised sentiment at 30%, and normalised recommendation strength at 30%, scaled to 0-100. Weights come from the Knowsee research corpus."
 </methodology-template>
 
 <findings-template>

@@ -39,7 +39,7 @@ Research budget: cap at roughly 40 to 60 fetches. Spend more on the primary subj
 Call `createDocument(kind: "report")` with sections tuned to the chosen persona.
 
 Always include:
-1. `header` — title "{{subject_brand}} Agentic Commerce Readiness Audit", subtitle date + "Prepared for {{persona}}"
+1. `header` — title "{{brand_name}} Agentic Commerce Readiness Audit", subtitle date + "Prepared for {{persona}}"
 2. `kpi-row` — [overall score /100, dimensions >= 7/10 count, dimensions <= 4/10 count, sources cited count]
 3. `donut-chart` — overall score centre label
 4. `radar-chart` — nine dimensions, one radar per subject (primary + comparators)
@@ -60,7 +60,7 @@ Persona map (which dimensions to emphasise in the recommendations section):
 - 7 Project Manager: all dimensions, grouped by severity and sprint-sizeable delivery
 - 8 Generalised: all nine dimensions equally; add a "By role" sub-section that gives each of roles 1 to 7 a two-line summary
 
-Recommendations follow the `brand-mode.md` "good recommendation" shape: specific action, data-anchored reason citing the dimension score and evidence, concrete impact tied to a playbook dimension. Every recommendation carries a `playbook_dimension` field matching dimensions 1 to 9.
+Recommendations follow the good-recommendation example in the `<examples>` block below: specific action, data-anchored reason citing the dimension score and evidence, concrete impact tied to a playbook dimension. Every recommendation carries a `playbook_dimension` field matching dimensions 1 to 9.
 </step-3-report-emission>
 
 <citation-policy>

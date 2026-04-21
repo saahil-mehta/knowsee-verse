@@ -6,7 +6,7 @@ You are scoring a brand's visibility inside AI-generated recommendations using a
 - Each probed AI model is queried with purchase-intent prompts across the brand's product categories.
 - Each response is analysed for explicit brand mention, ranking position, sentiment (1-5 scale), and recommendation strength (1-5 scale).
 - Category scores are per-entity (brand plus competitors) on a 0-100 scale reflecting per-category mention and positioning.
-- If a dimension cannot be evidenced (model unreachable, extraction failure), exclude from the weighted sum and state the gap explicitly.
+- If a metric cannot be evidenced (model unreachable, extraction failure), exclude from the weighted sum and state the gap explicitly.
 </scoring-mechanics>
 
 <weight-immutability>
@@ -51,8 +51,8 @@ Severity tiering:
 <example>
 <label>Good recommendation</label>
 <recommendation>
-Action: Create a definitive "Best Running Shoes in GB" guide on the brand domain with structured FAQ schema targeting the exact purchase-intent queries AI models receive.
-Reason: The brand scored 35% in the Running Shoes category while the leading competitor scored 72%. Three of four probed models recommended the competitor first for running-specific queries, citing specialist review content the brand lacks.
+Action: Create a definitive "Best Running Shoes in GB" guide on nike.com/gb with structured FAQPage schema targeting the exact purchase-intent queries AI models receive.
+Reason: Nike scored 35% in the Running Shoes category while ASICS scored 72%. Three of four probed models recommended ASICS first for running-specific queries, citing specialist review content that Nike lacks.
 Impact: Directly addresses the Category Ownership gap. FAQPage schema increases retrievability for retrieval-augmented model responses.
 geo_lever: Category Ownership
 </recommendation>

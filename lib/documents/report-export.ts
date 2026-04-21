@@ -1,9 +1,11 @@
 /**
  * Client-side report export — captures the rendered report DOM as HTML or PDF.
  *
- * Both formats share the same pipeline: clone the DOM, resolve CSS variable
- * colours on SVG charts, rasterise SVGs to PNG data URIs, and build a
- * self-contained HTML document with the Knowsee branded header.
+ * The export always produces a LIGHT-mode document regardless of the user's
+ * current theme. This is achieved by temporarily removing the `.dark` class
+ * from <html> for the duration of the synchronous style-capture pass, so that
+ * `getComputedStyle()` reads light-theme values into the clone's inline styles.
+ * The class is restored before any async work — the toggle is never painted.
  *
  * PDF uses the browser's native print-to-PDF via a hidden iframe, keeping
  * text selectable and file sizes small. No external dependencies required.
@@ -13,20 +15,35 @@
 const BRAND_PURPLE = "#6214d9";
 const LOGO_PATH = "/knowsee-logo-light.png";
 
-// Light-theme CSS variables for the self-contained HTML export
+// Full light-theme CSS variable set mirrored from app/globals.css :root.
+// Kept in sync so the exported document matches the in-app light appearance.
 const LIGHT_THEME_VARS = `
   --background: hsl(0 0% 100%);
   --foreground: hsl(240 10% 3.9%);
   --card: hsl(0 0% 100%);
   --card-foreground: hsl(240 10% 3.9%);
+  --popover: hsl(0 0% 100%);
+  --popover-foreground: hsl(240 10% 3.9%);
+  --primary: hsl(240 5.9% 10%);
+  --primary-foreground: hsl(0 0% 98%);
+  --secondary: hsl(240 4.8% 95.9%);
+  --secondary-foreground: hsl(240 5.9% 10%);
   --muted: hsl(240 4.8% 95.9%);
   --muted-foreground: hsl(240 3.8% 46.1%);
+  --accent: hsl(240 4.8% 95.9%);
+  --accent-foreground: hsl(240 5.9% 10%);
+  --destructive: hsl(0 84.2% 60.2%);
+  --destructive-foreground: hsl(0 0% 98%);
   --border: hsl(240 5.9% 90%);
+  --input: hsl(240 5.9% 90%);
+  --ring: hsl(240 10% 3.9%);
   --chart-1: hsl(12 76% 61%);
   --chart-2: hsl(173 58% 39%);
   --chart-3: hsl(197 37% 24%);
   --chart-4: hsl(43 74% 66%);
   --chart-5: hsl(27 87% 67%);
+  --radius: 0.5rem;
+  color-scheme: light;
 `;
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -83,124 +100,194 @@ async function toBase64DataUri(url: string): Promise<string> {
   });
 }
 
+// Base properties that are always safe to inline
+const BASE_INLINE_PROPS = [
+  "color",
+  "background-color",
+  "background",
+  "font-family",
+  "font-size",
+  "font-weight",
+  "line-height",
+  "letter-spacing",
+  "text-align",
+  "white-space",
+  "padding",
+  "margin",
+  "border",
+  "border-radius",
+  "display",
+  "flex-direction",
+  "align-items",
+  "justify-content",
+  "gap",
+  "grid-template-columns",
+  "height",
+  "max-height",
+  "min-height",
+  "overflow",
+  "box-shadow",
+  "opacity",
+];
+
+// Width-related properties are frozen only on block-level elements. For
+// inline/inline-block elements we leave width auto so fonts can resize
+// content without forcing wraps (e.g. the HIGH/MEDIUM/LOW impact pill).
+const WIDTH_INLINE_PROPS = ["width", "max-width", "min-width"];
+
+function inlineComputedStyles(source: HTMLElement, target: HTMLElement): void {
+  const computed = window.getComputedStyle(source);
+  const display = computed.getPropertyValue("display");
+  const isInline = display.startsWith("inline");
+
+  const props = isInline
+    ? BASE_INLINE_PROPS
+    : [...BASE_INLINE_PROPS, ...WIDTH_INLINE_PROPS];
+
+  for (const prop of props) {
+    const val = computed.getPropertyValue(prop);
+    if (val) {
+      target.style.setProperty(prop, val);
+    }
+  }
+
+  const sourceChildren = source.children;
+  const targetChildren = target.children;
+  for (let i = 0; i < sourceChildren.length; i++) {
+    if (sourceChildren[i] instanceof HTMLElement) {
+      inlineComputedStyles(
+        sourceChildren[i] as HTMLElement,
+        targetChildren[i] as HTMLElement
+      );
+    }
+  }
+}
+
+type PendingSvg = {
+  cloneSvg: SVGElement;
+  blobUrl: string;
+  width: number;
+  height: number;
+};
+
 /**
- * Clone the report element and prepare it for standalone export:
- * - Inline computed styles on all HTML elements
- * - Resolve CSS variable colours on SVG elements
- * - Rasterise SVGs to PNG data URIs
+ * Synchronous style capture under a forced-light cascade.
+ *
+ * Removes `.dark` from <html>, forces a style flush, clones the subtree and
+ * inlines computed light-theme styles onto the clone. For each SVG, resolves
+ * CSS-variable colours against the source (now light) and serialises to a
+ * blob URL ready for async rasterisation. Finally restores `.dark`.
+ *
+ * The entire function runs without any await, so the browser never paints
+ * the intermediate light state — the theme toggle is invisible to the user.
  */
-async function prepareClone(element: HTMLElement): Promise<HTMLElement> {
-  const clone = element.cloneNode(true) as HTMLElement;
+function captureUnderLightTheme(element: HTMLElement): {
+  clone: HTMLElement;
+  pendingSvgs: PendingSvg[];
+} {
+  const html = document.documentElement;
+  const wasDark = html.classList.contains("dark");
+  if (wasDark) {
+    html.classList.remove("dark");
+  }
 
-  // Inline computed styles on HTML elements
-  const inlineComputedStyles = (
-    source: HTMLElement,
-    target: HTMLElement
-  ): void => {
-    const computed = window.getComputedStyle(source);
-    const props = [
-      "color",
-      "background-color",
-      "background",
-      "font-family",
-      "font-size",
-      "font-weight",
-      "line-height",
-      "letter-spacing",
-      "text-align",
-      "padding",
-      "margin",
-      "border",
-      "border-radius",
-      "display",
-      "flex-direction",
-      "align-items",
-      "justify-content",
-      "gap",
-      "grid-template-columns",
-      "width",
-      "max-width",
-      "min-width",
-      "height",
-      "max-height",
-      "min-height",
-      "overflow",
-      "box-shadow",
-      "opacity",
-    ];
-    for (const prop of props) {
-      const val = computed.getPropertyValue(prop);
-      if (val) {
-        target.style.setProperty(prop, val);
-      }
+  try {
+    // Force style recalculation so getComputedStyle reads light values.
+    // Reading a layout-triggering property synchronously flushes pending
+    // style work — the assignment dance is the simplest cross-browser idiom.
+    const _flush = html.offsetHeight;
+    if (_flush < 0) {
+      // unreachable — keeps the expression from being tree-shaken
+      throw new Error("impossible");
     }
 
-    const sourceChildren = source.children;
-    const targetChildren = target.children;
-    for (let i = 0; i < sourceChildren.length; i++) {
-      if (sourceChildren[i] instanceof HTMLElement) {
-        inlineComputedStyles(
-          sourceChildren[i] as HTMLElement,
-          targetChildren[i] as HTMLElement
-        );
-      }
-    }
-  };
+    const clone = element.cloneNode(true) as HTMLElement;
+    inlineComputedStyles(element, clone);
 
-  inlineComputedStyles(element, clone);
+    // Resolve SVG colours and serialise to blob URLs (still sync, still light)
+    const pendingSvgs: PendingSvg[] = [];
+    const sourceSvgs = element.querySelectorAll("svg");
+    const cloneSvgs = clone.querySelectorAll("svg");
 
-  // Rasterise SVGs (Recharts charts) to PNG data URIs
-  const svgs = element.querySelectorAll("svg");
-  const cloneSvgs = clone.querySelectorAll("svg");
-  for (let i = 0; i < svgs.length; i++) {
-    try {
-      const svg = svgs[i];
+    for (let i = 0; i < sourceSvgs.length; i++) {
+      const svg = sourceSvgs[i];
       const svgClone = svg.cloneNode(true) as SVGElement;
       resolveComputedSvgColours(svg, svgClone);
 
+      const width = svg.clientWidth || svg.getBoundingClientRect().width;
+      const height = svg.clientHeight || svg.getBoundingClientRect().height;
+
       if (!svgClone.getAttribute("width")) {
-        svgClone.setAttribute("width", String(svg.clientWidth));
+        svgClone.setAttribute("width", String(width));
       }
       if (!svgClone.getAttribute("height")) {
-        svgClone.setAttribute("height", String(svg.clientHeight));
+        svgClone.setAttribute("height", String(height));
+      }
+      if (!svgClone.getAttribute("xmlns")) {
+        svgClone.setAttribute("xmlns", "http://www.w3.org/2000/svg");
       }
 
-      const serialiser = new XMLSerializer();
-      const svgString = serialiser.serializeToString(svgClone);
-      const svgBlob = new Blob([svgString], {
-        type: "image/svg+xml;charset=utf-8",
+      const svgString = new XMLSerializer().serializeToString(svgClone);
+      const blobUrl = URL.createObjectURL(
+        new Blob([svgString], { type: "image/svg+xml;charset=utf-8" })
+      );
+
+      pendingSvgs.push({
+        cloneSvg: cloneSvgs[i] as SVGElement,
+        blobUrl,
+        width,
+        height,
       });
-      const url = URL.createObjectURL(svgBlob);
+    }
 
-      const img = document.createElement("img");
-      img.style.cssText = `width: ${svg.clientWidth}px; height: ${svg.clientHeight}px;`;
+    return { clone, pendingSvgs };
+  } finally {
+    if (wasDark) {
+      html.classList.add("dark");
+    }
+  }
+}
 
-      await new Promise<void>((resolve) => {
+/**
+ * Asynchronously rasterise each pending SVG to a PNG data URI at 2x pixel
+ * density, then swap it into the clone. Safe to run after `.dark` has been
+ * restored because all colour values are already baked into the SVG strings.
+ */
+async function rasteriseSvgs(pending: PendingSvg[]): Promise<void> {
+  for (const { cloneSvg, blobUrl, width, height } of pending) {
+    try {
+      const dataUri = await new Promise<string>((resolve) => {
         const canvas = document.createElement("canvas");
-        canvas.width = svg.clientWidth * 2;
-        canvas.height = svg.clientHeight * 2;
-        // biome-ignore lint/style/noNonNullAssertion: canvas 2d context always exists for in-memory canvas
+        canvas.width = Math.max(1, Math.round(width * 2));
+        canvas.height = Math.max(1, Math.round(height * 2));
+        // biome-ignore lint/style/noNonNullAssertion: canvas 2d context always exists
         const ctx = canvas.getContext("2d")!;
         const image = new Image();
         image.onload = () => {
           ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
-          img.src = canvas.toDataURL("image/png");
-          URL.revokeObjectURL(url);
-          resolve();
+          resolve(canvas.toDataURL("image/png"));
         };
-        image.onerror = () => {
-          URL.revokeObjectURL(url);
-          resolve();
-        };
-        image.src = url;
+        image.onerror = () => resolve("");
+        image.src = blobUrl;
       });
 
-      cloneSvgs[i].parentNode?.replaceChild(img, cloneSvgs[i]);
+      if (dataUri) {
+        const img = document.createElement("img");
+        img.src = dataUri;
+        img.style.cssText = `width:${width}px;height:${height}px;max-width:100%;display:block;margin:0 auto;`;
+        cloneSvg.parentNode?.replaceChild(img, cloneSvg);
+      }
     } catch {
-      // Keep original SVG on failure
+      // keep original SVG on failure
+    } finally {
+      URL.revokeObjectURL(blobUrl);
     }
   }
+}
 
+async function prepareClone(element: HTMLElement): Promise<HTMLElement> {
+  const { clone, pendingSvgs } = captureUnderLightTheme(element);
+  await rasteriseSvgs(pendingSvgs);
   return clone;
 }
 
@@ -213,47 +300,210 @@ async function buildHeaderHtml(title: string): Promise<string> {
     logoDataUri = "";
   }
 
+  const today = new Date().toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
   return `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px 24px;border-bottom:3px solid ${BRAND_PURPLE};margin-bottom:16px;background:white;">
-      ${logoDataUri ? `<img src="${logoDataUri}" alt="Knowsee" style="height:28px;width:auto;" />` : `<span style="font-family:Arial,sans-serif;font-size:18px;font-weight:700;color:${BRAND_PURPLE};">Knowsee</span>`}
-      <span style="font-family:Arial,sans-serif;font-size:14px;font-weight:600;color:${BRAND_PURPLE};">${title}</span>
-    </div>
+    <header class="knowsee-report-header">
+      ${
+        logoDataUri
+          ? `<img src="${logoDataUri}" alt="Knowsee" class="knowsee-logo" />`
+          : `<span class="knowsee-wordmark">Knowsee</span>`
+      }
+      <div class="knowsee-header-meta">
+        <span class="knowsee-header-title">${title}</span>
+        <span class="knowsee-header-date">${today}</span>
+      </div>
+    </header>
   `;
 }
+
+// Baseline + print CSS shared by HTML and PDF exports. Keeps pagination
+// clean, forbids dark colours, and keeps cards from being sliced in half.
+const BASE_STYLES = `
+  :root { ${LIGHT_THEME_VARS} }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+
+  html {
+    color-scheme: light;
+    background: #ffffff;
+  }
+
+  body {
+    font-family: "Inter", "Google Sans", -apple-system, BlinkMacSystemFont,
+      "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    background: #ffffff;
+    color: hsl(240 10% 3.9%);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  img, svg { max-width: 100%; height: auto; }
+
+  a { color: inherit; text-decoration: none; }
+
+  /* Branded header */
+  .knowsee-report-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 24px;
+    border-bottom: 3px solid ${BRAND_PURPLE};
+    background: #ffffff;
+    margin-bottom: 8px;
+  }
+  .knowsee-logo { height: 26px; width: auto; }
+  .knowsee-wordmark {
+    font-size: 18px;
+    font-weight: 700;
+    color: ${BRAND_PURPLE};
+    letter-spacing: -0.01em;
+  }
+  .knowsee-header-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 2px;
+  }
+  .knowsee-header-title {
+    font-size: 13px;
+    font-weight: 600;
+    color: ${BRAND_PURPLE};
+  }
+  .knowsee-header-date {
+    font-size: 11px;
+    color: hsl(240 3.8% 46.1%);
+  }
+
+  .knowsee-report-body {
+    padding: 8px 24px 32px;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  /* Preserve internal spacing the flex container normally provides */
+  [data-report-content] > * + * { margin-top: 16px; }
+
+  /* Tables always fit their container and wrap long words */
+  [data-report-content] table {
+    width: 100%;
+    table-layout: auto;
+    border-collapse: collapse;
+  }
+  [data-report-content] td,
+  [data-report-content] th {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+`;
+
+const PRINT_STYLES = `
+  @page {
+    size: A4;
+    margin: 16mm 16mm 18mm;
+  }
+
+  @media print {
+    html, body {
+      background: #ffffff !important;
+      color: hsl(240 10% 3.9%) !important;
+    }
+
+    * {
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+    }
+
+    /* Force top-level report elements to fit the page width regardless of
+       whatever pixel widths were frozen in from the on-screen rendering. */
+    .knowsee-report-body {
+      padding: 0 !important;
+      max-width: 100% !important;
+      margin: 0 !important;
+    }
+    [data-report-content],
+    [data-report-content] > div,
+    [data-report-content] .rounded-lg {
+      max-width: 100% !important;
+      width: auto !important;
+    }
+    [data-report-content] table {
+      width: 100% !important;
+      max-width: 100% !important;
+    }
+    [data-report-content] img {
+      max-width: 100% !important;
+      height: auto !important;
+    }
+
+    .knowsee-report-header {
+      margin-bottom: 0;
+    }
+
+    /* Don't orphan headings at page bottoms */
+    h1, h2, h3, h4, h5, h6 {
+      break-after: avoid;
+      page-break-after: avoid;
+    }
+
+    /* Keep cards intact when they fit; allow break otherwise */
+    [data-report-content] > div,
+    [data-report-content] .rounded-lg {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    /* Recommendation items should stay together as atomic units */
+    .border-l-4 {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+
+    /* Tables: repeat headers, avoid splitting a single row */
+    table { break-inside: auto; page-break-inside: auto; }
+    thead { display: table-header-group; }
+    tfoot { display: table-footer-group; }
+    tr    { break-inside: avoid; page-break-inside: avoid; }
+
+    /* Paragraphs and list items */
+    p, li { widows: 3; orphans: 3; }
+
+    /* Images / rasterised charts */
+    img, svg {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      max-width: 100%;
+    }
+  }
+`;
 
 /** Build a complete self-contained HTML document from the prepared clone. */
 async function buildHtmlDocument(
   element: HTMLElement,
-  title: string,
-  extraStyles?: string
+  title: string
 ): Promise<string> {
   const clone = await prepareClone(element);
   const headerHtml = await buildHeaderHtml(title);
 
   return `<!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="light">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="light" />
   <title>${title}</title>
-  <style>
-    :root { ${LIGHT_THEME_VARS} }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      background: hsl(0 0% 100%);
-      color: hsl(240 10% 3.9%);
-      padding: 0;
-    }
-    img { max-width: 100%; }
-    ${extraStyles ?? ""}
-  </style>
+  <style>${BASE_STYLES}${PRINT_STYLES}</style>
 </head>
 <body>
   ${headerHtml}
-  <div style="padding: 0 24px 24px;">
+  <main class="knowsee-report-body">
     ${clone.outerHTML}
-  </div>
+  </main>
 </body>
 </html>`;
 }
@@ -265,7 +515,7 @@ export async function exportReportAsHtml(
   title: string
 ): Promise<void> {
   const html = await buildHtmlDocument(element, title);
-  const blob = new Blob([html], { type: "text/html" });
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
@@ -285,21 +535,12 @@ export async function exportReportAsPdf(
   element: HTMLElement,
   title: string
 ): Promise<void> {
-  const printStyles = `
-    @media print {
-      body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
-      img { break-inside: avoid; }
-    }
-    @page {
-      size: A4;
-      margin: 15mm;
-    }
-  `;
-  const html = await buildHtmlDocument(element, title, printStyles);
+  const html = await buildHtmlDocument(element, title);
 
   const iframe = document.createElement("iframe");
+  iframe.setAttribute("aria-hidden", "true");
   iframe.style.cssText =
-    "position:fixed;top:-99999px;left:-99999px;width:0;height:0;border:none;";
+    "position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden;";
   document.body.appendChild(iframe);
 
   try {
@@ -312,17 +553,17 @@ export async function exportReportAsPdf(
     iframeDoc.write(html);
     iframeDoc.close();
 
-    // Wait for images to load inside the iframe
+    // Wait for images (including rasterised charts) to finish loading
     await new Promise<void>((resolve) => {
-      const images = iframeDoc.querySelectorAll("img");
+      const images = Array.from(iframeDoc.querySelectorAll("img"));
       if (images.length === 0) {
         resolve();
         return;
       }
-      let loaded = 0;
+      let remaining = images.length;
       const onLoad = () => {
-        loaded++;
-        if (loaded >= images.length) {
+        remaining -= 1;
+        if (remaining <= 0) {
           resolve();
         }
       };
@@ -336,9 +577,17 @@ export async function exportReportAsPdf(
       }
     });
 
+    // One extra frame so layout settles before print
+    await new Promise((r) => requestAnimationFrame(() => r(null)));
+
+    iframe.contentWindow?.focus();
     iframe.contentWindow?.print();
   } finally {
     // Clean up after a short delay to let the print dialog open
-    setTimeout(() => document.body.removeChild(iframe), 1000);
+    setTimeout(() => {
+      if (iframe.parentNode) {
+        iframe.parentNode.removeChild(iframe);
+      }
+    }, 1500);
   }
 }

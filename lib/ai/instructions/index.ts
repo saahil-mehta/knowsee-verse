@@ -46,6 +46,11 @@ const summaryTemplate = loadInstruction("summary.md");
 const brandModeTemplate = loadInstruction("brand-mode.md");
 const brandMemoryTemplate = loadInstruction("brand-memory.md");
 const updateDocumentTemplate = loadInstruction("update-document.md");
+const commerceAuditPromptTemplate = loadInstruction("commerce-audit-prompt.md");
+const agenticCommercePlaybookTemplate = loadInstruction(
+  "agentic-commerce-playbook.md"
+);
+const genericAuditPromptTemplate = loadInstruction("generic-audit-prompt.md");
 
 // Model-specific guidance — keyed by model ID suffix for easy lookup.
 // Convention: model-<family>-<version>.md
@@ -88,6 +93,14 @@ export const toolsPrompt = toolsTemplate;
 
 /** Guidelines for artifact creation/update tools. */
 export const artifactsPrompt = artifactsTemplate;
+
+/** Combined commerce-audit mode + playbook. Returned by the brand_audit tool
+ * so the model sees both the protocol and the rubric when running an audit. */
+export const commerceAuditInstructions = `${commerceAuditPromptTemplate}\n\n${agenticCommercePlaybookTemplate}`;
+
+/** Generic audit protocol. Returned by the brand_audit tool as a fallback
+ * when the requested auditType has no specific playbook. */
+export const genericAuditInstructions = genericAuditPromptTemplate;
 
 /** Python code-generation system prompt. */
 export const codePrompt = codeTemplate;

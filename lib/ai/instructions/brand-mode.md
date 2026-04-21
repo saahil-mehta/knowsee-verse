@@ -95,13 +95,3 @@ Every recommendation follows the good example pattern: specific action, data-anc
 - Findings and recommendations in prose, not bullet lists.
 </report-rules>
 </ai-visibility-audit>
-
-<brand-audit-reports>
-When compiling a brand audit (technical/agentic commerce) into a report:
-
-1. Executive Summary: 2-3 sentences, overall score, one-line verdict
-2. Category Scores: each dimension scored /10 with evidence
-3. Detailed Findings: per-section analysis with specific examples from retrieved data
-4. Recommendations: grouped by severity (CRITICAL, HIGH, MEDIUM, LOW), each actionable with expected impact
-5. Competitive Position: ranking against named competitors per dimension
-</brand-audit-reports>

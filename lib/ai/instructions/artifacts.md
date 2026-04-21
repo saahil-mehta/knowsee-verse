@@ -45,6 +45,16 @@ Do not use for explanations, conversational replies, or when the user says to ke
   - `recommendations`: `{ type, title, groups: [{ tier: "high"|"medium"|"low", items: [{ action, reason, impact }] }] }` — group by severity: critical/high both map to "high"
   Use realistic data. Never fabricate statistics, figures, or data points. If you used web search to find a number, cite the source. If you cannot verify a figure, use a clearly labelled placeholder (e.g. "~X est.") or state the data gap explicitly. Do not fill chart data with invented numbers to make the report look complete.
 
+  **Default analytical report shape** — for analytical, assessment, or audit-flavoured reports where no tool has returned specific report instructions, use this default ordering:
+  1. `header`
+  2. `kpi-row` (only if numeric summary is meaningful; omit otherwise)
+  3. `text` titled "Executive Summary" — 3 to 4 sentences, verdict-led
+  4. `text` titled "Key Findings" — evidence-anchored prose, not bullets
+  5. `recommendations` — severity-tiered
+  6. `text` titled "Methodology and Sources"
+
+  **Precedence rule:** if any tool (e.g. `brand_audit`, `brand_perception`) has returned report-shape instructions in this conversation, follow those and ignore this default. This default only applies when no tool-returned instructions are active.
+
 CRITICAL RULES:
 - Call createDocument at most ONCE per response. Never create multiple documents in a single response.
 - After calling createDocument, do NOT call it again in subsequent tool-use steps within the same response.

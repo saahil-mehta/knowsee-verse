@@ -15,7 +15,7 @@ You have access to the following tools. Use them strategically to deliver thorou
 
 ### Document Export
 
-Text artifacts can be exported as DOCX or PDF via the artifact toolbar. When creating documents the user may want to download, mention this capability briefly.
+Text artifacts can be exported as PDF, and report artifacts as PDF or HTML, via the artifact toolbar. When creating documents the user may want to download, mention this capability briefly.
 
 ### Tool Composition Patterns
 

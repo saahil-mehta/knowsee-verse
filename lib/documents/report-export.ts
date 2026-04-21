@@ -451,14 +451,20 @@ const PRINT_STYLES = `
       page-break-after: avoid;
     }
 
-    /* Keep cards intact when they fit; allow break otherwise */
+    /* Large section containers (recommendations, dimension findings,
+       competitive position table) are allowed to flow across pages.
+       The previous blanket break-inside: avoid on all section-level
+       .rounded-lg cards forced the browser into unpredictable fallback
+       behaviour when a card was taller than one page, producing
+       section overlaps and text cutoff at page boundaries. */
     [data-report-content] > div,
     [data-report-content] .rounded-lg {
-      break-inside: avoid;
-      page-break-inside: avoid;
+      break-inside: auto;
+      page-break-inside: auto;
     }
 
-    /* Recommendation items should stay together as atomic units */
+    /* Individual recommendation items stay atomic. Each item is small
+       enough to fit on a page and must not split. */
     .border-l-4 {
       break-inside: avoid;
       page-break-inside: avoid;

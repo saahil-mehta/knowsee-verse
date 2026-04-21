@@ -1,0 +1,77 @@
+/* Print-route layout: always light, constrained to A4 content width. */
+
+.knowsee-print-layout {
+  background: #ffffff !important;
+  color: hsl(240 10% 3.9%) !important;
+  min-height: 100vh;
+}
+
+/* Content container sized for A4 content area (210mm - 32mm side margins
+   via Puppeteer = 178mm). On-screen preview uses the same width so the
+   visual matches the printed output. */
+.knowsee-print-root {
+  background: #ffffff;
+  color: hsl(240 10% 3.9%);
+  max-width: 178mm;
+  margin: 0 auto;
+  padding: 12mm 0;
+}
+
+/* Force light theme regardless of user's preference — the PDF output
+   must be light. Override any .dark-scoped rules. */
+html.dark .knowsee-print-layout,
+.dark .knowsee-print-layout,
+.knowsee-print-layout,
+.knowsee-print-layout * {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(240 10% 3.9%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(240 10% 3.9%);
+  --muted: hsl(240 4.8% 95.9%);
+  --muted-foreground: hsl(240 3.8% 46.1%);
+  --border: hsl(240 5.9% 90%);
+  color-scheme: light;
+}
+
+/* No animations in a document that will be rasterised to PDF. */
+.knowsee-print-layout *,
+.knowsee-print-layout *::before,
+.knowsee-print-layout *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Atomic units that must not split across pages. Puppeteer's Chromium
+   print engine honours these properly (unlike native window.print()
+   fallback we had before). */
+.knowsee-print-layout .border-l-4,
+.knowsee-print-layout .recharts-wrapper,
+.knowsee-print-layout img,
+.knowsee-print-layout svg,
+.knowsee-print-layout tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Headings hold onto the content that follows them. */
+.knowsee-print-layout h1,
+.knowsee-print-layout h2,
+.knowsee-print-layout h3,
+.knowsee-print-layout h4,
+.knowsee-print-layout h5,
+.knowsee-print-layout h6 {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* Tables wrap long cell content so they never overflow the page width. */
+.knowsee-print-layout table {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+.knowsee-print-layout th,
+.knowsee-print-layout td {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}

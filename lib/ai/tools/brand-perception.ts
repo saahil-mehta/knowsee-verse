@@ -1,5 +1,6 @@
 import { tool, type UIMessageStreamWriter } from "ai";
 import { z } from "zod";
+import { aiVisibilityInstructions } from "@/lib/ai/instructions";
 import {
   aggregateResults,
   formatSummaryForClaude,
@@ -155,10 +156,11 @@ export const createBrandPerception = ({
         };
       });
 
-      // Step 7: Return summary for Claude + probe grid for UI
+      // Step 7: Return summary for Claude + probe grid for UI + instructions
       return {
         summary: formatSummaryForClaude(summary, brandProfile.brandName),
         probeGrid,
+        instructions: aiVisibilityInstructions,
       };
     },
   });

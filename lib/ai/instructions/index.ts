@@ -2,7 +2,6 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import type { Geo } from "@vercel/functions";
 import type { ArtifactKind } from "@/components/artifact";
-import { PROBE_MODELS } from "@/lib/ai/perception/models";
 import type { BrandProfile } from "@/lib/db/schema";
 
 // ---------------------------------------------------------------------------
@@ -51,6 +50,10 @@ const agenticCommercePlaybookTemplate = loadInstruction(
   "agentic-commerce-playbook.md"
 );
 const genericAuditPromptTemplate = loadInstruction("generic-audit-prompt.md");
+const aiVisibilityPromptTemplate = loadInstruction("ai-visibility-prompt.md");
+const aiVisibilityPlaybookTemplate = loadInstruction(
+  "ai-visibility-playbook.md"
+);
 
 // Model-specific guidance — keyed by model ID suffix for easy lookup.
 // Convention: model-<family>-<version>.md
@@ -102,6 +105,11 @@ export const commerceAuditInstructions = `${commerceAuditPromptTemplate}\n\n${ag
  * when the requested auditType has no specific playbook. */
 export const genericAuditInstructions = genericAuditPromptTemplate;
 
+/** Combined AI-visibility mode + playbook. Returned by the brand_perception
+ * tool so the model sees both the protocol and the GEO framework when
+ * synthesising a visibility audit report. */
+export const aiVisibilityInstructions = `${aiVisibilityPromptTemplate}\n\n${aiVisibilityPlaybookTemplate}`;
+
 /** Python code-generation system prompt. */
 export const codePrompt = codeTemplate;
 
@@ -150,7 +158,6 @@ function brandContextPrompt(bp: BrandProfile): string {
     categories: (bp.categories as string[]).join(", "),
     competitors: (bp.competitors as string[]).join(", "),
     retailers: (bp.retailers as string[]).join(", "),
-    probe_models: PROBE_MODELS.map((m) => m.label).join(", "),
   });
   return `${mode}\n\n${brandMemoryTemplate}`;
 }

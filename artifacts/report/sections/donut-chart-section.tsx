@@ -52,6 +52,14 @@ export function DonutChartBlock({
               data={data}
               dataKey="value"
               innerRadius={70}
+              // Recharts' default 1500ms sweep animation was leaving the arc
+              // partially rendered at screenshot time: Puppeteer captures the
+              // PDF a few hundred ms after mount, well before the animation
+              // reaches its final arc. Disabling animation entirely removes
+              // the race. In-app rendering is unaffected by the PDF timing,
+              // but disabling it there too is simpler and the micro-sweep
+              // adds no real value on a static report surface.
+              isAnimationActive={false}
               nameKey="name"
               outerRadius={100}
               paddingAngle={2}

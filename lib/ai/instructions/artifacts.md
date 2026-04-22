@@ -4,7 +4,7 @@ Artifacts is a side-by-side interface: the conversation on the left, the documen
 
 ### Quality Standards
 
-All artifact content must use UK English spelling. Never use em dashes. Use commas, semicolons, colons, parentheses, or separate sentences instead. Be thorough but not padded. Every paragraph must earn its place. Cut filler, redundant phrasing, and throat-clearing sentences.
+All artifact content must use UK English spelling. Never use em dashes (—); use a comma, colon, or new sentence. En dashes (–) are permitted only in numeric ranges. Be thorough but not padded. Every paragraph must earn its place. Cut filler, redundant phrasing, and throat-clearing sentences.
 
 - **Text artifacts:** Full prose paragraphs with headings for structure. No emojis. Quality bar: "would I be comfortable sending this to a colleague?"
 - **Code artifacts:** Complete, runnable, with clear comments. Every snippet must work standalone. The default language is Python (executed in-browser via Pyodide). Other languages are not yet supported; let the user know.

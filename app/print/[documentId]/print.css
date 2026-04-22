@@ -79,6 +79,57 @@ html.dark .knowsee-print-layout,
   page-break-after: avoid;
 }
 
+/* ─── Section pagination ────────────────────────────────────────────
+   Semantic, shape-independent rules. Each section is a typed PTC
+   payload with `data-kind` on its wrapper, so we key off meaning
+   rather than position.
+
+   Defaults:
+   - Every top-level section claims its own page.
+   - The first child never forces a break (nothing precedes it).
+
+   Exceptions (never substantiate a full page):
+   - `title`:   the document header, not a content section.
+   - `kpi-row`: a compact metric strip; always reads as part of
+                a larger narrative, never standalone.
+
+   Structural exception:
+   - The section immediately following a title rides with it onto
+     the opening spread. Without this, a short title would be
+     marooned on page 1 with the rest of the cover blank. */
+.knowsee-print-layout .report-section {
+  break-before: page;
+  page-break-before: always;
+}
+.knowsee-print-layout .report-section:first-child {
+  break-before: auto;
+  page-break-before: avoid;
+}
+.knowsee-print-layout .report-section[data-kind="title"],
+.knowsee-print-layout .report-section[data-kind="kpi-row"] {
+  break-before: avoid;
+  page-break-before: avoid;
+}
+.knowsee-print-layout .report-section[data-kind="title"] + .report-section {
+  break-before: avoid;
+  page-break-before: avoid;
+}
+
+/* Keep the card shells (text/header/recommendations/chart wrappers)
+   from being split mid-shell. If the content genuinely exceeds one
+   page, Chromium breaks anyway — this just prevents gratuitous splits
+   on cards that would fit. */
+.knowsee-print-layout .report-section > div {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Widow/orphan protection on prose paragraphs. */
+.knowsee-print-layout .report-section p {
+  orphans: 3;
+  widows: 3;
+}
+
 /* Tables wrap long cell content so they never overflow the page width. */
 .knowsee-print-layout table {
   width: 100%;

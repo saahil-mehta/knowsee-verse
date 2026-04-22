@@ -1,7 +1,11 @@
 "use client";
 
 import { Cell, Label, Pie, PieChart, ResponsiveContainer } from "recharts";
-import { PRINT_DONUT_SIZE, usePrintMode } from "@/lib/print-mode";
+import {
+  PRINT_CHART_HEIGHT,
+  PRINT_CHART_WIDTH,
+  usePrintMode,
+} from "@/lib/print-mode";
 import type { DonutChartSection } from "../types";
 
 const CHART_COLORS = [
@@ -33,17 +37,13 @@ export function DonutChartBlock({
         className="mt-4 h-72"
         style={
           isPrint
-            ? {
-                width: PRINT_DONUT_SIZE,
-                height: PRINT_DONUT_SIZE,
-                margin: "0 auto",
-              }
+            ? { width: PRINT_CHART_WIDTH, height: PRINT_CHART_HEIGHT }
             : undefined
         }
       >
         <ResponsiveContainer
-          height={isPrint ? PRINT_DONUT_SIZE : "100%"}
-          width={isPrint ? PRINT_DONUT_SIZE : "100%"}
+          height={isPrint ? PRINT_CHART_HEIGHT : "100%"}
+          width={isPrint ? PRINT_CHART_WIDTH : "100%"}
         >
           <PieChart>
             <Pie

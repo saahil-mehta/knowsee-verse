@@ -147,10 +147,14 @@ html.dark .knowsee-print-layout,
    with cacheComponents, ResponsiveContainer occasionally measures its
    parent at 0 width during the first ResizeObserver pass and bails out
    to -1 dimensions. Giving the wrapper explicit width/height and a
-   sensible minimum sidesteps that measurement race. */
+   sensible minimum sidesteps that measurement race.
+
+   Height is kept in sync with PRINT_CHART_HEIGHT in lib/print-mode.tsx;
+   the !important override here wins over the inline style that the chart
+   components apply, so both values must move together. */
 .knowsee-print-layout .h-80 {
   width: 100% !important;
-  height: 320px !important;
+  height: 500px !important;
   min-width: 400px;
 }
 .knowsee-print-layout .recharts-responsive-container {

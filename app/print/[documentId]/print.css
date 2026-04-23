@@ -19,6 +19,22 @@ nextjs-portal,
   background: #ffffff !important;
   color: hsl(240 10% 3.9%) !important;
   min-height: 100vh;
+  font-family: var(--font-sans), "Google Sans", "Google Sans Text",
+    -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 11pt;
+  line-height: 1.55;
+}
+
+/* Text-kind artefacts (action matrices, briefs, write-ups) render
+   through a <pre whiteSpace="pre-wrap"> wrapper in print-document.tsx.
+   Without this override, <pre> falls back to the user-agent monospace,
+   which is why text artefacts print in a different font from report
+   artefacts. Normalise to the layout's typography. */
+.knowsee-print-layout pre {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: pre-wrap;
 }
 
 /* Content container sized for A4 content area (210mm - 32mm side margins

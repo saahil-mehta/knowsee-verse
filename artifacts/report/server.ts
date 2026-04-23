@@ -1,4 +1,5 @@
 import { createDocumentHandler } from "@/lib/artifacts/server";
+import { stripEmDashesInJson } from "@/lib/text/sanitise-report";
 
 export const reportDocumentHandler = createDocumentHandler<"report">({
   kind: "report",
@@ -8,7 +9,7 @@ export const reportDocumentHandler = createDocumentHandler<"report">({
       `[report:onCreate] DIRECT -- model: ${modelId}, content: ${content ? `${content.length} chars` : "none"}`
     );
     if (content) {
-      return content;
+      return stripEmDashesInJson(content);
     }
     return "";
   },
@@ -18,7 +19,7 @@ export const reportDocumentHandler = createDocumentHandler<"report">({
       `[report:onUpdate] DIRECT -- model: ${modelId}, content: ${content ? `${content.length} chars` : "none"}`
     );
     if (content) {
-      return content;
+      return stripEmDashesInJson(content);
     }
     return "";
   },

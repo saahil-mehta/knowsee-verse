@@ -1,0 +1,185 @@
+/* Print-route layout: always light, constrained to A4 content width. */
+
+/* Hide Next.js dev UI (build-status indicator, refresh/toast portals,
+   dev-tools button). Under `next dev` these inject floating elements
+   into the DOM that would otherwise land in the exported PDF. In
+   production these selectors match nothing so the rule is a no-op. */
+nextjs-portal,
+[data-nextjs-dev-indicator],
+[data-nextjs-dev-tools-button],
+[data-nextjs-toast],
+[data-nextjs-refresh-indicator],
+#__next-build-watcher,
+#__next-dev-overlay {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+.knowsee-print-layout {
+  background: #ffffff !important;
+  color: hsl(240 10% 3.9%) !important;
+  min-height: 100vh;
+  font-family: var(--font-sans), "Google Sans", "Google Sans Text",
+    -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-size: 11pt;
+  line-height: 1.55;
+}
+
+/* Text-kind artefacts (action matrices, briefs, write-ups) render
+   through a <pre whiteSpace="pre-wrap"> wrapper in print-document.tsx.
+   Without this override, <pre> falls back to the user-agent monospace,
+   which is why text artefacts print in a different font from report
+   artefacts. Normalise to the layout's typography. */
+.knowsee-print-layout pre {
+  font-family: inherit;
+  font-size: inherit;
+  line-height: inherit;
+  white-space: pre-wrap;
+}
+
+/* Content container sized for A4 content area (210mm - 32mm side margins
+   via Puppeteer = 178mm). On-screen preview uses the same width so the
+   visual matches the printed output. */
+.knowsee-print-root {
+  background: #ffffff;
+  color: hsl(240 10% 3.9%);
+  max-width: 178mm;
+  margin: 0 auto;
+  padding: 12mm 0;
+}
+
+/* Force light theme regardless of user's preference — the PDF output
+   must be light. Override any .dark-scoped rules. */
+html.dark .knowsee-print-layout,
+.dark .knowsee-print-layout,
+.knowsee-print-layout,
+.knowsee-print-layout * {
+  --background: hsl(0 0% 100%);
+  --foreground: hsl(240 10% 3.9%);
+  --card: hsl(0 0% 100%);
+  --card-foreground: hsl(240 10% 3.9%);
+  --muted: hsl(240 4.8% 95.9%);
+  --muted-foreground: hsl(240 3.8% 46.1%);
+  --border: hsl(240 5.9% 90%);
+  color-scheme: light;
+}
+
+/* No animations in a document that will be rasterised to PDF. */
+.knowsee-print-layout *,
+.knowsee-print-layout *::before,
+.knowsee-print-layout *::after {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* Atomic units that must not split across pages. Puppeteer's Chromium
+   print engine honours these properly (unlike native window.print()
+   fallback we had before). */
+.knowsee-print-layout .border-l-4,
+.knowsee-print-layout .recharts-wrapper,
+.knowsee-print-layout img,
+.knowsee-print-layout svg,
+.knowsee-print-layout tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Headings hold onto the content that follows them. */
+.knowsee-print-layout h1,
+.knowsee-print-layout h2,
+.knowsee-print-layout h3,
+.knowsee-print-layout h4,
+.knowsee-print-layout h5,
+.knowsee-print-layout h6 {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* ─── Section pagination ────────────────────────────────────────────
+   Semantic, shape-independent rules. Each section is a typed PTC
+   payload with `data-kind` on its wrapper, so we key off meaning
+   rather than position.
+
+   Defaults:
+   - Every top-level section claims its own page.
+   - The first child never forces a break (nothing precedes it).
+
+   Exceptions (never substantiate a full page):
+   - `title`:   the document header, not a content section.
+   - `kpi-row`: a compact metric strip; always reads as part of
+                a larger narrative, never standalone.
+
+   Structural exception:
+   - The section immediately following a title rides with it onto
+     the opening spread. Without this, a short title would be
+     marooned on page 1 with the rest of the cover blank. */
+.knowsee-print-layout .report-section {
+  break-before: page;
+  page-break-before: always;
+}
+.knowsee-print-layout .report-section:first-child {
+  break-before: auto;
+  page-break-before: avoid;
+}
+.knowsee-print-layout .report-section[data-kind="title"],
+.knowsee-print-layout .report-section[data-kind="kpi-row"] {
+  break-before: avoid;
+  page-break-before: avoid;
+}
+.knowsee-print-layout .report-section[data-kind="title"] + .report-section {
+  break-before: avoid;
+  page-break-before: avoid;
+}
+
+/* Keep the card shells (text/header/recommendations/chart wrappers)
+   from being split mid-shell. If the content genuinely exceeds one
+   page, Chromium breaks anyway — this just prevents gratuitous splits
+   on cards that would fit. */
+.knowsee-print-layout .report-section > div {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* Widow/orphan protection on prose paragraphs. */
+.knowsee-print-layout .report-section p {
+  orphans: 3;
+  widows: 3;
+}
+
+/* Tables wrap long cell content so they never overflow the page width. */
+.knowsee-print-layout table {
+  width: 100%;
+  table-layout: auto;
+  border-collapse: collapse;
+}
+.knowsee-print-layout th,
+.knowsee-print-layout td {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Force chart wrappers and Recharts's ResponsiveContainer to have concrete
+   pixel dimensions during print rendering. Under Next.js 16 streaming
+   with cacheComponents, ResponsiveContainer occasionally measures its
+   parent at 0 width during the first ResizeObserver pass and bails out
+   to -1 dimensions. Giving the wrapper explicit width/height and a
+   sensible minimum sidesteps that measurement race.
+
+   Height is kept in sync with PRINT_CHART_HEIGHT in lib/print-mode.tsx;
+   the !important override here wins over the inline style that the chart
+   components apply, so both values must move together. */
+.knowsee-print-layout .h-80 {
+  width: 100% !important;
+  height: 500px !important;
+  min-width: 400px;
+}
+.knowsee-print-layout .recharts-responsive-container {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 400px !important;
+  min-height: 280px !important;
+}
+.knowsee-print-layout .recharts-wrapper {
+  width: 100% !important;
+  height: 100% !important;
+}

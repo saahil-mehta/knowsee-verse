@@ -49,7 +49,7 @@ export function RecommendationList({ title, groups }: RecommendationSection) {
           return (
             <div key={group.tier}>
               <span
-                className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${styles.badge}`}
+                className={`inline-block whitespace-nowrap rounded-full px-2.5 py-0.5 text-xs font-medium ${styles.badge}`}
               >
                 {group.tier.toUpperCase()} IMPACT
               </span>

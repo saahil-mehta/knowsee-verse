@@ -450,7 +450,7 @@ export function ReportRenderer({
   return (
     <div className="flex flex-col gap-4 p-6" data-report-content>
       {reportData.title && (
-        <div>
+        <section className="report-section" data-kind="title">
           <h1 className="text-3xl font-bold text-foreground">
             {reportData.title}
           </h1>
@@ -462,9 +462,18 @@ export function ReportRenderer({
               {reportData.date}
             </p>
           )}
-        </div>
+        </section>
       )}
-      {reportData.sections.map((section, i) => renderSection(section, i))}
+      {reportData.sections.map((section, i) => (
+        <section
+          className="report-section"
+          data-kind={section.type}
+          // biome-ignore lint/suspicious/noArrayIndexKey: sections come from a parsed JSON blob and are never reordered at runtime
+          key={`section-${i}`}
+        >
+          {renderSection(section, i)}
+        </section>
+      ))}
     </div>
   );
 }

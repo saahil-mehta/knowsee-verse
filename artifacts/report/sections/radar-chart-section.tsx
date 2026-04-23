@@ -10,6 +10,11 @@ import {
   ResponsiveContainer,
   Tooltip,
 } from "recharts";
+import {
+  PRINT_CHART_HEIGHT,
+  PRINT_CHART_WIDTH,
+  usePrintMode,
+} from "@/lib/print-mode";
 import type { RadarChartSection } from "../types";
 
 const CHART_COLORS = [
@@ -27,6 +32,7 @@ export function RadarChartBlock({
   radars,
   angleKey,
 }: RadarChartSection) {
+  const isPrint = usePrintMode();
   if (!Array.isArray(data) || !Array.isArray(radars)) {
     return null;
   }
@@ -36,8 +42,18 @@ export function RadarChartBlock({
       {description && (
         <p className="mt-1 text-sm text-muted-foreground">{description}</p>
       )}
-      <div className="mt-4 h-80">
-        <ResponsiveContainer height="100%" width="100%">
+      <div
+        className="mt-4 h-80"
+        style={
+          isPrint
+            ? { width: PRINT_CHART_WIDTH, height: PRINT_CHART_HEIGHT }
+            : undefined
+        }
+      >
+        <ResponsiveContainer
+          height={isPrint ? PRINT_CHART_HEIGHT : "100%"}
+          width={isPrint ? PRINT_CHART_WIDTH : "100%"}
+        >
           <RadarChart data={data}>
             <PolarGrid opacity={0.3} />
             <PolarAngleAxis dataKey={angleKey} tick={{ fontSize: 12 }} />

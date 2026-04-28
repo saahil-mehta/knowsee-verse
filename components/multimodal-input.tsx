@@ -355,7 +355,7 @@ function PureMultimodalInput({
         )}
 
         <PromptInput
-          className="relative z-10 rounded-2xl border border-border bg-background p-3 shadow-xs backdrop-blur-sm transition-all duration-300 ease-out focus-within:border-muted-foreground/40 focus-within:shadow-[0_0_16px_rgba(98,20,217,0.15),0_0_40px_rgba(98,20,217,0.08)]"
+          className="relative z-10 rounded-2xl border border-border bg-background p-3 shadow-xs backdrop-blur-sm transition-all duration-300 ease-out focus-within:border-muted-foreground/40 focus-within:shadow-[0_0_24px_rgba(98,20,217,0.24),0_0_64px_rgba(98,20,217,0.14),0_0_104px_rgba(98,20,217,0.08)]"
           onSubmit={(event) => {
             event.preventDefault();
             if (!input.trim() && attachments.length === 0) {

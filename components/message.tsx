@@ -130,10 +130,7 @@ const PurePreviewMessage = ({
         })}
       >
         <div
-          className={cn("flex min-w-0 flex-col", {
-            "gap-2 md:gap-4": processedParts?.some(
-              (p) => p.type === "text" && p.text?.trim()
-            ),
+          className={cn("flex min-w-0 flex-col gap-3 md:gap-4", {
             "w-full":
               (message.role === "assistant" &&
                 (processedParts?.some(

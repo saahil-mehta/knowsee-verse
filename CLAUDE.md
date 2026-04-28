@@ -27,7 +27,7 @@ A personal AI assistant (Knowsee) with artifact creation, web browsing, and mult
 - Small increments — one feature, implement, test, verify, build
 - Project tooling — use `make` (Makefile) targets, not raw commands
 - No hacky or fragile approaches; question if a better method is available
-- Call the /superpowers:brainstorm skill whenever necessary
+- Superpowers usage: `/superpowers:brainstorm` is the primary Superpowers skill. Use it before material feature work, UX/product decisions, prompt or AI behaviour changes, architecture changes, or unclear scope. Do not treat other Superpowers as mandatory unless explicitly requested or clearly useful.
 - Makefile must be composable and DRY
 - Gitignore philosophy: ignore by intent (credentials, secrets, build outputs), not by extension
 
@@ -118,4 +118,3 @@ Types: feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert
 - No emojis
 - No unnecessary documentation
 - Always provide honest critical assessment under CRITICAL_ASSESSMENT
-

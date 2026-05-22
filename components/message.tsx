@@ -168,8 +168,16 @@ const PurePreviewMessage = ({
               const hasContent = part.text?.trim().length > 0;
               const isStreaming = "state" in part && part.state === "streaming";
               if (hasContent || isStreaming) {
+                const appMeta = part.providerMetadata?.app as
+                  | { durationMs?: unknown }
+                  | undefined;
+                const persistedDurationMs =
+                  typeof appMeta?.durationMs === "number"
+                    ? appMeta.durationMs
+                    : undefined;
                 return (
                   <MessageReasoning
+                    durationMs={persistedDurationMs}
                     isLoading={isLoading || isStreaming}
                     key={key}
                     reasoning={part.text || ""}

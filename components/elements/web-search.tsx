@@ -57,7 +57,7 @@ export const WebSearchHeader = ({
 }: WebSearchHeaderProps) => (
   <CollapsibleTrigger
     className={cn(
-      "group flex w-full cursor-pointer items-center gap-2 py-1.5 text-muted-foreground transition-colors hover:text-foreground",
+      "group flex w-full cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-muted-foreground text-sm transition-colors hover:bg-muted hover:text-foreground",
       className
     )}
     {...props}
@@ -68,13 +68,13 @@ export const WebSearchHeader = ({
         isLoading(state) && "animate-spin"
       )}
     />
-    <span className="truncate text-sm">{query ?? "Searching the web..."}</span>
+    <span className="truncate">{query ?? "Searching the web..."}</span>
     {state === "output-available" && resultCount != null && (
       <span className="ml-auto shrink-0 text-muted-foreground/60 text-xs">
         {resultCount} result{resultCount === 1 ? "" : "s"}
       </span>
     )}
-    <ChevronDownIcon className="size-3 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
+    <ChevronDownIcon className="size-3.5 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180" />
   </CollapsibleTrigger>
 );
 

@@ -138,6 +138,14 @@ export async function POST(request: Request) {
     const modelMessages = await convertToModelMessages(uiMessages);
     const prunedMessages = compactMessages(modelMessages);
 
+    // Per-block reasoning timings, captured during streaming and stamped
+    // onto each reasoning part's providerMetadata before persistence. Order
+    // matches the order reasoning parts land in the assembled message, so
+    // we assign durations by index in onFinish.
+    type ReasoningTiming = { start: number; end: number };
+    const reasoningTimings: ReasoningTiming[] = [];
+    const reasoningTimingsById = new Map<string, ReasoningTiming>();
+
     const stream = createUIMessageStream({
       originalMessages: isToolApprovalFlow ? uiMessages : undefined,
       execute: async ({ writer: dataStream }) => {
@@ -159,6 +167,19 @@ export async function POST(request: Request) {
             },
           }),
           stopWhen: stepCountIs(brandProfile ? 20 : 8),
+          onChunk: ({ chunk }) => {
+            if (chunk.type === "reasoning-delta") {
+              const now = Date.now();
+              const existing = reasoningTimingsById.get(chunk.id);
+              if (existing) {
+                existing.end = now;
+              } else {
+                const entry: ReasoningTiming = { start: now, end: now };
+                reasoningTimingsById.set(chunk.id, entry);
+                reasoningTimings.push(entry);
+              }
+            }
+          },
           experimental_activeTools: [
             "createDocument",
             "updateDocument",
@@ -245,12 +266,48 @@ export async function POST(request: Request) {
       },
       generateId: generateUUID,
       onFinish: async ({ messages: finishedMessages }) => {
-        // Strip transient UI stream events before persisting — these are
+        // Strip transient UI stream events before persisting, these are
         // real-time display events (probe progress, usage, title) that
         // bloat the context window when reloaded into model history.
         const stripTransientParts = (
           parts: (typeof finishedMessages)[number]["parts"]
         ) => parts.filter((p) => !p.type.startsWith("data-"));
+
+        // Walk reasoning parts in order and stamp the matching tracked
+        // duration onto providerMetadata.app.durationMs so the value
+        // survives reloads and history navigation.
+        let reasoningIdx = 0;
+        const stampReasoningDurations = (
+          parts: (typeof finishedMessages)[number]["parts"]
+        ) =>
+          parts.map((p) => {
+            if (
+              p.type !== "reasoning" ||
+              reasoningIdx >= reasoningTimings.length
+            ) {
+              return p;
+            }
+            const timing = reasoningTimings[reasoningIdx++];
+            if (!timing) {
+              return p;
+            }
+            const existingApp =
+              (p.providerMetadata?.app as Record<string, unknown>) ?? {};
+            return {
+              ...p,
+              providerMetadata: {
+                ...(p.providerMetadata ?? {}),
+                app: {
+                  ...existingApp,
+                  durationMs: timing.end - timing.start,
+                },
+              },
+            };
+          });
+
+        const preparePartsForPersist = (
+          parts: (typeof finishedMessages)[number]["parts"]
+        ) => stampReasoningDurations(stripTransientParts(parts));
 
         try {
           if (isToolApprovalFlow) {
@@ -261,7 +318,7 @@ export async function POST(request: Request) {
               if (existingMsg) {
                 await updateMessage({
                   id: finishedMsg.id,
-                  parts: stripTransientParts(finishedMsg.parts),
+                  parts: preparePartsForPersist(finishedMsg.parts),
                 });
               } else {
                 await saveMessages({
@@ -269,7 +326,7 @@ export async function POST(request: Request) {
                     {
                       id: finishedMsg.id,
                       role: finishedMsg.role,
-                      parts: stripTransientParts(finishedMsg.parts),
+                      parts: preparePartsForPersist(finishedMsg.parts),
                       createdAt: new Date(),
                       attachments: [],
                       chatId: id,
@@ -283,7 +340,7 @@ export async function POST(request: Request) {
               messages: finishedMessages.map((currentMessage) => ({
                 id: currentMessage.id,
                 role: currentMessage.role,
-                parts: stripTransientParts(currentMessage.parts),
+                parts: preparePartsForPersist(currentMessage.parts),
                 createdAt: new Date(),
                 attachments: [],
                 chatId: id,

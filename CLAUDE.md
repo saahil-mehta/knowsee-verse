@@ -31,6 +31,22 @@ A personal AI assistant (Knowsee) with artifact creation, web browsing, and mult
 - Makefile must be composable and DRY
 - Gitignore philosophy: ignore by intent (credentials, secrets, build outputs), not by extension
 
+## Debugging Philosophy
+
+The principle sticks, the stack drifts. These are about how to debug anything, not about this codebase.
+
+- **Evidence outranks assertion, regardless of source.** A hypothesis grounded in observation does not get demoted by a verbal claim — not the user's, not memory's, not a confident document's. Claims describe a *model* of state; the live system *is* state. When a claim contradicts a strong prior, verify cheaply rather than pivot. Surrendering a correct prior to a wrong assertion costs an entire detour; doubting an assertion costs a one-line query. Ask which command produced the claim, or run it yourself.
+
+- **Look before you theorise.** When something is opaque — a redacted message, an unknown code, a "this used to work" — fetching the next layer of detail is almost always cheaper than constructing a story that explains the visible symptom. Stories grow to fit symptoms and feel like progress; raw evidence does not flatter the reasoner. Pull the log, dump the state, run the diff first; build the narrative second.
+
+- **Separate what was observed from what is being claimed about it.** The user's symptoms are data and should be taken as given. The user's causal explanation is a hypothesis on equal footing with any other. Do not let the two collapse into one input in reasoning. Treat "this is what I see" as a fact and "this is why I think it's happening" as a candidate.
+
+- **Boring causes outnumber dramatic ones.** A failure pattern that *feels* like cascading infection, state poisoning, or coordinated misbehaviour usually decomposes into many identical small failures, or one root presenting at many surfaces. The aesthetic of a symptom is not evidence about its cause. Reach for the boring explanation first; promote dramatic ones only when the boring ones are ruled out.
+
+- **Described state drifts from applied state.** Anywhere a system holds both a description of how it *should* be (a config file, a doc, a recollection of a past action) and a representation of how it *is* (the runtime, the API, the live process), the two diverge over time. When a question turns on which is true, query the live system, not the description. Written-down state is data, not ground truth.
+
+- **A fix without a confirmed root cause is a guess wearing a uniform.** It is allowed to ship a guess when the cost of being wrong is small and the cost of investigating is high — but call it that. Do not let pressure to act collapse the difference between "I have evidence X causes Y" and "X is plausible and would explain Y if true". One closes a loop; the other widens it.
+
 ## AI SDK Development
 
 ### Core Primitives (server-side, Route Handlers)
@@ -116,5 +132,7 @@ Types: feat, fix, docs, style, refactor, perf, test, chore, ci, build, revert
 ## Output Policy
 - UK English spelling
 - No emojis
+- No em dashes (—); use commas, colons, parentheses, or rephrase. En dashes (–) and hyphens (-) are fine. Replace any pre-existing em dashes when editing nearby content.
+- Identity-bearing labels in test or verification traffic (User-Agent, X-Source, job labels, automation markers) use `smehta/<kebab-case-purpose>`. Never `claude-*`, `anthropic-*`, `ai-*`, or any AI-branded variant. Identity labels persist in audit trails; attribution belongs to the human operating the terminal.
 - No unnecessary documentation
 - Always provide honest critical assessment under CRITICAL_ASSESSMENT

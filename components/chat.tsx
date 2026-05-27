@@ -94,6 +94,7 @@ export function Chat({
     sendMessage,
     status,
     stop,
+    clearError,
     regenerate,
     resumeStream,
     addToolApprovalResponse,
@@ -266,6 +267,7 @@ export function Chat({
               attachments={attachments}
               chatId={id}
               chatTitle={chatTitle}
+              clearError={clearError}
               input={input}
               messages={messages}
               onModelChange={setCurrentModelId}
@@ -290,6 +292,7 @@ export function Chat({
         addToolApprovalResponse={addToolApprovalResponse}
         attachments={attachments}
         chatId={id}
+        clearError={clearError}
         input={input}
         isReadonly={isReadonly}
         messages={messages}

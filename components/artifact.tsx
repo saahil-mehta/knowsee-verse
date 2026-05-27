@@ -62,6 +62,7 @@ function PureArtifact({
   setInput,
   status,
   stop,
+  clearError,
   attachments,
   setAttachments,
   sendMessage,
@@ -80,6 +81,7 @@ function PureArtifact({
   setInput: Dispatch<SetStateAction<string>>;
   status: UseChatHelpers<ChatMessage>["status"];
   stop: UseChatHelpers<ChatMessage>["stop"];
+  clearError: UseChatHelpers<ChatMessage>["clearError"];
   attachments: Attachment[];
   setAttachments: Dispatch<SetStateAction<Attachment[]>>;
   messages: ChatMessage[];
@@ -344,6 +346,7 @@ function PureArtifact({
                     chatId={chatId}
                     chatTitle=""
                     className="bg-background dark:bg-muted"
+                    clearError={clearError}
                     input={input}
                     messages={messages}
                     selectedModelId={selectedModelId}

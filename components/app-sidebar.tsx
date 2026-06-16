@@ -1,5 +1,6 @@
 "use client";
 
+import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -23,6 +24,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import type { User } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -37,9 +39,10 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 
 export function AppSidebar({ user }: { user: User | undefined }) {
   const router = useRouter();
-  const { setOpenMobile } = useSidebar();
+  const { state, setOpenMobile, toggleSidebar } = useSidebar();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const isCollapsed = state === "collapsed";
 
   const handleDeleteAll = () => {
     const deletePromise = fetch("/api/history", {
@@ -61,25 +64,50 @@ export function AppSidebar({ user }: { user: User | undefined }) {
 
   return (
     <>
-      <Sidebar className="group-data-[side=left]:border-r-0">
+      <Sidebar className="group-data-[side=left]:border-r-0" collapsible="icon">
         <SidebarHeader>
           <SidebarMenu>
-            <div className="flex flex-row items-center justify-between">
-              <Link
-                className="flex flex-row items-center gap-3"
-                href="/"
-                onClick={() => {
-                  setOpenMobile(false);
-                }}
-              >
-                <span className="cursor-pointer rounded-md px-2 text-2xl font-serif hover:bg-muted">
-                  <span className="font-normal">Know</span>
-                  <span className="-ml-0.5 font-light italic opacity-70">
-                    see.
+            <div className="flex flex-row items-center justify-between gap-2">
+              {isCollapsed ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <button
+                      aria-label="Open sidebar"
+                      className="group/logo relative flex h-8 w-8 shrink-0 items-center justify-center"
+                      onClick={toggleSidebar}
+                      type="button"
+                    >
+                      <span className="font-serif text-2xl leading-none transition-opacity group-hover/logo:opacity-0">
+                        K
+                      </span>
+                      <span className="absolute inset-0 flex items-center justify-center opacity-0 transition-opacity group-hover/logo:opacity-100">
+                        <PanelLeftOpen size={16} />
+                      </span>
+                    </button>
+                  </TooltipTrigger>
+                  <TooltipContent align="start" side="bottom">
+                    Open sidebar
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <Link
+                  className="flex min-w-0 flex-row items-center"
+                  href="/"
+                  onClick={() => {
+                    setOpenMobile(false);
+                  }}
+                >
+                  <span className="cursor-pointer rounded-md px-2 font-serif text-2xl hover:bg-muted">
+                    <span className="font-normal">Know</span>
+                    <span className="-ml-0.5 font-light italic opacity-70">
+                      see.
+                    </span>
                   </span>
-                </span>
-              </Link>
-              <div className="flex flex-row gap-1">
+                </Link>
+              )}
+              <div
+                className={cn("flex flex-row gap-1", isCollapsed && "hidden")}
+              >
                 {user && (
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -116,15 +144,31 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                     New Chat
                   </TooltipContent>
                 </Tooltip>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      aria-label="Close sidebar"
+                      className="h-8 p-1 md:h-fit md:p-2"
+                      onClick={toggleSidebar}
+                      type="button"
+                      variant="ghost"
+                    >
+                      <PanelLeftClose size={16} />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent align="end" className="hidden md:block">
+                    Close sidebar
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </div>
           </SidebarMenu>
         </SidebarHeader>
-        <SidebarContent>
+        <SidebarContent className={cn(isCollapsed && "hidden")}>
           <SidebarProjects user={user} />
           <SidebarHistory user={user} />
         </SidebarContent>
-        <SidebarFooter>
+        <SidebarFooter className={cn(isCollapsed && "hidden")}>
           <UserMenu />
         </SidebarFooter>
       </Sidebar>

@@ -1,0 +1,27 @@
+# Local development services for knowsee-verse.
+#
+# Postgres stands in for Cloud SQL during local development: it is the dev
+# half of the config-switchable database connection (Cloud SQL in deploy,
+# local Postgres here). This file is for local dev only and is never used
+# in deploy. Bring it up with `docker compose up -d`, then run migrations
+# with `pnpm db:migrate`.
+services:
+  postgres:
+    image: postgres:17
+    container_name: knowsee-dev-postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: knowsee
+    ports:
+      - "5432:5432"
+    volumes:
+      - knowsee-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d knowsee"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+volumes:
+  knowsee-pgdata:

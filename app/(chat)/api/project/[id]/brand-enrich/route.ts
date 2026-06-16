@@ -150,7 +150,7 @@ If you cannot determine a field, use an empty array or empty string.`,
     }
 
     return Response.json({ logoUrl, ...parsed.data });
-  } catch (_error) {
+  } catch {
     return new ChatSDKError("bad_request:project").toResponse();
   }
 }

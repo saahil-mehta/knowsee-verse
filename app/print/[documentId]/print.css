@@ -16,14 +16,14 @@ nextjs-portal,
 }
 
 .knowsee-print-layout {
-  background: #ffffff !important;
-  color: hsl(240 10% 3.9%) !important;
   min-height: 100vh;
   font-family:
     var(--font-sans), "Google Sans", "Google Sans Text", -apple-system,
     BlinkMacSystemFont, system-ui, sans-serif;
   font-size: 11pt;
   line-height: 1.55;
+  color: hsl(240 10% 3.9%) !important;
+  background: #ffffff !important;
 }
 
 /* Text-kind artefacts (action matrices, briefs, write-ups) render
@@ -42,11 +42,11 @@ nextjs-portal,
    via Puppeteer = 178mm). On-screen preview uses the same width so the
    visual matches the printed output. */
 .knowsee-print-root {
-  background: #ffffff;
-  color: hsl(240 10% 3.9%);
   max-width: 178mm;
-  margin: 0 auto;
   padding: 12mm 0;
+  margin: 0 auto;
+  color: hsl(240 10% 3.9%);
+  background: #ffffff;
 }
 
 /* Force light theme regardless of user's preference — the PDF output
@@ -69,8 +69,8 @@ html.dark .knowsee-print-layout,
 .knowsee-print-layout *,
 .knowsee-print-layout *::before,
 .knowsee-print-layout *::after {
-  animation: none !important;
   transition: none !important;
+  animation: none !important;
 }
 
 /* Atomic units that must not split across pages. Puppeteer's Chromium
@@ -143,8 +143,8 @@ html.dark .knowsee-print-layout,
 
 /* Widow/orphan protection on prose paragraphs. */
 .knowsee-print-layout .report-section p {
-  orphans: 3;
   widows: 3;
+  orphans: 3;
 }
 
 /* Tables wrap long cell content so they never overflow the page width. */
@@ -155,8 +155,8 @@ html.dark .knowsee-print-layout,
 }
 .knowsee-print-layout th,
 .knowsee-print-layout td {
-  overflow-wrap: anywhere;
   word-break: break-word;
+  overflow-wrap: anywhere;
 }
 
 /* Force chart wrappers and Recharts's ResponsiveContainer to have concrete
@@ -171,13 +171,13 @@ html.dark .knowsee-print-layout,
    components apply, so both values must move together. */
 .knowsee-print-layout .h-80 {
   width: 100% !important;
-  height: 500px !important;
   min-width: 400px;
+  height: 500px !important;
 }
 .knowsee-print-layout .recharts-responsive-container {
   width: 100% !important;
-  height: 100% !important;
   min-width: 400px !important;
+  height: 100% !important;
   min-height: 280px !important;
 }
 .knowsee-print-layout .recharts-wrapper {

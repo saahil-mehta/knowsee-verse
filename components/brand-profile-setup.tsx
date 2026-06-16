@@ -102,7 +102,7 @@ export function BrandProfileSetup({ projectId }: { projectId: string }) {
         type: "success",
         description: `Brand credentials verified for ${name}`,
       });
-    } catch (_err) {
+    } catch {
       toast({ type: "error", description: "Failed to enrich brand data." });
       resetAll();
     }
@@ -143,7 +143,7 @@ export function BrandProfileSetup({ projectId }: { projectId: string }) {
         throw new Error("Failed to create");
       }
       router.refresh();
-    } catch (_err) {
+    } catch {
       toast({ type: "error", description: "Failed to create brand profile." });
     } finally {
       setSubmitting(false);

@@ -65,7 +65,7 @@ export async function saveChat({
         modelId,
       })
       .onConflictDoNothing({ target: chat.id });
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError("bad_request:database", "Failed to save chat");
   }
 }
@@ -83,7 +83,7 @@ export async function deleteChatById({ id }: { id: string }) {
         .returning();
       return chatsDeleted;
     });
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete chat by id"
@@ -116,7 +116,7 @@ export async function deleteAllChatsByUserId({ userId }: { userId: string }) {
 
       return { deletedCount: deletedChats.length };
     });
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete all chats by user id"
@@ -194,7 +194,7 @@ export async function getChatsByUserId({
       chats: hasMore ? filteredChats.slice(0, limit) : filteredChats,
       hasMore,
     };
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get chats by user id"
@@ -210,7 +210,7 @@ export async function getChatById({ id }: { id: string }) {
     }
 
     return selectedChat;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError("bad_request:database", "Failed to get chat by id");
   }
 }
@@ -222,7 +222,7 @@ export function getParentChat({ parentChatId }: { parentChatId: string }) {
 export async function saveMessages({ messages }: { messages: DBMessage[] }) {
   try {
     return await db.insert(message).values(messages);
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError("bad_request:database", "Failed to save messages");
   }
 }
@@ -236,7 +236,7 @@ export async function updateMessage({
 }) {
   try {
     return await db.update(message).set({ parts }).where(eq(message.id, id));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError("bad_request:database", "Failed to update message");
   }
 }
@@ -248,7 +248,7 @@ export async function getMessagesByChatId({ id }: { id: string }) {
       .from(message)
       .where(eq(message.chatId, id))
       .orderBy(asc(message.createdAt));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get messages by chat id"
@@ -277,7 +277,7 @@ export async function voteMessage({
         target: [vote.chatId, vote.messageId],
         set: { isUpvoted: type === "up" },
       });
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError("bad_request:database", "Failed to vote message");
   }
 }
@@ -285,7 +285,7 @@ export async function voteMessage({
 export async function getVotesByChatId({ id }: { id: string }) {
   try {
     return await db.select().from(vote).where(eq(vote.chatId, id));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get votes by chat id"
@@ -321,7 +321,7 @@ export async function saveDocument({
         createdAt: new Date(),
       })
       .returning();
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError("bad_request:database", "Failed to save document");
   }
 }
@@ -335,7 +335,7 @@ export async function getDocumentsById({ id }: { id: string }) {
       .orderBy(asc(document.createdAt));
 
     return documents;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get documents by id"
@@ -352,7 +352,7 @@ export async function getDocumentById({ id }: { id: string }) {
       .orderBy(desc(document.createdAt));
 
     return selectedDocument;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get document by id"
@@ -390,7 +390,7 @@ export async function getDocumentsByProjectId({
       seen.add(d.id);
       return true;
     });
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get documents by project"
@@ -419,7 +419,7 @@ export async function deleteDocumentsByIdAfterTimestamp({
       .delete(document)
       .where(and(eq(document.id, id), gt(document.createdAt, timestamp)))
       .returning();
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete documents by id after timestamp"
@@ -434,7 +434,7 @@ export async function saveSuggestions({
 }) {
   try {
     return await db.insert(suggestion).values(suggestions);
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to save suggestions"
@@ -452,7 +452,7 @@ export async function getSuggestionsByDocumentId({
       .select()
       .from(suggestion)
       .where(eq(suggestion.documentId, documentId));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get suggestions by document id"
@@ -463,7 +463,7 @@ export async function getSuggestionsByDocumentId({
 export async function getMessageById({ id }: { id: string }) {
   try {
     return await db.select().from(message).where(eq(message.id, id));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get message by id"
@@ -503,7 +503,7 @@ export async function deleteMessagesByChatIdAfterTimestamp({
           and(eq(message.chatId, chatId), inArray(message.id, messageIds))
         );
     }
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete messages by chat id after timestamp"
@@ -520,7 +520,7 @@ export async function updateChatVisibilityById({
 }) {
   try {
     return await db.update(chat).set({ visibility }).where(eq(chat.id, chatId));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to update chat visibility by id"
@@ -569,7 +569,7 @@ export async function getMessageCountByUserId({
       .execute();
 
     return stats?.count ?? 0;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get message count by user id"
@@ -588,7 +588,7 @@ export async function createStreamId({
     await db
       .insert(stream)
       .values({ id: streamId, chatId, createdAt: new Date() });
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to create stream id"
@@ -606,7 +606,7 @@ export async function getStreamIdsByChatId({ chatId }: { chatId: string }) {
       .execute();
 
     return streamIds.map(({ id }) => id);
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get stream ids by chat id"
@@ -629,7 +629,7 @@ export async function createProject({
       .values({ name, userId })
       .returning();
     return created;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError("bad_request:database", "Failed to create project");
   }
 }
@@ -641,7 +641,7 @@ export async function getProjectsByUserId({ userId }: { userId: string }) {
       .from(project)
       .where(eq(project.userId, userId))
       .orderBy(desc(project.updatedAt));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get projects by user id"
@@ -659,7 +659,7 @@ export async function getProjectById({ id }: { id: string }) {
       return null;
     }
     return selected;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get project by id"
@@ -681,7 +681,7 @@ export async function updateProject({
       .where(eq(project.id, id))
       .returning();
     return updated;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError("bad_request:database", "Failed to update project");
   }
 }
@@ -698,7 +698,7 @@ export async function deleteProjectById({ id }: { id: string }) {
         .where(eq(chat.projectId, id));
       await tx.delete(project).where(eq(project.id, id));
     });
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete project by id"
@@ -745,7 +745,7 @@ export async function createBrandProfile({
       })
       .returning();
     return created;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to create brand profile"
@@ -767,7 +767,7 @@ export async function getBrandProfileByProjectId({
       return null;
     }
     return selected;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get brand profile by project id"
@@ -796,7 +796,7 @@ export async function updateBrandProfile({
       .where(eq(brandProfile.projectId, pid))
       .returning();
     return updated;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to update brand profile"
@@ -828,7 +828,7 @@ export async function getProjectWithBrandProfile({
       project: row.project,
       brandProfile: row.brandProfile as BrandProfile | null,
     };
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get project with brand profile"
@@ -847,7 +847,7 @@ export async function getChatsByProjectId({
       .from(chat)
       .where(eq(chat.projectId, pid))
       .orderBy(desc(chat.createdAt));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get chats by project id"
@@ -894,7 +894,7 @@ export async function saveVisibilityAudit({
       })
       .returning();
     return created;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to save visibility audit"
@@ -913,7 +913,7 @@ export async function getVisibilityAuditsByProjectId({
       .from(visibilityAudit)
       .where(eq(visibilityAudit.projectId, projectId))
       .orderBy(desc(visibilityAudit.createdAt));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get visibility audits by project id"
@@ -934,7 +934,7 @@ export async function getMemoriesByProjectId({
       .from(memory)
       .where(eq(memory.projectId, pid))
       .orderBy(asc(memory.path));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get memories by project id"
@@ -955,7 +955,7 @@ export async function getMemoryByPath({
       .from(memory)
       .where(and(eq(memory.projectId, pid), eq(memory.path, path)));
     return selected ?? null;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to get memory by path"
@@ -978,7 +978,7 @@ export async function createMemory({
       .values({ projectId: pid, path, content })
       .returning();
     return created;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError("bad_request:database", "Failed to create memory");
   }
 }
@@ -999,7 +999,7 @@ export async function updateMemoryContent({
       .where(and(eq(memory.projectId, pid), eq(memory.path, path)))
       .returning();
     return updated;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to update memory content"
@@ -1018,7 +1018,7 @@ export async function deleteMemoryByPath({
     await db
       .delete(memory)
       .where(and(eq(memory.projectId, pid), eq(memory.path, path)));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete memory by path"
@@ -1029,7 +1029,7 @@ export async function deleteMemoryByPath({
 export async function deleteMemoryById({ id }: { id: string }) {
   try {
     await db.delete(memory).where(eq(memory.id, id));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete memory by id"
@@ -1044,7 +1044,7 @@ export async function deleteAllMemoriesByProjectId({
 }) {
   try {
     await db.delete(memory).where(eq(memory.projectId, pid));
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError(
       "bad_request:database",
       "Failed to delete all memories by project id"
@@ -1068,7 +1068,7 @@ export async function renameMemory({
       .where(and(eq(memory.projectId, pid), eq(memory.path, oldPath)))
       .returning();
     return updated;
-  } catch (_error) {
+  } catch {
     throw new ChatSDKError("bad_request:database", "Failed to rename memory");
   }
 }

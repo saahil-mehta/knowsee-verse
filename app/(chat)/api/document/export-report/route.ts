@@ -111,7 +111,7 @@ export async function GET(request: Request) {
         footerTemplate,
       });
 
-      return new Response(pdf, {
+      return new Response(new Uint8Array(pdf), {
         status: 200,
         headers: {
           "Content-Type": CONTENT_TYPES.pdf,

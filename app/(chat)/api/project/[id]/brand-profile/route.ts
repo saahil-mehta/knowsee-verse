@@ -43,7 +43,7 @@ export async function POST(
     const data = brandProfileSchema.parse(json);
     const created = await createBrandProfile({ projectId: id, ...data });
     return Response.json(created, { status: 201 });
-  } catch (_error) {
+  } catch {
     return new ChatSDKError("bad_request:project").toResponse();
   }
 }
@@ -64,7 +64,7 @@ export async function PUT(
     const data = brandProfileSchema.parse(json);
     const updated = await updateBrandProfile({ projectId: id, ...data });
     return Response.json(updated);
-  } catch (_error) {
+  } catch {
     return new ChatSDKError("bad_request:project").toResponse();
   }
 }

@@ -44,7 +44,7 @@ export const maxDuration = 300;
 function getStreamContext() {
   try {
     return createResumableStreamContext({ waitUntil: after });
-  } catch (_) {
+  } catch {
     return null;
   }
 }
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
   try {
     const json = await request.json();
     requestBody = postRequestBodySchema.parse(json);
-  } catch (_) {
+  } catch {
     return new ChatSDKError("bad_request:api").toResponse();
   }
 
@@ -370,7 +370,7 @@ export async function POST(request: Request) {
               () => sseStream
             );
           }
-        } catch (_) {
+        } catch {
           // ignore redis errors
         }
       },

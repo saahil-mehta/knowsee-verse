@@ -4,11 +4,11 @@ import { useTypewriter } from "@/hooks/use-typewriter";
 import { cn } from "@/lib/utils";
 
 interface TypewriterTextProps {
-  text: string;
+  className?: string;
+  showCursor?: boolean;
   speed?: number;
   startDelay?: number;
-  showCursor?: boolean;
-  className?: string;
+  text: string;
 }
 
 function renderWithBranding(text: string): React.ReactNode {

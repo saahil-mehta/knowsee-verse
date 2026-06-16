@@ -36,7 +36,7 @@ export async function PATCH(
     const { name } = updateProjectSchema.parse(json);
     const updated = await updateProject({ id, name });
     return Response.json(updated);
-  } catch (_error) {
+  } catch {
     return new ChatSDKError("bad_request:project").toResponse();
   }
 }

@@ -26,7 +26,7 @@ export async function POST(request: Request) {
     const { name } = createProjectSchema.parse(json);
     const created = await createProject({ name, userId: session.user.id });
     return Response.json(created, { status: 201 });
-  } catch (_error) {
+  } catch {
     return new ChatSDKError("bad_request:project").toResponse();
   }
 }

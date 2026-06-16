@@ -6,8 +6,8 @@ import { cn } from "@/lib/utils";
 import { AccountSettings } from "./account-settings";
 
 interface SettingsDialogProps {
-  open: boolean;
   onOpenChange: (open: boolean) => void;
+  open: boolean;
 }
 
 const tabs = [{ id: "account" as const, label: "Account", icon: UserIcon }];

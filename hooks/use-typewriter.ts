@@ -3,18 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 
 interface UseTypewriterOptions {
-  text: string;
+  cursorChar?: string;
+  showCursor?: boolean;
   speed?: number;
   startDelay?: number;
-  showCursor?: boolean;
-  cursorChar?: string;
+  text: string;
 }
 
 interface UseTypewriterResult {
+  cursor: string | null;
   displayedText: string;
   isComplete: boolean;
   isTyping: boolean;
-  cursor: string | null;
 }
 
 export function useTypewriter({

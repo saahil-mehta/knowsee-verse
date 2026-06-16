@@ -39,7 +39,7 @@ export async function POST(request: Request) {
     const validatedFile = FileSchema.safeParse({ file });
 
     if (!validatedFile.success) {
-      const errorMessage = validatedFile.error.errors
+      const errorMessage = validatedFile.error.issues
         .map((error) => error.message)
         .join(", ");
 
@@ -56,10 +56,10 @@ export async function POST(request: Request) {
       });
 
       return NextResponse.json(data);
-    } catch (_error) {
+    } catch {
       return NextResponse.json({ error: "Upload failed" }, { status: 500 });
     }
-  } catch (_error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to process request" },
       { status: 500 }

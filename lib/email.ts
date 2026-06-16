@@ -1,3 +1,5 @@
+import { getConfig } from "@/lib/config";
+
 interface SendEmailOptions {
   subject: string;
   text: string;
@@ -9,18 +11,10 @@ export async function sendEmail({
   subject,
   text,
 }: SendEmailOptions): Promise<void> {
-  const apiKey = process.env.MAILGUN_API_KEY?.trim();
-  const domain = process.env.MAILGUN_DOMAIN?.trim();
-  const from =
-    process.env.MAILGUN_FROM?.trim() || `Knowsee <noreply@${domain}>`;
-
-  if (!apiKey || !domain) {
-    console.error("[email] Mailgun credentials missing", {
-      hasApiKey: !!apiKey,
-      hasDomain: !!domain,
-    });
-    throw new Error("Mailgun credentials not configured");
-  }
+  const { email } = getConfig();
+  const apiKey = email.mailgunApiKey;
+  const domain = email.mailgunDomain;
+  const from = email.mailgunFrom || `Knowsee <noreply@${domain}>`;
 
   console.log("[email] Sending to %s via %s", to, domain);
 

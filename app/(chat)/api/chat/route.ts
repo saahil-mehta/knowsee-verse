@@ -19,6 +19,7 @@ import { requestSuggestions } from "@/lib/ai/tools/request-suggestions";
 import { createServerTools } from "@/lib/ai/tools/server-tools";
 import { updateDocument } from "@/lib/ai/tools/update-document";
 import { getSession } from "@/lib/auth";
+import { getConfig } from "@/lib/config";
 import { isProductionEnvironment } from "@/lib/constants";
 import {
   createStreamId,
@@ -42,9 +43,19 @@ import { type PostRequestBody, postRequestBodySchema } from "./schema";
 export const maxDuration = 300;
 
 function getStreamContext() {
+  if (!getConfig().redis.enabled) {
+    console.log(
+      "[stream] resumable streams disabled: no Redis configured (set REDIS_URL to enable)"
+    );
+    return null;
+  }
   try {
     return createResumableStreamContext({ waitUntil: after });
-  } catch {
+  } catch (error) {
+    console.error(
+      "[stream] failed to initialise resumable stream context",
+      error
+    );
     return null;
   }
 }

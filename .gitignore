@@ -49,3 +49,6 @@ tests/.auth/
 .mcp.json
 *.tsbuildinfo
 /.codex
+
+# Next.js generates this on dev/build (path flips between modes); not source
+next-env.d.ts

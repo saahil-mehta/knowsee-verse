@@ -45,7 +45,6 @@
     "@radix-ui/react-use-controllable-state": "^1.2.3",
     "@radix-ui/react-visually-hidden": "^1.2.6",
     "@sparticuz/chromium": "^149.0.0",
-    "@vercel/analytics": "^2.0.1",
     "@vercel/blob": "^2.4.0",
     "@vercel/functions": "^3.7.1",
     "@vercel/otel": "^2.1.3",

@@ -17,7 +17,7 @@ describe("resolveConfig", () => {
     const config = resolveConfig(validEnv());
 
     expect(config.auth.mode).toBe("otp");
-    expect(config.storage.backend).toBe("vercel-blob");
+    expect(config.storage.backend).toBe("local");
     expect(config.redis.enabled).toBe(false);
     expect(config.db.url).toContain("postgresql://");
     expect(config.env.isProduction).toBe(true);

@@ -16,7 +16,7 @@ import { z } from "zod";
  */
 
 const authModeSchema = z.enum(["sso", "otp"]);
-const storageBackendSchema = z.enum(["gcs", "vercel-blob", "local"]);
+const storageBackendSchema = z.enum(["gcs", "local"]);
 
 export type AuthMode = z.infer<typeof authModeSchema>;
 export type StorageBackend = z.infer<typeof storageBackendSchema>;
@@ -48,7 +48,6 @@ export type Config = {
   storage: {
     backend: StorageBackend;
     gcsBucket: string | null;
-    vercelBlobToken: string | null;
   };
   llm: {
     gatewayApiKey: string;
@@ -107,7 +106,7 @@ export function resolveConfig(env: NodeJS.ProcessEnv): Config {
   const storageBackend = parseEnum<StorageBackend>(
     "STORAGE_BACKEND",
     storageBackendSchema,
-    "vercel-blob"
+    "local"
   );
 
   // Redis is optional. It is on when a URL is provided or REDIS_ENABLED is set;
@@ -161,7 +160,6 @@ export function resolveConfig(env: NodeJS.ProcessEnv): Config {
     storage: {
       backend: storageBackend,
       gcsBucket,
-      vercelBlobToken: env.BLOB_READ_WRITE_TOKEN?.trim() || null,
     },
     llm: {
       gatewayApiKey: require_("VERCEL_AI_GATEWAY"),

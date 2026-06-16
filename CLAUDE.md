@@ -2,18 +2,24 @@
 A conversational AI assistant built as a full-stack Next.js application with Vercel AI SDK.
 
 ## Vision
-A personal AI assistant (Knowsee) with artifact creation, web browsing, and multi-model support — deployed on Vercel with persistent chat history and resumable streams.
+A personal AI assistant (Knowsee) with artifact creation, web browsing, and multi-model support — a GCP-native Cloud Run app with persistent chat history and resumable streams.
 
 ## Stack
-- **AI**: Vercel AI SDK v6 (`ai`, `@ai-sdk/react`, `@ai-sdk/anthropic`, `@ai-sdk/gateway`)
-- **Framework**: Next.js 16 (App Router, Turbopack, `proxy.ts` middleware)
+- **AI**: Vercel AI SDK v6 (`ai`, `@ai-sdk/react`, `@ai-sdk/anthropic`, `@ai-sdk/gateway`). The Vercel AI Gateway is the one non-GCP dependency (LLM transport).
+- **Framework**: Next.js 16 (App Router, Turbopack, `proxy.ts` middleware), standalone output for Docker.
 - **UI**: Radix primitives + Tailwind v4 + shadcn pattern
-- **Database**: PostgreSQL (Drizzle ORM, migrations in `lib/db/migrations/`)
-- **Auth**: NextAuth v5 beta (guest + regular user types)
-- **Infra**: Vercel (blob storage, analytics, OpenTelemetry)
-- **Testing**: Playwright (e2e)
+- **Database**: PostgreSQL (Drizzle ORM, migrations in `lib/db/migrations/`). Cloud SQL in deploy, local Docker Postgres in dev.
+- **Auth**: Better Auth (email + OTP; Google OAuth behind the `sso` switch)
+- **Hosting**: Cloud Run (Docker), provisioned by the `terraform/environments/ksve` harness (Cloud SQL, Memorystore, GCS uploads, Secret Manager, runtime SA).
+- **Storage**: config-switchable (`STORAGE_BACKEND`): GCS in deploy, a local data-URL backend in dev.
+- **Testing**: Playwright (e2e, `pnpm test`) + Vitest (unit, `pnpm test:unit`)
 - **Linting**: Biome via ultracite (`pnpm lint` / `pnpm format`)
 - **Package manager**: pnpm
+
+## Configuration
+- A single typed config module (`lib/config`) resolves and validates all configuration once, via `getConfig()`. **No silent fallbacks**: a missing required value fails loud, and every optional capability (Redis, GCS, SSO, GCP project) sits behind an explicit switch whose resolved value is logged at startup.
+- Resolve config lazily at request time, never eagerly at module load, so `next build` (which evaluates server modules without runtime env) does not trip config validation.
+- Switches: `AUTH_MODE` (`otp`|`sso`), `STORAGE_BACKEND` (`gcs`|`local`), Redis on/off (presence of `REDIS_URL`).
 
 ## Critical
 - Always provide honest critical assessment under Critical Assessment section after completion of a task
@@ -56,7 +62,7 @@ The principle sticks, the stack drifts. These are about how to debug anything, n
 - **`createUIMessageStream`** + `createUIMessageStreamResponse` for the streaming pipeline
 - **`stepCountIs(n)`** (not `maxSteps`) to cap agent tool-call loops
 - **`convertToModelMessages`** to translate UI messages to model format
-- Export `maxDuration` in route files to extend Vercel's streaming timeout
+- Export `maxDuration` in route files to extend the Cloud Run request/streaming timeout
 
 ### Provider System
 - Providers are swappable packages implementing `LanguageModelV3`
@@ -112,7 +118,8 @@ Client (useChat) → POST /api/chat/route.ts → streamText() → tools execute
 - Schema: `lib/db/schema.ts` (Drizzle ORM)
 - Migrations: `lib/db/migrations/` (generated via `pnpm db:generate`)
 - Queries: `lib/db/queries.ts` — all DB access through this module
-- Local dev: Docker Compose PostgreSQL (`make db-up`)
+- Local dev: `docker compose up -d` runs Postgres (see `compose.yaml`); the app runs on port 3100 (`pnpm dev`). Apply migrations with `pnpm db:migrate` and seed the e2e user with `pnpm db:seed`.
+- Migrations form a single squashed baseline; author new ones with `pnpm db:generate` and commit each `.sql` with its `meta/<idx>_snapshot.json` (the snapshot-chain gotcha). A fresh database must be provisionable from the baseline.
 
 ## Commit Policy
 Use conventional commits:

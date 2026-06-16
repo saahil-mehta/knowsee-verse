@@ -14,7 +14,7 @@ export function ToolStreamHandler({ messages }: { messages: ChatMessage[] }) {
   useEffect(() => {
     const lastMessage = messages.at(-1);
 
-    if (!lastMessage || lastMessage.role !== "assistant") {
+    if (lastMessage?.role !== "assistant") {
       return;
     }
 

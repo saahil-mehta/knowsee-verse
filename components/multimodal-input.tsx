@@ -26,6 +26,7 @@ import {
   ModelSelectorTrigger,
 } from "@/components/ai-elements/model-selector";
 import { chatModels, DEFAULT_CHAT_MODEL } from "@/lib/ai/models";
+import { resolveSubmitAction } from "@/lib/chat/submit-guard";
 import type { Attachment, ChatMessage, UsageData } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { BranchChatCard } from "./branch-chat-card";
@@ -63,6 +64,7 @@ function PureMultimodalInput({
   setInput,
   status,
   stop,
+  clearError,
   attachments,
   setAttachments,
   messages,
@@ -81,6 +83,7 @@ function PureMultimodalInput({
   setInput: Dispatch<SetStateAction<string>>;
   status: UseChatHelpers<ChatMessage>["status"];
   stop: () => void;
+  clearError: UseChatHelpers<ChatMessage>["clearError"];
   attachments: Attachment[];
   setAttachments: Dispatch<SetStateAction<Attachment[]>>;
   messages: UIMessage[];
@@ -361,11 +364,18 @@ function PureMultimodalInput({
             if (!input.trim() && attachments.length === 0) {
               return;
             }
-            if (status === "ready") {
-              submitForm();
-            } else {
+            const action = resolveSubmitAction(status);
+            if (action === "block") {
               toast.error("Please wait for the model to finish its response!");
+              return;
             }
+            // "error" means the previous stream was severed (e.g. a function
+            // timeout). Clear it first so useChat resets out of the error state
+            // instead of leaving the input locked until a refresh.
+            if (action === "clear-and-send") {
+              clearError();
+            }
+            submitForm();
           }}
         >
           {(attachments.length > 0 || uploadQueue.length > 0) && (
@@ -439,7 +449,7 @@ function PureMultimodalInput({
                   />
                 );
               })()}
-              {status === "submitted" ? (
+              {status === "submitted" || status === "streaming" ? (
                 <StopButton setMessages={setMessages} stop={stop} />
               ) : (
                 <PromptInputSubmit

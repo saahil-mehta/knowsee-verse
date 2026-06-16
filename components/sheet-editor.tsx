@@ -3,7 +3,7 @@
 import { useTheme } from "next-themes";
 import { parse, unparse } from "papaparse";
 import { memo, useEffect, useMemo, useState } from "react";
-import DataGrid, { textEditor } from "react-data-grid";
+import { DataGrid, renderTextEditor } from "react-data-grid";
 import { cn } from "@/lib/utils";
 
 import "react-data-grid/lib/styles.css";
@@ -57,7 +57,7 @@ const PureSpreadsheetEditor = ({ content, saveContent }: SheetEditorProps) => {
     const dataColumns = Array.from({ length: MIN_COLS }, (_, i) => ({
       key: i.toString(),
       name: String.fromCharCode(65 + i),
-      renderEditCell: textEditor,
+      renderEditCell: renderTextEditor,
       width: 120,
       cellClass: cn("border-t dark:bg-zinc-950 dark:text-zinc-50", {
         "border-l": i !== 0,
@@ -70,20 +70,22 @@ const PureSpreadsheetEditor = ({ content, saveContent }: SheetEditorProps) => {
     return [rowNumberColumn, ...dataColumns];
   }, []);
 
-  const initialRows = useMemo(() => {
-    return parseData.map((row, rowIndex) => {
-      const rowData: any = {
-        id: rowIndex,
-        rowNumber: rowIndex + 1,
-      };
+  const initialRows = useMemo(
+    () =>
+      parseData.map((row, rowIndex) => {
+        const rowData: any = {
+          id: rowIndex,
+          rowNumber: rowIndex + 1,
+        };
 
-      columns.slice(1).forEach((col, colIndex) => {
-        rowData[col.key] = row[colIndex] || "";
-      });
+        columns.slice(1).forEach((col, colIndex) => {
+          rowData[col.key] = row[colIndex] || "";
+        });
 
-      return rowData;
-    });
-  }, [parseData, columns]);
+        return rowData;
+      }),
+    [parseData, columns]
+  );
 
   const [localRows, setLocalRows] = useState(initialRows);
 
@@ -91,16 +93,14 @@ const PureSpreadsheetEditor = ({ content, saveContent }: SheetEditorProps) => {
     setLocalRows(initialRows);
   }, [initialRows]);
 
-  const generateCsv = (data: any[][]) => {
-    return unparse(data);
-  };
+  const generateCsv = (data: any[][]) => unparse(data);
 
   const handleRowsChange = (newRows: any[]) => {
     setLocalRows(newRows);
 
-    const updatedData = newRows.map((row) => {
-      return columns.slice(1).map((col) => row[col.key] || "");
-    });
+    const updatedData = newRows.map((row) =>
+      columns.slice(1).map((col) => row[col.key] || "")
+    );
 
     const newCsvContent = generateCsv(updatedData);
     saveContent(newCsvContent, true);

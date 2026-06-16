@@ -229,11 +229,9 @@ export const voteDeprecated = pgTable(
       .references(() => messageDeprecated.id),
     isUpvoted: boolean("isUpvoted").notNull(),
   },
-  (table) => {
-    return {
-      pk: primaryKey({ columns: [table.chatId, table.messageId] }),
-    };
-  }
+  (table) => ({
+    pk: primaryKey({ columns: [table.chatId, table.messageId] }),
+  })
 );
 
 export type VoteDeprecated = InferSelectModel<typeof voteDeprecated>;
@@ -249,11 +247,9 @@ export const vote = pgTable(
       .references(() => message.id),
     isUpvoted: boolean("isUpvoted").notNull(),
   },
-  (table) => {
-    return {
-      pk: primaryKey({ columns: [table.chatId, table.messageId] }),
-    };
-  }
+  (table) => ({
+    pk: primaryKey({ columns: [table.chatId, table.messageId] }),
+  })
 );
 
 export type Vote = InferSelectModel<typeof vote>;
@@ -275,11 +271,9 @@ export const document = pgTable(
       .references(() => user.id),
     chatId: uuid("chatId").references(() => chat.id, { onDelete: "cascade" }),
   },
-  (table) => {
-    return {
-      pk: primaryKey({ columns: [table.id, table.createdAt] }),
-    };
-  }
+  (table) => ({
+    pk: primaryKey({ columns: [table.id, table.createdAt] }),
+  })
 );
 
 export type Document = InferSelectModel<typeof document>;

@@ -6,11 +6,11 @@ import { useRef, useState } from "react";
 import { cn } from "@/lib/utils";
 
 interface GradientAvatarProps {
-  name: string;
-  image?: string | null;
-  size?: "sm" | "md" | "lg";
   editable?: boolean;
+  image?: string | null;
+  name: string;
   onImageChange?: (file: File) => void;
+  size?: "sm" | "md" | "lg";
 }
 
 function generateGradient(str: string): string {

@@ -59,9 +59,8 @@ export const buildDocumentFromContent = (content: string) => {
   return parser.parse(tempContainer);
 };
 
-export const buildContentFromDocument = (document: Node) => {
-  return markdownSerializer.serialize(document);
-};
+export const buildContentFromDocument = (document: Node) =>
+  markdownSerializer.serialize(document);
 
 export const createDecorations = (
   suggestions: UISuggestion[],

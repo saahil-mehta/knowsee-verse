@@ -199,9 +199,9 @@
   }
 
   body {
-    @apply bg-background text-foreground;
-    overflow-x: hidden;
     position: relative;
+    overflow-x: hidden;
+    @apply bg-background text-foreground;
   }
 
   html {
@@ -282,17 +282,17 @@
 }
 
 .ProseMirror table {
-  border-collapse: collapse;
   width: 100%;
   margin: 1em 0;
+  border-collapse: collapse;
 }
 
 .ProseMirror th,
 .ProseMirror td {
-  border: 1px solid var(--border);
   padding: 0.5rem 0.75rem;
-  text-align: left;
   vertical-align: top;
+  text-align: left;
+  border: 1px solid var(--border);
 }
 
 .ProseMirror th {
@@ -367,8 +367,8 @@
 
 /* firefox scrollbar styling */
 * {
-  scrollbar-width: thin;
   scrollbar-color: var(--border) transparent;
+  scrollbar-width: thin;
 }
 
 @theme inline {

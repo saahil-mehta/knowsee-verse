@@ -92,7 +92,7 @@ export function BrandProfileForm({
       }
       router.refresh();
       onCancel?.();
-    } catch (_err) {
+    } catch {
       toast({ type: "error", description: "Failed to save brand profile." });
     } finally {
       setSubmitting(false);

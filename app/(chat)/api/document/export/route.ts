@@ -53,7 +53,7 @@ export async function GET(request: Request) {
 
   const filename = `${document.title.replace(/[^a-zA-Z0-9-_ ]/g, "").trim()}.${format}`;
 
-  return new Response(buffer, {
+  return new Response(new Uint8Array(buffer), {
     status: 200,
     headers: {
       "Content-Type": CONTENT_TYPES[format],

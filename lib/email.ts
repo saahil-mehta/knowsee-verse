@@ -1,7 +1,7 @@
 interface SendEmailOptions {
-  to: string;
   subject: string;
   text: string;
+  to: string;
 }
 
 export async function sendEmail({

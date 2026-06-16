@@ -63,7 +63,7 @@ If you cannot find the brand, return an empty array: []`,
     }
 
     return Response.json({ suggestions: parsed.data });
-  } catch (_error) {
+  } catch {
     return new ChatSDKError("bad_request:project").toResponse();
   }
 }

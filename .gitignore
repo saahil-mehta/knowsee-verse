@@ -52,3 +52,10 @@ tests/.auth/
 
 # Next.js generates this on dev/build (path flips between modes); not source
 next-env.d.ts
+
+# Terraform
+**/.terraform/*
+*.tfstate
+*.tfstate.*
+*.tfplan
+terraform/**/terraform.tfvars

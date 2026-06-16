@@ -1,0 +1,15 @@
+# Copy to terraform.tfvars (gitignored) and fill in. Secrets live here only.
+project_id = "your-gcp-project"
+region     = "europe-west1"
+app_url    = "https://knowsee.example.com"
+auth_mode  = "otp"
+
+# External secrets (required at apply for the app to start).
+llm_gateway_api_key = "vck_..."
+mailgun_api_key     = "key-..."
+mailgun_domain      = "data.example.com"
+mailgun_from        = "Knowsee <noreply@data.example.com>"
+
+# sso mode only:
+# google_oauth_client_id     = "....apps.googleusercontent.com"
+# google_oauth_client_secret = "GOCSPX-..."

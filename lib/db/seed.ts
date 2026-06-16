@@ -33,10 +33,7 @@ const runSeed = async () => {
   const db = drizzle(connection);
 
   try {
-    const existing = await db
-      .select()
-      .from(user)
-      .where(eq(user.email, email));
+    const existing = await db.select().from(user).where(eq(user.email, email));
 
     if (existing.length > 0) {
       await db

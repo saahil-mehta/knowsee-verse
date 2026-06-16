@@ -16,7 +16,8 @@
     "db:pull": "drizzle-kit pull",
     "db:check": "drizzle-kit check",
     "db:up": "drizzle-kit up",
-    "test": "export PLAYWRIGHT=True && pnpm exec playwright test"
+    "test": "export PLAYWRIGHT=True && pnpm exec playwright test",
+    "test:unit": "vitest run"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.84",
@@ -128,7 +129,8 @@
     "tailwindcss": "^4.3.1",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
-    "ultracite": "^7.8.3"
+    "ultracite": "^7.8.3",
+    "vitest": "^4.1.9"
   },
   "packageManager": "pnpm@9.12.3"
 }

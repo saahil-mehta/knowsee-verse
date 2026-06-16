@@ -10,8 +10,9 @@ config({
   path: ".env.local",
 });
 
-/* Use process.env.PORT by default and fallback to port 3000 */
-const PORT = process.env.PORT || 3000;
+/* Use process.env.PORT by default and fall back to Knowsee's dev port 3100
+ * (deliberately distant from other local Next apps that default to 3000) */
+const PORT = process.env.PORT || 3100;
 
 /**
  * Set webServer.url and use.baseURL with the location

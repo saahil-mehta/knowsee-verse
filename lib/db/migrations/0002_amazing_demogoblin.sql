@@ -1,1 +1,0 @@
-ALTER TABLE "BrandProfile" ADD COLUMN "market" varchar(64);

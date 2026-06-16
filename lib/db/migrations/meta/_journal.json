@@ -5,50 +5,8 @@
     {
       "idx": 0,
       "version": "7",
-      "when": 1772196129271,
-      "tag": "0000_vengeful_reavers",
-      "breakpoints": true
-    },
-    {
-      "idx": 1,
-      "version": "7",
-      "when": 1773071229944,
-      "tag": "0001_black_vermin",
-      "breakpoints": true
-    },
-    {
-      "idx": 2,
-      "version": "7",
-      "when": 1773079991955,
-      "tag": "0002_amazing_demogoblin",
-      "breakpoints": true
-    },
-    {
-      "idx": 3,
-      "version": "7",
-      "when": 1773147637388,
-      "tag": "0003_good_thaddeus_ross",
-      "breakpoints": true
-    },
-    {
-      "idx": 4,
-      "version": "7",
-      "when": 1773314139025,
-      "tag": "0004_curly_amphibian",
-      "breakpoints": true
-    },
-    {
-      "idx": 5,
-      "version": "7",
-      "when": 1773938518685,
-      "tag": "0005_nostalgic_greymalkin",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "7",
-      "when": 1775721256152,
-      "tag": "0006_wonderful_mulholland_black",
+      "when": 1781605438414,
+      "tag": "0000_nebulous_starhawk",
       "breakpoints": true
     }
   ]

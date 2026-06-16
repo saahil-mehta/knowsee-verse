@@ -1,2 +1,0 @@
-ALTER TABLE "Document" ADD COLUMN "chatId" uuid;--> statement-breakpoint
-ALTER TABLE "Document" ADD CONSTRAINT "Document_chatId_Chat_id_fk" FOREIGN KEY ("chatId") REFERENCES "public"."Chat"("id") ON DELETE cascade ON UPDATE no action;

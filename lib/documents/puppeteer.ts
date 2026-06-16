@@ -1,4 +1,3 @@
-import chromium from "@sparticuz/chromium";
 import type { Browser } from "puppeteer-core";
 import puppeteer from "puppeteer-core";
 
@@ -21,7 +20,9 @@ const LOCAL_CHROME_PATHS: Partial<Record<NodeJS.Platform, string[]>> = {
   ],
 };
 
-async function findLocalExecutable(): Promise<string | null> {
+async function findExecutable(): Promise<string | null> {
+  // The container image (Cloud Run) installs system Chromium and sets this;
+  // locally it points at an installed Chrome, or we probe known paths.
   if (process.env.PUPPETEER_EXECUTABLE_PATH) {
     return process.env.PUPPETEER_EXECUTABLE_PATH;
   }
@@ -36,33 +37,21 @@ async function findLocalExecutable(): Promise<string | null> {
 }
 
 /**
- * Launch a headless browser suitable for the current environment.
+ * Launch a headless browser using the system Chromium.
  *
- * On Vercel / AWS Lambda, uses `@sparticuz/chromium`'s bundled Chromium.
- * Locally, uses the first system Chrome/Chromium we can find (or whatever
- * PUPPETEER_EXECUTABLE_PATH is set to).
+ * Selected via PUPPETEER_EXECUTABLE_PATH (set in the Cloud Run image) or, in
+ * local dev, the first Chrome/Chromium we can find. The serverless bundled
+ * Chromium (`@sparticuz/chromium`) was retired with Vercel hosting.
  */
 export async function launchBrowser(): Promise<Browser> {
-  const isServerless = Boolean(
-    process.env.VERCEL_ENV || process.env.AWS_LAMBDA_FUNCTION_NAME
-  );
-
-  if (isServerless) {
-    return puppeteer.launch({
-      args: chromium.args,
-      executablePath: await chromium.executablePath(),
-      headless: true,
-    });
-  }
-
-  const localPath = await findLocalExecutable();
-  if (!localPath) {
+  const executablePath = await findExecutable();
+  if (!executablePath) {
     throw new Error(
-      "No Chrome/Chromium found for local development. Install Google Chrome or set PUPPETEER_EXECUTABLE_PATH."
+      "No Chrome/Chromium found. Install Google Chrome or set PUPPETEER_EXECUTABLE_PATH."
     );
   }
   return puppeteer.launch({
-    executablePath: localPath,
+    executablePath,
     headless: true,
     args: ["--no-sandbox", "--disable-setuid-sandbox"],
   });

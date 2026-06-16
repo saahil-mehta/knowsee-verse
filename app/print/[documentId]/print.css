@@ -19,8 +19,9 @@ nextjs-portal,
   background: #ffffff !important;
   color: hsl(240 10% 3.9%) !important;
   min-height: 100vh;
-  font-family: var(--font-sans), "Google Sans", "Google Sans Text",
-    -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  font-family:
+    var(--font-sans), "Google Sans", "Google Sans Text", -apple-system,
+    BlinkMacSystemFont, system-ui, sans-serif;
   font-size: 11pt;
   line-height: 1.55;
 }

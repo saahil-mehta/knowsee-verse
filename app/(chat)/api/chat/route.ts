@@ -1,4 +1,3 @@
-import { geolocation } from "@vercel/functions";
 import {
   convertToModelMessages,
   createUIMessageStream,
@@ -34,6 +33,7 @@ import {
 } from "@/lib/db/queries";
 import type { BrandProfile, DBMessage } from "@/lib/db/schema";
 import { ChatSDKError } from "@/lib/errors";
+import { getGeo } from "@/lib/request-geo";
 import type { ChatMessage } from "@/lib/types";
 import { convertToUIMessages, generateUUID } from "@/lib/utils";
 import { generateTitleFromUserMessage } from "../../actions";
@@ -107,7 +107,7 @@ export async function POST(request: Request) {
       ? (messages as ChatMessage[])
       : [...convertToUIMessages(messagesFromDb), message as ChatMessage];
 
-    const { longitude, latitude, city, country } = geolocation(request);
+    const { longitude, latitude, city, country } = getGeo(request);
 
     const requestHints: RequestHints = {
       longitude,

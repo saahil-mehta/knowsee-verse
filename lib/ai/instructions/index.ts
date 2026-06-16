@@ -1,8 +1,8 @@
 import { readFileSync } from "node:fs";
 import { join } from "node:path";
-import type { Geo } from "@vercel/functions";
 import type { ArtifactKind } from "@/components/artifact";
 import type { BrandProfile } from "@/lib/db/schema";
+import type { Geo } from "@/lib/request-geo";
 
 // ---------------------------------------------------------------------------
 // Markdown loader — reads instruction files relative to this directory.

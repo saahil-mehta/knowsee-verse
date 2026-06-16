@@ -43,6 +43,16 @@ test.describe("Chat API Integration", () => {
   });
 
   test("shows stop button during generation", async ({ page }) => {
+    // Hold the chat response open so the generating state is deterministic
+    // rather than racing the mock model's near-instant completion (which made
+    // this assertion flaky under parallel load).
+    await page.route("**/api/chat", async (route) => {
+      await new Promise((resolve) => {
+        setTimeout(resolve, 2000);
+      });
+      await route.continue();
+    });
+
     await page.goto("/");
     const input = page.getByTestId("multimodal-input");
     await input.fill("Test");

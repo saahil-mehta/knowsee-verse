@@ -8,7 +8,7 @@ import { hashPassword } from "better-auth/crypto";
 import { eq } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/postgres-js";
 import postgres from "postgres";
-import { account, user } from "./schema";
+import { account, user, userPreference } from "./schema";
 
 // Seeds the e2e test user (read from TEST_USER_EMAIL / TEST_USER_PASSWORD) so
 // the Playwright auth.setup login succeeds. Reproducible and database-agnostic:
@@ -32,6 +32,18 @@ const runSeed = async () => {
   const connection = postgres(process.env.POSTGRES_URL, { max: 1 });
   const db = drizzle(connection);
 
+  // Mark the test user as having seen the first-run tour, so the driver.js
+  // overlay does not auto-start and block clicks during e2e runs.
+  const markTourSeen = async (id: string) => {
+    await db
+      .insert(userPreference)
+      .values({ userId: id, hasSeenTour: true })
+      .onConflictDoUpdate({
+        target: userPreference.userId,
+        set: { hasSeenTour: true },
+      });
+  };
+
   try {
     const existing = await db.select().from(user).where(eq(user.email, email));
 
@@ -40,6 +52,7 @@ const runSeed = async () => {
         .update(user)
         .set({ emailVerified: true })
         .where(eq(user.email, email));
+      await markTourSeen(existing[0].id);
       console.log("✅ Test user already present; ensured emailVerified");
       return;
     }
@@ -60,6 +73,7 @@ const runSeed = async () => {
       userId,
       password: hashed,
     });
+    await markTourSeen(userId);
 
     console.log("✅ Seeded test user %s", email);
   } finally {

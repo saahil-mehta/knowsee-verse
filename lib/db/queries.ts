@@ -30,6 +30,7 @@ import {
   type Suggestion,
   stream,
   suggestion,
+  userPreference,
   visibilityAudit,
   vote,
 } from "./schema";
@@ -1070,5 +1071,45 @@ export async function renameMemory({
     return updated;
   } catch {
     throw new ChatSDKError("bad_request:database", "Failed to rename memory");
+  }
+}
+
+export async function getUserPreferences({
+  userId,
+}: {
+  userId: string;
+}): Promise<{ hasSeenTour: boolean }> {
+  try {
+    const [row] = await db
+      .select({ hasSeenTour: userPreference.hasSeenTour })
+      .from(userPreference)
+      .where(eq(userPreference.userId, userId));
+    return row ?? { hasSeenTour: false };
+  } catch {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to read user preferences"
+    );
+  }
+}
+
+export async function markTourSeen({
+  userId,
+}: {
+  userId: string;
+}): Promise<void> {
+  try {
+    await db
+      .insert(userPreference)
+      .values({ userId, hasSeenTour: true })
+      .onConflictDoUpdate({
+        target: userPreference.userId,
+        set: { hasSeenTour: true, updatedAt: new Date() },
+      });
+  } catch {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update user preferences"
+    );
   }
 }

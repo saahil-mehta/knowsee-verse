@@ -8,6 +8,13 @@
       "when": 1781605438414,
       "tag": "0000_nebulous_starhawk",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1782128155472,
+      "tag": "0001_jazzy_giant_man",
+      "breakpoints": true
     }
   ]
 }

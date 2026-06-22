@@ -321,3 +321,16 @@ export const stream = pgTable(
 );
 
 export type Stream = InferSelectModel<typeof stream>;
+
+// Per-user UI preferences. Currently records whether the first-run product
+// tour has been shown; one row per user, upserted on the user id.
+export const userPreference = pgTable("UserPreference", {
+  userId: uuid("userId")
+    .primaryKey()
+    .references(() => user.id, { onDelete: "cascade" }),
+  hasSeenTour: boolean("hasSeenTour").notNull().default(false),
+  createdAt: timestamp("createdAt").notNull().defaultNow(),
+  updatedAt: timestamp("updatedAt").notNull().defaultNow(),
+});
+
+export type UserPreference = InferSelectModel<typeof userPreference>;

@@ -13,6 +13,7 @@ import {
   getChatHistoryPaginationKey,
   SidebarHistory,
 } from "@/components/sidebar-history";
+import { SidebarNavGroups } from "@/components/sidebar-nav-groups";
 import { SidebarProjects } from "@/components/sidebar-projects";
 import { Button } from "@/components/ui/button";
 import {
@@ -129,6 +130,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
                   <TooltipTrigger asChild>
                     <Button
                       className="h-8 p-1 md:h-fit md:p-2"
+                      data-tour="new-chat"
                       onClick={() => {
                         setOpenMobile(false);
                         router.push("/");
@@ -167,6 +169,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarContent className={cn(isCollapsed && "hidden")}>
           <SidebarProjects user={user} />
           <SidebarHistory user={user} />
+          <SidebarNavGroups />
         </SidebarContent>
         <SidebarFooter className={cn(isCollapsed && "hidden")}>
           <UserMenu />

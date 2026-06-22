@@ -162,7 +162,7 @@ export async function POST(request: Request) {
       execute: async ({ writer: dataStream }) => {
         const result = streamText({
           model: getLanguageModel(selectedChatModel),
-          system: systemPrompt({
+          system: await systemPrompt({
             selectedChatModel,
             requestHints,
             brandProfile: brandProfile ?? undefined,

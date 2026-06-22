@@ -363,3 +363,26 @@ export const feedback = pgTable(
 );
 
 export type Feedback = InferSelectModel<typeof feedback>;
+
+// Wiki-style shared context for the system prompt. Anyone signed in can edit
+// any section. The latest non-empty body of each section is composed into the
+// prompt at request time.
+export const playbookSection = pgTable(
+  "PlaybookSection",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    key: varchar("key", { length: 64 }).notNull().unique(),
+    title: varchar("title", { length: 256 }).notNull(),
+    body: text("body").notNull().default(""),
+    ordering: integer("ordering").notNull().default(0),
+    version: integer("version").notNull().default(1),
+    lastEditedBy: uuid("lastEditedBy").references(() => user.id, {
+      onDelete: "set null",
+    }),
+    lastEditedAt: timestamp("lastEditedAt").notNull().defaultNow(),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [index("playbookSection_ordering_idx").on(table.ordering)]
+);
+
+export type PlaybookSection = InferSelectModel<typeof playbookSection>;

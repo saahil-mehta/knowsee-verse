@@ -3,6 +3,7 @@ import { join } from "node:path";
 import type { ArtifactKind } from "@/components/artifact";
 import type { BrandProfile } from "@/lib/db/schema";
 import type { Geo } from "@/lib/request-geo";
+import { getPlaybookPrompt } from "./playbook-cache";
 
 // ---------------------------------------------------------------------------
 // Markdown loader — reads instruction files relative to this directory.
@@ -162,7 +163,7 @@ function brandContextPrompt(bp: BrandProfile): string {
   return `${mode}\n\n${brandMemoryTemplate}`;
 }
 
-export const systemPrompt = ({
+export const systemPrompt = async ({
   selectedChatModel,
   requestHints,
   brandProfile,
@@ -174,7 +175,12 @@ export const systemPrompt = ({
   const requestPrompt = getRequestPromptFromHints(requestHints);
   const guidance = modelGuidanceFiles[selectedChatModel] ?? "";
   const brand = brandProfile ? `\n\n${brandContextPrompt(brandProfile)}` : "";
-  return `${regularPrompt}\n\n${requestPrompt}\n\n${toolsPrompt}\n\n${artifactsPrompt}${guidance ? `\n\n${guidance}` : ""}${brand}`;
+  // Team-curated shared context, folded in after the brand block. Empty when
+  // no sections have a body, so the prompt is unchanged until the playbook is
+  // populated.
+  const playbook = await getPlaybookPrompt();
+  const playbookBlock = playbook ? `\n\n${playbook}` : "";
+  return `${regularPrompt}\n\n${requestPrompt}\n\n${toolsPrompt}\n\n${artifactsPrompt}${guidance ? `\n\n${guidance}` : ""}${brand}${playbookBlock}`;
 };
 
 // ---------------------------------------------------------------------------

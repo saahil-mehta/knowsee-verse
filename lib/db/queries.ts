@@ -12,6 +12,7 @@ import {
   isNull,
   lt,
   type SQL,
+  sql,
 } from "drizzle-orm";
 import type { ArtifactKind } from "@/components/artifact";
 import type { VisibilityType } from "@/components/visibility-selector";
@@ -27,10 +28,13 @@ import {
   feedback,
   memory,
   message,
+  type PlaybookSection,
+  playbookSection,
   project,
   type Suggestion,
   stream,
   suggestion,
+  user,
   userPreference,
   visibilityAudit,
   vote,
@@ -1151,5 +1155,133 @@ export async function createFeedback({
     return row;
   } catch {
     throw new ChatSDKError("bad_request:database", "Failed to save feedback");
+  }
+}
+
+export type PlaybookSectionWithEditor = PlaybookSection & {
+  lastEditedByName: string | null;
+  lastEditedByEmail: string | null;
+};
+
+export async function getAllPlaybookSections(): Promise<
+  PlaybookSectionWithEditor[]
+> {
+  try {
+    return await db
+      .select({
+        id: playbookSection.id,
+        key: playbookSection.key,
+        title: playbookSection.title,
+        body: playbookSection.body,
+        ordering: playbookSection.ordering,
+        version: playbookSection.version,
+        lastEditedBy: playbookSection.lastEditedBy,
+        lastEditedAt: playbookSection.lastEditedAt,
+        createdAt: playbookSection.createdAt,
+        lastEditedByName: user.name,
+        lastEditedByEmail: user.email,
+      })
+      .from(playbookSection)
+      .leftJoin(user, eq(playbookSection.lastEditedBy, user.id))
+      .orderBy(asc(playbookSection.ordering));
+  } catch {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get playbook sections"
+    );
+  }
+}
+
+export async function createPlaybookSection({
+  title,
+  userId,
+}: {
+  title: string;
+  userId: string;
+}): Promise<PlaybookSection> {
+  try {
+    const [{ maxOrdering }] = await db
+      .select({
+        maxOrdering: sql<number>`COALESCE(MAX(${playbookSection.ordering}), 0)`,
+      })
+      .from(playbookSection);
+
+    const [created] = await db
+      .insert(playbookSection)
+      .values({
+        key: crypto.randomUUID(),
+        title,
+        body: "",
+        ordering: maxOrdering + 10,
+        lastEditedBy: userId,
+      })
+      .returning();
+
+    return created;
+  } catch {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to create playbook section"
+    );
+  }
+}
+
+export async function updatePlaybookSection({
+  key,
+  title,
+  body,
+  userId,
+}: {
+  key: string;
+  title?: string;
+  body?: string;
+  userId: string;
+}): Promise<PlaybookSection> {
+  try {
+    const [existing] = await db
+      .select()
+      .from(playbookSection)
+      .where(eq(playbookSection.key, key));
+
+    if (!existing) {
+      throw new ChatSDKError("bad_request:api", "Playbook section not found");
+    }
+
+    const [updated] = await db
+      .update(playbookSection)
+      .set({
+        ...(title !== undefined && { title }),
+        ...(body !== undefined && { body }),
+        version: existing.version + 1,
+        lastEditedBy: userId,
+        lastEditedAt: new Date(),
+      })
+      .where(eq(playbookSection.key, key))
+      .returning();
+
+    return updated;
+  } catch (error) {
+    if (error instanceof ChatSDKError) {
+      throw error;
+    }
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to update playbook section"
+    );
+  }
+}
+
+export async function deletePlaybookSection({
+  key,
+}: {
+  key: string;
+}): Promise<void> {
+  try {
+    await db.delete(playbookSection).where(eq(playbookSection.key, key));
+  } catch {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to delete playbook section"
+    );
   }
 }

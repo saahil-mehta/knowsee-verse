@@ -1,6 +1,8 @@
 "use client";
 
-import { UserIcon, XIcon } from "lucide-react";
+import { BookOpenIcon, UserIcon, XIcon } from "lucide-react";
+import { useState } from "react";
+import { PlaybookEditor } from "@/components/playbook/playbook-editor";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { AccountSettings } from "./account-settings";
@@ -10,10 +12,15 @@ interface SettingsDialogProps {
   open: boolean;
 }
 
-const tabs = [{ id: "account" as const, label: "Account", icon: UserIcon }];
+const tabs = [
+  { id: "account" as const, label: "Account", icon: UserIcon },
+  { id: "playbook" as const, label: "Playbook", icon: BookOpenIcon },
+];
+
+type TabId = (typeof tabs)[number]["id"];
 
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
-  const activeTab = "account";
+  const [activeTab, setActiveTab] = useState<TabId>("account");
 
   return (
     <Dialog onOpenChange={onOpenChange} open={open}>
@@ -49,6 +56,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                           ? "bg-accent font-medium text-foreground"
                           : "text-muted-foreground hover:bg-accent/50 hover:text-foreground"
                       )}
+                      onClick={() => setActiveTab(tab.id)}
                       type="button"
                     >
                       <Icon className="size-4" />
@@ -69,7 +77,11 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-6">
-              <AccountSettings />
+              {activeTab === "account" ? (
+                <AccountSettings />
+              ) : (
+                <PlaybookEditor />
+              )}
             </div>
           </div>
         </div>

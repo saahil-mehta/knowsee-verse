@@ -53,6 +53,16 @@ export const TOUR_STEPS: DriveStep[] = [
     },
   },
   {
+    element: '[data-tour="feedback-nav"]',
+    popover: {
+      title: "Tell us what's off",
+      description:
+        "A bug, a rough edge, or a number that looks wrong? Send feedback lives right here. Every note reaches the team, and that is how Knowsee gets sharper.",
+      side: "right",
+      align: "start",
+    },
+  },
+  {
     element: '[data-testid="user-nav-button"]',
     popover: {
       title: "Settings and your account",

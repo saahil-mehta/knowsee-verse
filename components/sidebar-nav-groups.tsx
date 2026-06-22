@@ -59,6 +59,9 @@ export function SidebarNavGroups({
                   return (
                     <SidebarMenuItem key={item.label}>
                       <SidebarMenuButton
+                        data-tour={
+                          item.action ? `${item.action}-nav` : undefined
+                        }
                         onClick={() => {
                           setOpenMobile(false);
                           handler?.();

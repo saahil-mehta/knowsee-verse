@@ -334,3 +334,32 @@ export const userPreference = pgTable("UserPreference", {
 });
 
 export type UserPreference = InferSelectModel<typeof userPreference>;
+
+// Free-text feedback, either general product feedback ("product") or feedback
+// on a specific AI answer ("answer"). The row is the source of truth; a Mailgun
+// notification is fired best-effort on insert (see app/(chat)/api/feedback).
+// messageId is intentionally not a foreign key: feedback should outlive the
+// message it describes, and context is captured at write time.
+export const feedback = pgTable(
+  "Feedback",
+  {
+    id: uuid("id").primaryKey().notNull().defaultRandom(),
+    userId: uuid("userId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    userEmail: text("userEmail").notNull(),
+    kind: varchar("kind", { enum: ["product", "answer"] }).notNull(),
+    category: varchar("category", { length: 32 }),
+    message: text("message").notNull(),
+    chatId: uuid("chatId").references(() => chat.id, { onDelete: "set null" }),
+    messageId: uuid("messageId"),
+    pageContext: text("pageContext"),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    index("feedback_userId_idx").on(table.userId),
+    index("feedback_createdAt_idx").on(table.createdAt),
+  ]
+);
+
+export type Feedback = InferSelectModel<typeof feedback>;

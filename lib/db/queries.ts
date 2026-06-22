@@ -24,6 +24,7 @@ import {
   chat,
   type DBMessage,
   document,
+  feedback,
   memory,
   message,
   project,
@@ -1111,5 +1112,44 @@ export async function markTourSeen({
       "bad_request:database",
       "Failed to update user preferences"
     );
+  }
+}
+
+export async function createFeedback({
+  userId,
+  userEmail,
+  kind,
+  category,
+  message: body,
+  chatId,
+  messageId,
+  pageContext,
+}: {
+  userId: string;
+  userEmail: string;
+  kind: "product" | "answer";
+  category?: string;
+  message: string;
+  chatId?: string;
+  messageId?: string;
+  pageContext?: string;
+}): Promise<{ id: string; createdAt: Date }> {
+  try {
+    const [row] = await db
+      .insert(feedback)
+      .values({
+        userId,
+        userEmail,
+        kind,
+        category,
+        message: body,
+        chatId,
+        messageId,
+        pageContext,
+      })
+      .returning({ id: feedback.id, createdAt: feedback.createdAt });
+    return row;
+  } catch {
+    throw new ChatSDKError("bad_request:database", "Failed to save feedback");
   }
 }

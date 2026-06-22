@@ -56,6 +56,7 @@ export type Config = {
     mailgunApiKey: string;
     mailgunDomain: string;
     mailgunFrom: string | null;
+    feedbackNotifyTo: string | null;
   };
   export: {
     puppeteerExecutablePath: string | null;
@@ -168,6 +169,7 @@ export function resolveConfig(env: NodeJS.ProcessEnv): Config {
       mailgunApiKey: require_("MAILGUN_API_KEY"),
       mailgunDomain: require_("MAILGUN_DOMAIN"),
       mailgunFrom: env.MAILGUN_FROM?.trim() || null,
+      feedbackNotifyTo: env.FEEDBACK_NOTIFY_TO?.trim() || null,
     },
     export: {
       puppeteerExecutablePath: env.PUPPETEER_EXECUTABLE_PATH?.trim() || null,

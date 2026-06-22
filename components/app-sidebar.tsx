@@ -7,6 +7,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { useSWRConfig } from "swr";
 import { unstable_serialize } from "swr/infinite";
+import { FeedbackDialog } from "@/components/feedback/feedback-dialog";
 import { PlusIcon, TrashIcon } from "@/components/icons";
 import { UserMenu } from "@/components/settings";
 import {
@@ -43,6 +44,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
   const { state, setOpenMobile, toggleSidebar } = useSidebar();
   const { mutate } = useSWRConfig();
   const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const [showFeedback, setShowFeedback] = useState(false);
   const isCollapsed = state === "collapsed";
 
   const handleDeleteAll = () => {
@@ -169,7 +171,9 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarContent className={cn(isCollapsed && "hidden")}>
           <SidebarProjects user={user} />
           <SidebarHistory user={user} />
-          <SidebarNavGroups />
+          <SidebarNavGroups
+            onAction={{ feedback: () => setShowFeedback(true) }}
+          />
         </SidebarContent>
         <SidebarFooter className={cn(isCollapsed && "hidden")}>
           <UserMenu />
@@ -196,6 +200,8 @@ export function AppSidebar({ user }: { user: User | undefined }) {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <FeedbackDialog onOpenChange={setShowFeedback} open={showFeedback} />
     </>
   );
 }

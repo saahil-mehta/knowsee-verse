@@ -167,6 +167,31 @@ export const chat = pgTable(
 
 export type Chat = InferSelectModel<typeof chat>;
 
+// Per-user chat sharing on top of the public/private visibility flag. A chat
+// is owner-only unless a matching row grants read access to another user.
+// Access = owner OR chat is public OR a ChatShare row exists.
+export const chatShare = pgTable(
+  "ChatShare",
+  {
+    chatId: uuid("chatId")
+      .notNull()
+      .references(() => chat.id, { onDelete: "cascade" }),
+    sharedWithUserId: uuid("sharedWithUserId")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    sharedByUserId: uuid("sharedByUserId")
+      .notNull()
+      .references(() => user.id),
+    createdAt: timestamp("createdAt").notNull().defaultNow(),
+  },
+  (table) => [
+    primaryKey({ columns: [table.chatId, table.sharedWithUserId] }),
+    index("ChatShare_sharedWithUserId_idx").on(table.sharedWithUserId),
+  ]
+);
+
+export type ChatShare = InferSelectModel<typeof chatShare>;
+
 export const visibilityAudit = pgTable(
   "VisibilityAudit",
   {

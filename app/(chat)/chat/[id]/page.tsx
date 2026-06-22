@@ -10,6 +10,7 @@ import {
   getMessagesByChatId,
   getParentChat,
   getProjectById,
+  isChatSharedWithUser,
 } from "@/lib/db/queries";
 import { convertToUIMessages } from "@/lib/utils";
 
@@ -40,8 +41,15 @@ async function ChatPage({ params }: { params: Promise<{ id: string }> }) {
       return notFound();
     }
 
+    // Owner sees it directly; anyone else needs an explicit ChatShare grant.
     if (session.user.id !== chat.userId) {
-      return notFound();
+      const shared = await isChatSharedWithUser({
+        chatId: id,
+        userId: session.user.id,
+      });
+      if (!shared) {
+        return notFound();
+      }
     }
   }
 

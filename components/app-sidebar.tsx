@@ -16,6 +16,7 @@ import {
 } from "@/components/sidebar-history";
 import { SidebarNavGroups } from "@/components/sidebar-nav-groups";
 import { SidebarProjects } from "@/components/sidebar-projects";
+import { SidebarShared } from "@/components/sidebar-shared";
 import { Button } from "@/components/ui/button";
 import {
   Sidebar,
@@ -171,6 +172,7 @@ export function AppSidebar({ user }: { user: User | undefined }) {
         <SidebarContent className={cn(isCollapsed && "hidden")}>
           <SidebarProjects user={user} />
           <SidebarHistory user={user} />
+          <SidebarShared user={user} />
           <SidebarNavGroups
             onAction={{ feedback: () => setShowFeedback(true) }}
           />

@@ -8,9 +8,12 @@ import {
   eq,
   gt,
   gte,
+  ilike,
   inArray,
   isNull,
   lt,
+  ne,
+  or,
   type SQL,
   sql,
 } from "drizzle-orm";
@@ -23,6 +26,7 @@ import {
   brandProfile,
   type Chat,
   chat,
+  chatShare,
   type DBMessage,
   document,
   feedback,
@@ -1155,6 +1159,140 @@ export async function createFeedback({
     return row;
   } catch {
     throw new ChatSDKError("bad_request:database", "Failed to save feedback");
+  }
+}
+
+export async function shareChatWithUser({
+  chatId,
+  sharedWithUserId,
+  sharedByUserId,
+}: {
+  chatId: string;
+  sharedWithUserId: string;
+  sharedByUserId: string;
+}) {
+  try {
+    return await db
+      .insert(chatShare)
+      .values({ chatId, sharedWithUserId, sharedByUserId })
+      .onConflictDoNothing();
+  } catch {
+    throw new ChatSDKError("bad_request:database", "Failed to share chat");
+  }
+}
+
+export async function unshareChatWithUser({
+  chatId,
+  sharedWithUserId,
+}: {
+  chatId: string;
+  sharedWithUserId: string;
+}) {
+  try {
+    return await db
+      .delete(chatShare)
+      .where(
+        and(
+          eq(chatShare.chatId, chatId),
+          eq(chatShare.sharedWithUserId, sharedWithUserId)
+        )
+      );
+  } catch {
+    throw new ChatSDKError("bad_request:database", "Failed to unshare chat");
+  }
+}
+
+export async function isChatSharedWithUser({
+  chatId,
+  userId,
+}: {
+  chatId: string;
+  userId: string;
+}) {
+  try {
+    const [row] = await db
+      .select({ chatId: chatShare.chatId })
+      .from(chatShare)
+      .where(
+        and(
+          eq(chatShare.chatId, chatId),
+          eq(chatShare.sharedWithUserId, userId)
+        )
+      )
+      .limit(1);
+    return Boolean(row);
+  } catch {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to check chat share"
+    );
+  }
+}
+
+export async function getChatShares({ chatId }: { chatId: string }) {
+  try {
+    return await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+      })
+      .from(chatShare)
+      .innerJoin(user, eq(chatShare.sharedWithUserId, user.id))
+      .where(eq(chatShare.chatId, chatId))
+      .orderBy(asc(user.name));
+  } catch {
+    throw new ChatSDKError("bad_request:database", "Failed to get chat shares");
+  }
+}
+
+export async function getChatsSharedWithUser({ userId }: { userId: string }) {
+  try {
+    const rows = await db
+      .select({ chat })
+      .from(chatShare)
+      .innerJoin(chat, eq(chatShare.chatId, chat.id))
+      .where(eq(chatShare.sharedWithUserId, userId))
+      .orderBy(desc(chatShare.createdAt));
+    return rows.map((row) => row.chat);
+  } catch {
+    throw new ChatSDKError(
+      "bad_request:database",
+      "Failed to get chats shared with user"
+    );
+  }
+}
+
+export async function searchUsers({
+  query,
+  excludeUserId,
+  limit = 10,
+}: {
+  query: string;
+  excludeUserId: string;
+  limit?: number;
+}) {
+  try {
+    const pattern = `%${query}%`;
+    return await db
+      .select({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        image: user.image,
+      })
+      .from(user)
+      .where(
+        and(
+          ne(user.id, excludeUserId),
+          or(ilike(user.name, pattern), ilike(user.email, pattern))
+        )
+      )
+      .orderBy(asc(user.name))
+      .limit(limit);
+  } catch {
+    throw new ChatSDKError("bad_request:database", "Failed to search users");
   }
 }
 

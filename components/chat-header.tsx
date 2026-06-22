@@ -6,6 +6,7 @@ import { memo } from "react";
 import { useWindowSize } from "usehooks-ts";
 import { Button } from "@/components/ui/button";
 import { PlusIcon } from "./icons";
+import { ShareButton } from "./share-dialog";
 import { useSidebar } from "./ui/sidebar";
 import { VisibilitySelector, type VisibilityType } from "./visibility-selector";
 
@@ -35,6 +36,8 @@ function PureChatHeader({
           selectedVisibilityType={selectedVisibilityType}
         />
       )}
+
+      {!isReadonly && <ShareButton chatId={chatId} />}
 
       {projectContext && (
         <div className="flex min-w-0 items-center gap-1 text-sm">
